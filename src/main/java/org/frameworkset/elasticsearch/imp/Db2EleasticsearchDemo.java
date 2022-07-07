@@ -17,7 +17,7 @@ package org.frameworkset.elasticsearch.imp;
 
 import com.frameworkset.util.SimpleStringUtil;
 import org.frameworkset.elasticsearch.ElasticSearchHelper;
-import org.frameworkset.elasticsearch.util.PropertiesUtil;
+import org.frameworkset.spi.assemble.PropertiesUtil;
 import org.frameworkset.spi.geoip.IpInfo;
 import org.frameworkset.tran.DataRefactor;
 import org.frameworkset.tran.DataStream;
@@ -51,7 +51,7 @@ public class Db2EleasticsearchDemo {
 	public static void main(String args[]){
 		Db2EleasticsearchDemo db2EleasticsearchDemo = new Db2EleasticsearchDemo();
 		//从配置文件application.properties中获取参数值
-		boolean dropIndice = PropertiesUtil.getPropertiesContainer().getBooleanSystemEnvProperty("dropIndice",true);
+		boolean dropIndice = PropertiesUtil.getPropertiesContainer("application.properties").getBooleanSystemEnvProperty("dropIndice",true);
 //		dbdemo.fullImportData(  dropIndice);
 //		dbdemo.scheduleImportData(dropIndice);
 		db2EleasticsearchDemo.scheduleTimestampImportData(dropIndice);
