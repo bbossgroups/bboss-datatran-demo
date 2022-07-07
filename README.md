@@ -194,14 +194,14 @@ db2es工具管理提取数据的sql语句有两种方法：代码中直接编写
 mainclass=org.frameworkset.elasticsearch.imp.Dbdemo
 
 # 参数配置
-# 在代码中获取方法：CommonLauncher.getBooleanAttribute("dropIndice",false);//同时指定了默认值false
+# 在代码中获取方法：PropertiesUtil.getPropertiesContainer().getBooleanAttribute("dropIndice",false);//同时指定了默认值false
 dropIndice=false
 ```
 
 在代码中获取参数dropIndice方法：
 
 ```java
-boolean dropIndice = CommonLauncher.getBooleanAttribute("dropIndice",false);//同时指定了默认值false
+boolean dropIndice = PropertiesUtil.getPropertiesContainer().getBooleanAttribute("dropIndice",false);//同时指定了默认值false
 ```
 
 另外可以在resources/application.properties配置控制作业执行的一些参数，例如工作线程数，等待队列数，批处理size等等：
@@ -215,9 +215,9 @@ batchSize=20
 在作业执行方法中获取并使用上述参数：
 
 ```java
-int batchSize = CommonLauncher.getIntProperty("batchSize",10);//同时指定了默认值
-int queueSize = CommonLauncher.getIntProperty("queueSize",50);//同时指定了默认值
-int workThreads = CommonLauncher.getIntProperty("workThreads",10);//同时指定了默认值
+int batchSize = PropertiesUtil.getPropertiesContainer().getIntSystemEnvProperty("batchSize",10);//同时指定了默认值
+int queueSize = PropertiesUtil.getPropertiesContainer().getIntSystemEnvProperty("queueSize",50);//同时指定了默认值
+int workThreads = PropertiesUtil.getPropertiesContainer().getIntSystemEnvProperty("workThreads",10);//同时指定了默认值
 importBuilder.setBatchSize(batchSize);
 importBuilder.setQueue(queueSize);//设置批量导入线程池等待队列长度
 importBuilder.setThreadCount(workThreads);//设置批量导入线程池工作线程数量
