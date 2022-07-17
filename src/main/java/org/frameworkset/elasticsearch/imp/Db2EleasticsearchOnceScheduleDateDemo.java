@@ -19,10 +19,8 @@ import com.frameworkset.util.SimpleStringUtil;
 import org.frameworkset.elasticsearch.ElasticSearchHelper;
 import org.frameworkset.spi.assemble.PropertiesUtil;
 import org.frameworkset.spi.geoip.IpInfo;
-import org.frameworkset.tran.DataRefactor;
-import org.frameworkset.tran.DataStream;
-import org.frameworkset.tran.ExportResultHandler;
-import org.frameworkset.tran.ImportStartAction;
+import org.frameworkset.spi.remote.http.HttpRequestProxy;
+import org.frameworkset.tran.*;
 import org.frameworkset.tran.config.ImportBuilder;
 import org.frameworkset.tran.context.Context;
 import org.frameworkset.tran.context.ImportContext;
@@ -32,11 +30,16 @@ import org.frameworkset.tran.plugin.es.output.ElasticsearchOutputConfig;
 import org.frameworkset.tran.schedule.CallInterceptor;
 import org.frameworkset.tran.schedule.TaskContext;
 import org.frameworkset.tran.task.TaskCommand;
+import org.frameworkset.util.ResourceEnd;
+import org.frameworkset.util.ResourceStart;
+import org.frameworkset.util.ResourceStartResult;
 import org.frameworkset.util.TimeUtil;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
 import java.util.Date;
+import java.util.LinkedHashMap;
+import java.util.Map;
 
 /**
  * <p>Description: 基于数字类型db-es一次性同步案例，同步处理程序，如需调试同步功能，直接运行main方法即可
@@ -93,6 +96,8 @@ public class Db2EleasticsearchOnceScheduleDateDemo {
 
 		//在任务数据抽取之前做一些初始化处理，例如：通过删表来做初始化操作
 
+		//在任务数据抽取之前做一些初始化处理，例如：通过删表来做初始化操作
+
 		importBuilder.setImportStartAction(new ImportStartAction() {
 			@Override
 			public void startAction(ImportContext importContext) {
@@ -104,6 +109,39 @@ public class Db2EleasticsearchOnceScheduleDateDemo {
 						logger.error("Drop indice dbdemo failed:",e);
 					}
 				}
+
+				importContext.addResourceStart(new ResourceStart() {
+					@Override
+					public ResourceStartResult startResource() {
+						Map<String,Object> configs = new LinkedHashMap<>();
+						configs.put("http.poolNames","datatran");
+						configs.put("datatran.http.health","/health");
+						configs.put("datatran.http.hosts","192.168.137.1:808");
+						configs.put("datatran.http.timeoutConnection","5000");
+						configs.put("datatran.http.timeoutSocket","50000");
+						configs.put("datatran.http.connectionRequestTimeout","50000");
+						configs.put("datatran.http.maxTotal","200");
+						configs.put("datatran.http.defaultMaxPerRoute","100");
+						configs.put("datatran.http.failAllContinue","true");
+
+						return HttpRequestProxy.startHttpPools(configs);
+					}
+				});
+
+			}
+		});
+
+		//任务结束后销毁初始化阶段自定义的http数据源
+		importBuilder.setImportEndAction(new ImportEndAction() {
+			@Override
+			public void endAction(ImportContext importContext, Exception e) {
+				//销毁初始化阶段自定义的数据源
+				importContext.destroyResources(new ResourceEnd() {
+					@Override
+					public void endResource(ResourceStartResult resourceStartResult) {
+						HttpRequestProxy.stopHttpClients(resourceStartResult);
+					}
+				});
 			}
 		});
 
@@ -239,6 +277,7 @@ public class Db2EleasticsearchOnceScheduleDateDemo {
 				IpInfo ipInfo = context.getIpInfoByIp("219.133.80.136");
 				if(ipInfo != null)
 					context.addFieldValue("ipInfo", SimpleStringUtil.object2json(ipInfo));
+				HttpRequestProxy.sendJsonBody("datatran",ipInfo,"/httpservice/sendData.api");
 			}
 		});
 		//映射和转换配置结束
