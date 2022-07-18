@@ -15,11 +15,13 @@ package org.frameworkset.elasticsearch.imp;
  * limitations under the License.
  */
 
+import com.frameworkset.common.poolman.util.DBStartResult;
 import com.frameworkset.util.SimpleStringUtil;
 import org.frameworkset.elasticsearch.ElasticSearchHelper;
 import org.frameworkset.spi.assemble.PropertiesUtil;
 import org.frameworkset.spi.geoip.IpInfo;
 import org.frameworkset.spi.remote.http.HttpRequestProxy;
+import org.frameworkset.spi.remote.http.HttpResourceStartResult;
 import org.frameworkset.tran.*;
 import org.frameworkset.tran.config.ImportBuilder;
 import org.frameworkset.tran.context.Context;
@@ -139,7 +141,12 @@ public class Db2EleasticsearchOnceScheduleDateDemo {
 				importContext.destroyResources(new ResourceEnd() {
 					@Override
 					public void endResource(ResourceStartResult resourceStartResult) {
-						HttpRequestProxy.stopHttpClients(resourceStartResult);
+						if(resourceStartResult instanceof HttpResourceStartResult) {
+							HttpRequestProxy.stopHttpClients(resourceStartResult);
+						}
+						else if(resourceStartResult instanceof DBStartResult) {
+							DataTranPluginImpl.stopDatasources((DBStartResult) resourceStartResult);
+						}
 					}
 				});
 			}
@@ -150,22 +157,32 @@ public class Db2EleasticsearchOnceScheduleDateDemo {
 //		importBuilder.addIgnoreFieldMapping("remark1");
 //		importBuilder.setSql("select * from td_sm_log ");
 		ElasticsearchOutputConfig elasticsearchOutputConfig = new ElasticsearchOutputConfig();
-		elasticsearchOutputConfig
-				.addTargetElasticsearch("elasticsearch.serverNames","default")
-				.addElasticsearchProperty("default.elasticsearch.rest.hostNames","192.168.137.1:9200")
-				.addElasticsearchProperty("default.elasticsearch.showTemplate","true")
-				.addElasticsearchProperty("default.elasticUser","elastic")
-				.addElasticsearchProperty("default.elasticPassword","changeme")
-				.addElasticsearchProperty("default.elasticsearch.failAllContinue","true")
-				.addElasticsearchProperty("default.http.timeoutSocket","60000")
-				.addElasticsearchProperty("default.http.timeoutConnection","40000")
-				.addElasticsearchProperty("default.http.connectionRequestTimeout","70000")
-				.addElasticsearchProperty("default.http.maxTotal","200")
-				.addElasticsearchProperty("default.http.defaultMaxPerRoute","100")
-				.setIndex("dbdemo")
-				.setEsIdField("log_id")//设置文档主键，不设置，则自动产生文档id
-				.setDebugResponse(false)//设置是否将每次处理的reponse打印到日志文件中，默认false
-				.setDiscardBulkResponse(false);//设置是否需要批量处理的响应报文，不需要设置为false，true为需要，默认false
+		if(true) {
+			elasticsearchOutputConfig
+					.addTargetElasticsearch("elasticsearch.serverNames", "default")
+					.addElasticsearchProperty("default.elasticsearch.rest.hostNames", "192.168.137.1:9200")
+					.addElasticsearchProperty("default.elasticsearch.showTemplate", "true")
+					.addElasticsearchProperty("default.elasticUser", "elastic")
+					.addElasticsearchProperty("default.elasticPassword", "changeme")
+					.addElasticsearchProperty("default.elasticsearch.failAllContinue", "true")
+					.addElasticsearchProperty("default.http.timeoutSocket", "60000")
+					.addElasticsearchProperty("default.http.timeoutConnection", "40000")
+					.addElasticsearchProperty("default.http.connectionRequestTimeout", "70000")
+					.addElasticsearchProperty("default.http.maxTotal", "200")
+					.addElasticsearchProperty("default.http.defaultMaxPerRoute", "100")
+					.setIndex("dbdemo")
+					.setEsIdField("log_id")//设置文档主键，不设置，则自动产生文档id
+					.setDebugResponse(false)//设置是否将每次处理的reponse打印到日志文件中，默认false
+					.setDiscardBulkResponse(false);//设置是否需要批量处理的响应报文，不需要设置为false，true为需要，默认false
+		}
+		else{
+			elasticsearchOutputConfig
+					.setTargetElasticsearch("aaaa")
+					.setIndex("dbdemo")
+					.setEsIdField("log_id")//设置文档主键，不设置，则自动产生文档id
+					.setDebugResponse(false)//设置是否将每次处理的reponse打印到日志文件中，默认false
+					.setDiscardBulkResponse(false);//设置是否需要批量处理的响应报文，不需要设置为false，true为需要，默认false
+		}
 		/**
 		 elasticsearchOutputConfig.setEsIdGenerator(new EsIdGenerator() {
 		 //如果指定EsIdGenerator，则根据下面的方法生成文档id，
