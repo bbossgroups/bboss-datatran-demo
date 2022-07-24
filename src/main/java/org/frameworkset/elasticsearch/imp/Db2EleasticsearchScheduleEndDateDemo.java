@@ -105,6 +105,11 @@ public class Db2EleasticsearchScheduleEndDateDemo {
 					}
 				}
 			}
+
+			@Override
+			public void afterStartAction(ImportContext importContext) {
+
+			}
 		});
 
 

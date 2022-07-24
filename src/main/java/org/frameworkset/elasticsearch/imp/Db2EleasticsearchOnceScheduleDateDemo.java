@@ -15,7 +15,9 @@ package org.frameworkset.elasticsearch.imp;
  * limitations under the License.
  */
 
+import com.frameworkset.common.poolman.util.DBConf;
 import com.frameworkset.common.poolman.util.DBStartResult;
+import com.frameworkset.common.poolman.util.SQLManager;
 import com.frameworkset.util.SimpleStringUtil;
 import org.frameworkset.elasticsearch.ElasticSearchHelper;
 import org.frameworkset.spi.assemble.PropertiesUtil;
@@ -101,16 +103,13 @@ public class Db2EleasticsearchOnceScheduleDateDemo {
 		//在任务数据抽取之前做一些初始化处理，例如：通过删表来做初始化操作
 
 		importBuilder.setImportStartAction(new ImportStartAction() {
+			/**
+			 * 初始化之前执行的处理操作，比如后续初始化操作、数据处理过程中依赖的资源初始化
+			 * @param importContext
+			 */
 			@Override
 			public void startAction(ImportContext importContext) {
-				if(dropIndice) {
-					try {
-						//清除测试表,导入的时候回重建表，测试的时候加上为了看测试效果，实际线上环境不要删表
-						ElasticSearchHelper.getRestClientUtil().dropIndice("dbdemo");
-					} catch (Exception e) {
-						logger.error("Drop indice dbdemo failed:",e);
-					}
-				}
+
 
 				importContext.addResourceStart(new ResourceStart() {
 					@Override
@@ -130,6 +129,55 @@ public class Db2EleasticsearchOnceScheduleDateDemo {
 					}
 				});
 
+				importContext.addResourceStart(new ResourceStart() {
+					@Override
+					public ResourceStartResult startResource() {
+						DBConf tempConf = new DBConf();
+						tempConf.setPoolname("testStatus");
+						tempConf.setDriver("com.mysql.cj.jdbc.Driver");
+						tempConf.setJdbcurl("jdbc:mysql://192.168.137.1:3306/bboss?useUnicode=true&characterEncoding=utf-8&useSSL=false&rewriteBatchedStatements=true");
+
+						tempConf.setUsername("root");
+						tempConf.setPassword("123456");
+						tempConf.setValidationQuery("select 1");
+
+						tempConf.setInitialConnections(5);
+						tempConf.setMinimumSize(10);
+						tempConf.setMaximumSize(10);
+						tempConf.setUsepool(true);
+						tempConf.setShowsql(true);
+						tempConf.setJndiName("testStatus-jndi");
+
+						//# 控制map中的列名采用小写，默认为大写
+						tempConf.setColumnLableUpperCase(false);
+						//启动数据源
+						boolean result = SQLManager.startPool(tempConf);
+						ResourceStartResult resourceStartResult = null;
+						//记录启动的数据源信息，用户作业停止时释放数据源
+						if(result){
+							resourceStartResult = new DBStartResult();
+							resourceStartResult.addResourceStartResult("testStatus");
+						}
+						return resourceStartResult;
+					}
+				});
+
+			}
+
+			/**
+			 * 所有初始化操作完成后，导出数据之前执行的操作
+			 * @param importContext
+			 */
+			@Override
+			public void afterStartAction(ImportContext importContext) {
+				if(dropIndice) {
+					try {
+						//清除测试表,导入的时候回重建表，测试的时候加上为了看测试效果，实际线上环境不要删表
+						ElasticSearchHelper.getRestClientUtil().dropIndice("dbdemo");
+					} catch (Exception e) {
+						logger.error("Drop indice dbdemo failed:",e);
+					}
+				}
 			}
 		});
 
@@ -141,10 +189,10 @@ public class Db2EleasticsearchOnceScheduleDateDemo {
 				importContext.destroyResources(new ResourceEnd() {
 					@Override
 					public void endResource(ResourceStartResult resourceStartResult) {
-						if(resourceStartResult instanceof HttpResourceStartResult) {
+						if(resourceStartResult instanceof HttpResourceStartResult) {//作业停止时，释放http服务数据源
 							HttpRequestProxy.stopHttpClients(resourceStartResult);
 						}
-						else if(resourceStartResult instanceof DBStartResult) {
+						else if(resourceStartResult instanceof DBStartResult) { //作业停止时，释放db数据源
 							DataTranPluginImpl.stopDatasources((DBStartResult) resourceStartResult);
 						}
 					}

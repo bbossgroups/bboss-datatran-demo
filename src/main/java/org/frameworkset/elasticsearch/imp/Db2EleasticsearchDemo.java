@@ -15,11 +15,13 @@ package org.frameworkset.elasticsearch.imp;
  * limitations under the License.
  */
 
+import com.frameworkset.common.poolman.util.DBConf;
+import com.frameworkset.common.poolman.util.DBStartResult;
+import com.frameworkset.common.poolman.util.SQLManager;
 import com.frameworkset.util.SimpleStringUtil;
 import org.frameworkset.elasticsearch.ElasticSearchHelper;
 import org.frameworkset.spi.assemble.PropertiesUtil;
 import org.frameworkset.spi.geoip.IpInfo;
-import org.frameworkset.spi.remote.http.HttpRequestProxy;
 import org.frameworkset.tran.*;
 import org.frameworkset.tran.config.ImportBuilder;
 import org.frameworkset.tran.context.Context;
@@ -38,8 +40,6 @@ import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
 import java.util.Date;
-import java.util.LinkedHashMap;
-import java.util.Map;
 
 /**
  * <p>Description: 基于数字类型db-es增量同步案例，同步处理程序，如需调试同步功能，直接运行main方法即可
@@ -71,6 +71,84 @@ public class Db2EleasticsearchDemo {
 	public void scheduleTimestampImportData(boolean dropIndice){
 
 		ImportBuilder importBuilder = new ImportBuilder() ;
+		//在任务数据抽取之前做一些初始化处理，例如：通过删表来做初始化操作
+
+
+		importBuilder.setImportStartAction(new ImportStartAction() {
+			/**
+			 * 初始化之前执行的处理操作，比如后续初始化操作、数据处理过程中依赖的资源初始化
+			 * @param importContext
+			 */
+			@Override
+			public void startAction(ImportContext importContext) {
+
+
+				importContext.addResourceStart(new ResourceStart() {
+					@Override
+					public ResourceStartResult startResource() {
+						DBConf tempConf = new DBConf();
+						tempConf.setPoolname("testStatus");
+						tempConf.setDriver("com.mysql.cj.jdbc.Driver");
+						tempConf.setJdbcurl("jdbc:mysql://192.168.137.1:3306/bboss?useUnicode=true&characterEncoding=utf-8&useSSL=false&rewriteBatchedStatements=true");
+
+						tempConf.setUsername("root");
+						tempConf.setPassword("123456");
+						tempConf.setValidationQuery("select 1");
+
+						tempConf.setInitialConnections(5);
+						tempConf.setMinimumSize(10);
+						tempConf.setMaximumSize(10);
+						tempConf.setUsepool(true);
+						tempConf.setShowsql(true);
+						tempConf.setJndiName("testStatus-jndi");
+						//# 控制map中的列名采用小写，默认为大写
+						tempConf.setColumnLableUpperCase(false);
+						//启动数据源
+						boolean result = SQLManager.startPool(tempConf);
+						ResourceStartResult resourceStartResult = null;
+						//记录启动的数据源信息，用户作业停止时释放数据源
+						if(result){
+							resourceStartResult = new DBStartResult();
+							resourceStartResult.addResourceStartResult("testStatus");
+						}
+						return resourceStartResult;
+					}
+				});
+
+			}
+
+			/**
+			 * 所有初始化操作完成后，导出数据之前执行的操作
+			 * @param importContext
+			 */
+			@Override
+			public void afterStartAction(ImportContext importContext) {
+				if(dropIndice) {
+					try {
+						//清除测试表,导入的时候回重建表，测试的时候加上为了看测试效果，实际线上环境不要删表
+						ElasticSearchHelper.getRestClientUtil().dropIndice("dbdemo");
+					} catch (Exception e) {
+						logger.error("Drop indice dbdemo failed:",e);
+					}
+				}
+			}
+		});
+
+		//任务结束后销毁初始化阶段自定义的http数据源
+		importBuilder.setImportEndAction(new ImportEndAction() {
+			@Override
+			public void endAction(ImportContext importContext, Exception e) {
+				//销毁初始化阶段自定义的数据源
+				importContext.destroyResources(new ResourceEnd() {
+					@Override
+					public void endResource(ResourceStartResult resourceStartResult) {
+						if(resourceStartResult instanceof DBStartResult) { //作业停止时，释放db数据源
+							DataTranPluginImpl.stopDatasources((DBStartResult) resourceStartResult);
+						}
+					}
+				});
+			}
+		});
 		DBInputConfig dbInputConfig = new DBInputConfig();
 		//指定导入数据的sql语句，必填项，可以设置自己的提取逻辑，
 		// 设置增量变量log_id，增量变量名称#[log_id]可以多次出现在sql语句的不同位置中，例如：
@@ -196,8 +274,8 @@ public class Db2EleasticsearchDemo {
 		importBuilder.setLastValueColumn("log_id");//手动指定数字增量查询字段，默认采用上面设置的sql语句中的增量变量名称作为增量查询字段的名称，指定以后就用指定的字段
 		importBuilder.setFromFirst(false);//setFromfirst(false)，如果作业停了，作业重启后从上次截止位置开始采集数据，
 //		setFromfirst(true) 如果作业停了，作业重启后，重新开始采集数据
-		importBuilder.setStatusDbname("logtable");
-		importBuilder.setLastValueStorePath("logtable_import");//记录上次采集的增量字段值的文件路径，作为下次增量（或者重启后）采集数据的起点，不同的任务这个路径要不一样
+		importBuilder.setStatusDbname("testStatus");//指定增量状态数据源名称
+//		importBuilder.setLastValueStorePath("logtable_import");//记录上次采集的增量字段值的文件路径，作为下次增量（或者重启后）采集数据的起点，不同的任务这个路径要不一样
 		importBuilder.setLastValueStoreTableName("logstable");//记录上次采集的增量字段值的表，可以不指定，采用默认表名increament_tab
 		importBuilder.setLastValueType(ImportIncreamentConfig.NUMBER_TYPE);//如果没有指定增量查询字段名称，则需要指定字段类型：ImportIncreamentConfig.NUMBER_TYPE 数字类型
 //		SimpleDateFormat format = new SimpleDateFormat("yyyy-MM-dd");
