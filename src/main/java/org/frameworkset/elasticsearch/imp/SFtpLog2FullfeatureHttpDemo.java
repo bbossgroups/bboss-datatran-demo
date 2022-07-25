@@ -199,7 +199,9 @@ public class SFtpLog2FullfeatureHttpDemo {
 						return token;
 					}
 				})
-				.addTargetHttpPoolName("http.poolNames","datatran,jwtservice")
+//				.addTargetHttpPoolName("http.poolNames","datatran,jwtservice")//初始化多个http服务集群时，就不要用addTargetHttpPoolName方法，使用以下方法即可
+				.setTargetHttpPool("datatran")
+				.addHttpOutputConfig("http.poolNames","datatran,jwtservice")
 //				.addHttpOutputConfig("datatran.http.health","/health")//服务监控检查地址
 				.addHttpOutputConfig("datatran.http.hosts","192.168.137.1:808")//服务地址清单，多个用逗号分隔
 				.addHttpOutputConfig("datatran.http.timeoutConnection","5000")
