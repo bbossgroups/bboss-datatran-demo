@@ -234,7 +234,7 @@ public class SFtpLog2FullfeatureHttpDslDemo {
 						 public Object getValue(String paramName, DynamicParamContext dynamicParamContext) {
 						 	  String datas = (String) dynamicParamContext.getDatas();
 						 	  //可以根据自己的算法对数据进行签名
-						 	  String signature = "1b3bb71f6ebae2f52b7a238c589f3ff9";//signature =md5($pre_secret_urlstr)
+						 	  String signature = "1b3bb71f6ebae2f52b7a238c589f3ff9";//signature =md5(datas)
 							 return signature;
 						 }
 					 });
