@@ -22,6 +22,8 @@ import org.apache.http.util.EntityUtils;
 import org.frameworkset.tran.DataRefactor;
 import org.frameworkset.tran.DataStream;
 import org.frameworkset.tran.ExportResultHandler;
+import org.frameworkset.tran.config.DynamicParam;
+import org.frameworkset.tran.config.DynamicParamContext;
 import org.frameworkset.tran.config.ImportBuilder;
 import org.frameworkset.tran.context.Context;
 import org.frameworkset.tran.metrics.TaskMetrics;
@@ -107,7 +109,17 @@ public class Http2ESFullQueryDslDemo {
 		importBuilder.setInputConfig(httpInputConfig);
 		importBuilder.addJobInputParam("otherParam","陈雨菲2:0战胜戴资颖")
 					 .addJobInputParam("device_id","app03001")
-				     .addJobInputParam("app_id","app03");
+				     .addJobInputParam("app_id","app03")
+		.addJobDynamicInputParam("signature", new DynamicParam() {//根据数据动态生成签名参数
+			@Override
+			public Object getValue(String paramName, DynamicParamContext dynamicParamContext) {
+
+				//可以根据自己的算法对数据进行签名
+				String signature = "1b3bb71f6ebae2f52b7a238c589f3ff9";//signature =md5(datas)
+				return signature;
+			}
+		});
+
 
 //		importBuilder.addFieldMapping("LOG_CONTENT","message");
 //		importBuilder.addIgnoreFieldMapping("remark1");

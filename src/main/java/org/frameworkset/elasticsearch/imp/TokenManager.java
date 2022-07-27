@@ -51,7 +51,7 @@ public class TokenManager {
 			params.put("app_id","app03");
 			params.put("signature","1b3bb71f6ebae2f52b7a238c589f3ff9");
 			params.put("uuid","adfdafadfadsfe34132fdsadsfadsf");
-			Map datas = HttpRequestProxy.sendJsonBody("jwtservice",params,"/api/auth/v1.0/getToken", Map.class);
+			Map datas = HttpRequestProxy.sendJsonBody("jwtservice",params,"/api/auth/v1.0/getToken.api", Map.class);
 			if(datas != null){
 				int code = (int)datas.get("code");
 				if(code == 200) {
