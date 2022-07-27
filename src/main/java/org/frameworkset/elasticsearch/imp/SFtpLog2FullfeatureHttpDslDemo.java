@@ -189,6 +189,7 @@ public class SFtpLog2FullfeatureHttpDslDemo {
 
 		httpOutputConfig
 				.setJson(true)
+				.setShowDsl(true)
 				.setDslFile("httpdsl.xml")
 				.setDataDslName("sendData")
 				.setDataKey("httpDatas")

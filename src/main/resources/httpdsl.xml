@@ -32,7 +32,7 @@
         {
             "device_id": #[device_id], ## device_id,通过addJobInputParam赋值
             "app_id": #[app_id], ## app_id,通过addJobInputParam赋值
-            "datas":  #[httpDatas,quoted=false], ## datas,发送的数据源
+            "datas":  #[httpDatas,quoted=false,escape=false], ## datas,发送的数据源
             "signature": #[signature]
         }
         ]]></property>
