@@ -193,6 +193,7 @@ public class SFtpLog2HttpDemo {
 
 
 		httpOutputConfig
+				.setJson(false)
 				.setServiceUrl("/httpservice/sendData.api")
 				.setHttpMethod("post")
 				.addTargetHttpPoolName("http.poolNames","datatran")
