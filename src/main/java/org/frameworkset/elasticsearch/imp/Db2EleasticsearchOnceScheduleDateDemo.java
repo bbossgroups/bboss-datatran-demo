@@ -40,6 +40,7 @@ import org.frameworkset.util.ResourceStartResult;
 import org.frameworkset.util.TimeUtil;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
+import org.sqlite.SQLiteConfig;
 
 import java.util.Date;
 import java.util.LinkedHashMap;
@@ -63,6 +64,8 @@ public class Db2EleasticsearchOnceScheduleDateDemo {
 //		dbdemo.fullImportData(  dropIndice);
 //		dbdemo.scheduleImportData(dropIndice);
 		db2EleasticsearchDemo.scheduleTimestampImportData(dropIndice);
+
+		SQLiteConfig config = new SQLiteConfig();
 //		dbdemo.scheduleImportData(dropIndice);
 //		args[1].charAt(0) == args[2].charAt(0);
 	}
@@ -266,8 +269,8 @@ public class Db2EleasticsearchOnceScheduleDateDemo {
 				.setPrintTaskLog(true) //可选项，true 打印任务执行日志（耗时，处理记录数） false 不打印，默认值false
 				.setBatchSize(10);  //可选项,批量导入es的记录数，默认为-1，逐条处理，> 0时批量处理
 
-		//定时任务配置，
-		importBuilder.setScheduleDate(TimeUtil.addDateMinitues(new Date(),1)); //指定任务开始执行时间：日期，1分钟后开始
+		//指定任务开始执行时间：日期，1分钟后开始
+		importBuilder.setScheduleDate(TimeUtil.addDateMinitues(new Date(),1));
 //				.setDeyLay(1000L) // 任务延迟执行deylay毫秒后执行
 
 
@@ -343,6 +346,9 @@ public class Db2EleasticsearchOnceScheduleDateDemo {
 				if(ipInfo != null)
 					context.addFieldValue("ipInfo", SimpleStringUtil.object2json(ipInfo));
 				HttpRequestProxy.sendJsonBody("datatran",ipInfo,"/httpservice/sendData.api");
+
+				TranMeta tranMeta = context.getMetaData();
+				logger.info("tranMeta {}",tranMeta);
 			}
 		});
 		//映射和转换配置结束
@@ -389,7 +395,7 @@ public class Db2EleasticsearchOnceScheduleDateDemo {
 		 */
 		DataStream dataStream = importBuilder.builder();
 		dataStream.execute();//执行导入操作
-//		dataStream.destroy();//释放资源
+		dataStream.destroy();//释放资源，一次性执行作业需要主动调用destroy方法释放资源，其他作业无效主动调用
 
 
 	}

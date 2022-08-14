@@ -21,12 +21,16 @@ import org.frameworkset.spi.geoip.IpInfo;
 import org.frameworkset.tran.DataRefactor;
 import org.frameworkset.tran.DataStream;
 import org.frameworkset.tran.ExportResultHandler;
+import org.frameworkset.tran.ImportStartAction;
 import org.frameworkset.tran.config.ImportBuilder;
 import org.frameworkset.tran.context.Context;
+import org.frameworkset.tran.context.ImportContext;
 import org.frameworkset.tran.metrics.TaskMetrics;
 import org.frameworkset.tran.plugin.db.input.DBInputConfig;
 import org.frameworkset.tran.plugin.db.output.DBOutputConfig;
+import org.frameworkset.tran.schedule.CallInterceptor;
 import org.frameworkset.tran.schedule.ImportIncreamentConfig;
+import org.frameworkset.tran.schedule.TaskContext;
 import org.frameworkset.tran.task.TaskCommand;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
@@ -96,6 +100,33 @@ public class Db2DBdemo {
 				.setInsertSqlName("insertSql");
 		importBuilder.setOutputConfig(dbOutputConfig);
 
+		//在任务数据抽取之前做一些初始化处理，例如：通过删表来做初始化操作
+		importBuilder.setImportStartAction(new ImportStartAction() {
+			/**
+			 * 所有初始化操作完成后，导出数据之前执行的操作
+			 * @param importContext
+			 */
+			@Override
+			public void afterStartAction(ImportContext importContext) {
+//				try {
+//					SQLExecutor.deleteWithDBName("target","delete from tablename");//删目标库target的tablename表中的数据
+//					SQLExecutor.deleteWithDBName("target","drop table tablename"); //删表目标库target的tablename表
+//					SQLExecutor.updateWithDBName("target","create table tablename ...."); //重新创建目标库target的tablename表
+//
+//				} catch (SQLException throwables) {
+//					throwables.printStackTrace();
+//				}
+			}
+			/**
+			 * 初始化之前执行的处理操作，比如后续初始化操作、数据处理过程中依赖的资源初始化
+			 * @param importContext
+			 */
+			@Override
+			public void startAction(ImportContext importContext) {
+			}
+
+
+		});
 		importBuilder.setBatchSize(10); //可选项,批量导入db的记录数，默认为-1，逐条处理，> 0时批量处理
 		//定时任务配置，
 		importBuilder.setFixedRate(false)//参考jdk timer task文档对fixedRate的说明
@@ -105,22 +136,34 @@ public class Db2DBdemo {
 		//定时任务配置结束
 //
 //		//设置任务执行拦截器，可以添加多个，定时任务每次执行的拦截器
-//		importBuilder.addCallInterceptor(new CallInterceptor() {
-//			@Override
-//			public void preCall(TaskContext taskContext) {
-//				System.out.println("preCall");
-//			}
+		importBuilder.addCallInterceptor(new CallInterceptor() {
+			/**
+			 * 每次定时执行任务时进行的操作
+			 * @param taskContext
+			 */
+			@Override
+			public void preCall(TaskContext taskContext) {
+//				try {
+//					SQLExecutor.deleteWithDBName("target","delete from tablename");//删目标库target的tablename表中的数据
+//					SQLExecutor.deleteWithDBName("target","drop table tablename"); //删表目标库target的tablename表
+//					SQLExecutor.updateWithDBName("target","create table tablename ...."); //重新创建目标库target的tablename表
 //
-//			@Override
-//			public void afterCall(TaskContext taskContext) {
-//				System.out.println("afterCall");
-//			}
-//
-//			@Override
-//			public void throwException(TaskContext taskContext, Exception e) {
-//				System.out.println("throwException");
-//			}
-//		}).addCallInterceptor(new CallInterceptor() {
+//				} catch (SQLException throwables) {
+//					throwables.printStackTrace();
+//				}
+			}
+
+			@Override
+			public void afterCall(TaskContext taskContext) {
+				System.out.println("afterCall");
+			}
+
+			@Override
+			public void throwException(TaskContext taskContext, Exception e) {
+				System.out.println("throwException");
+			}
+		});
+//				.addCallInterceptor(new CallInterceptor() {
 //			@Override
 //			public void preCall(TaskContext taskContext) {
 //				System.out.println("preCall 1");
@@ -186,6 +229,7 @@ public class Db2DBdemo {
 //					context.setDrop(true);
 //					return;
 //				}
+
 
 
 				context.addFieldValue("author","duoduo");
