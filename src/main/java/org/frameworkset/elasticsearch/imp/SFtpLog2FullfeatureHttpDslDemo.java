@@ -58,7 +58,7 @@ public class SFtpLog2FullfeatureHttpDslDemo {
 
 		TokenManager tokenManager = new TokenManager();
 		ImportBuilder importBuilder = new ImportBuilder();
-		importBuilder.setBatchSize(1)//设置批量入库的记录数
+		importBuilder.setBatchSize(10)//设置批量入库的记录数
 				.setFetchSize(1000);//设置按批读取文件行数
 		//设置强制刷新检测空闲时间间隔，单位：毫秒，在空闲flushInterval后，还没有数据到来，强制将已经入列的数据进行存储操作，默认8秒,为0时关闭本机制
 		importBuilder.setFlushInterval(10000l);
