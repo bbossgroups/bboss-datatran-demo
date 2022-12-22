@@ -18,6 +18,8 @@ package org.frameworkset.elasticsearch.imp;
 import org.frameworkset.tran.*;
 import org.frameworkset.tran.config.ImportBuilder;
 import org.frameworkset.tran.context.Context;
+import org.frameworkset.tran.context.InitJobContextCall;
+import org.frameworkset.tran.context.JobContext;
 import org.frameworkset.tran.metrics.TaskMetrics;
 import org.frameworkset.tran.plugin.es.input.ElasticsearchInputConfig;
 import org.frameworkset.tran.plugin.http.output.HttpOutputConfig;
@@ -241,7 +243,7 @@ public class ES2HttpRecoderCustomDemo {
 			}
 
 			@Override
-			public void throwException(TaskContext taskContext, Exception e) {
+			public void throwException(TaskContext taskContext, Throwable e) {
 				System.out.println("throwException");
 			}
 		}).addCallInterceptor(new CallInterceptor() {
@@ -256,7 +258,7 @@ public class ES2HttpRecoderCustomDemo {
 			}
 
 			@Override
-			public void throwException(TaskContext taskContext, Exception e) {
+			public void throwException(TaskContext taskContext, Throwable e) {
 				System.out.println("throwException 1");
 			}
 		});
@@ -318,7 +320,7 @@ public class ES2HttpRecoderCustomDemo {
 //				context.addFieldValue("oldLogTimeEndTime",new Date(oldLogTimeEndTime));
 //				Date date = context.getDateValue("LOG_OPERTIME");
 
-
+				Object value = context.getJobContext().getJobData("test");
 				context.addFieldValue("newCollecttime",new Date());//添加采集时间
 
 			}
@@ -338,6 +340,7 @@ public class ES2HttpRecoderCustomDemo {
 			@Override
 			public void success(TaskCommand<String,String> taskCommand, String result) {
 				TaskMetrics taskMetrics = taskCommand.getTaskMetrics();
+				Object value = taskCommand.getJobContext().getJobData("test");
 				logger.info(taskMetrics.toString());
 				logger.debug(result);
 			}
@@ -345,13 +348,15 @@ public class ES2HttpRecoderCustomDemo {
 			@Override
 			public void error(TaskCommand<String,String> taskCommand, String result) {
 				TaskMetrics taskMetrics = taskCommand.getTaskMetrics();
+				Object value = taskCommand.getJobContext().getJobData("test");
 				logger.info(taskMetrics.toString());
 				logger.debug(result);
 			}
 
 			@Override
-			public void exception(TaskCommand<String,String> taskCommand, Exception exception) {
+			public void exception(TaskCommand<String,String> taskCommand, Throwable exception) {
 				TaskMetrics taskMetrics = taskCommand.getTaskMetrics();
+				Object value = taskCommand.getJobContext().getJobData("test");
 				logger.debug(taskMetrics.toString());
 			}
 
@@ -363,6 +368,12 @@ public class ES2HttpRecoderCustomDemo {
 		/**
 		 * 执行数据库表数据导入es操作
 		 */
+		importBuilder.setInitJobContextCall(new InitJobContextCall() {
+			@Override
+			public void initJobContext(JobContext jobContext) {
+				jobContext.addJobData("test",1111);
+			}
+		});
 		DataStream dataStream = importBuilder.builder();
 		dataStream.execute();//执行导入操作
 	}

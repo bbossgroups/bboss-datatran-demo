@@ -356,7 +356,7 @@ public class SFtpLog2FullfeatureHttpDemo {
 			}
 
 			@Override
-			public void exception(TaskCommand<String,String> taskCommand, Exception exception) {
+			public void exception(TaskCommand<String,String> taskCommand, Throwable exception) {
 				logger.warn("error:",exception);
 			}
 
