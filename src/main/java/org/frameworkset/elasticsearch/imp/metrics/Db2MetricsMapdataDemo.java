@@ -218,9 +218,24 @@ public class Db2MetricsMapdataDemo {
                     @Override
                     public MapData buildMapData(MetricsData metricsData) {
                         BuildMapDataContext buildMapDataContext = metricsData.getBuildMapDataContext();
-                        MapData mapData = new MapData();
+                        MapData mapData = new MapData(){
+                            /**
+                             * 根据指标标识，获取指标的时间统计维度字段，默认返回dataTime字段值，不同的指标需要指定不同的时间维度统计字段
+                             * 分析处理作业可以覆盖本方法，自定义获取时间维度字段值
+                             * @param metricsKey
+                             * @return
+                             */
+                            public Date metricsDataTime(String metricsKey) {
+//						if(metricsKey.equals("xxxx") ) {
+//							Date time = (Date)data.get("collectime");
+//							return time;
+//						}
+                                return getDataTime();
+                            }
+
+                        };
                         Date dateTime = (Date) metricsData.getCommonRecord().getData("logOpertime");
-                        mapData.setDataTime(dateTime);
+                        mapData.setDataTime(dateTime);//默认按照操作时间作为指标时间维度字段，上面复写了metricsDataTime方法，可以根据指标key指定不同的时间维度值
                         mapData.setData(metricsData.getCommonRecord());
                         mapData.setDayFormat(buildMapDataContext.getDayFormat());
                         mapData.setHourFormat(buildMapDataContext.getHourFormat());

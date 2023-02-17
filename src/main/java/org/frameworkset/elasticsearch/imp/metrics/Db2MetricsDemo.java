@@ -87,10 +87,6 @@ public class Db2MetricsDemo {
              */
             @Override
             public void startAction(ImportContext importContext) {
-
-
-
-
             }
 
             /**
@@ -99,8 +95,6 @@ public class Db2MetricsDemo {
              */
             @Override
             public void afterStartAction(ImportContext importContext) {
-
-
                 try {
                     //清除测试表,导入的时候回重建表，测试的时候加上为了看测试效果，实际线上环境不要删表
                     ElasticSearchHelper.getRestClientUtil().dropIndice("vops-loginmodulemetrics");
