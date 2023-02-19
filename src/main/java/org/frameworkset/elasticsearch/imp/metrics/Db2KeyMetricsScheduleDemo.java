@@ -192,7 +192,7 @@ public class Db2KeyMetricsScheduleDemo {
 		ETLMetrics keyMetrics = new ETLMetrics(Metrics.MetricsType_KeyMetircs){
 			@Override
 			public void builderMetrics(){
-				//指标1 按操作模块统计模块登录次数
+				//指标1 按操作模块统计模块操作次数
 				addMetricBuilder(new MetricBuilder() {
 					@Override
 					public String buildMetricKey(MapData mapData){
@@ -214,7 +214,7 @@ public class Db2KeyMetricsScheduleDemo {
 					}
 				});
 
-				//指标2 按照用户统计登录次数
+				//指标2 按照用户统计操作次数
 				addMetricBuilder(new MetricBuilder() {
 					@Override
 					public String buildMetricKey(MapData mapData){

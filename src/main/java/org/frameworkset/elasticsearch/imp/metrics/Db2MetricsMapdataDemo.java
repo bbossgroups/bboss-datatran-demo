@@ -213,7 +213,7 @@ public class Db2MetricsMapdataDemo {
 		ETLMetrics keyMetrics = new ETLMetrics(Metrics.MetricsType_KeyTimeMetircs){
 			@Override
 			public void builderMetrics(){
-                //自定义MapData
+                //自定义MapData，只能设置一个BuildMapData
                 setBuildMapData(new BuildMapData() {
                     @Override
                     public MapData buildMapData(MetricsData metricsData) {
@@ -246,10 +246,11 @@ public class Db2MetricsMapdataDemo {
                         return mapData;
                     }
                 });
-				//指标1 按操作模块统计模块登录次数
+                //可以添加多个指标构建器
+				//指标1 按操作模块统计模块操作次数
 				addMetricBuilder(new MetricBuilder() {
 					@Override
-					public String buildMetricKey(MapData mapData){
+					public String buildMetricKey(MapData mapData){ //生成指标key
                         CommonRecord data = (CommonRecord) mapData.getData();
                         String operModule = (String) data.getData("operModule");
                         if(operModule == null || operModule.equals("")){
@@ -261,14 +262,14 @@ public class Db2MetricsMapdataDemo {
 					public KeyMetricBuilder metricBuilder(){
 						return new KeyMetricBuilder() {
 							@Override
-							public KeyMetric build() {
+							public KeyMetric build() {//生成指标对象
 								return new LoginModuleMetric();
 							}
 						};
 					}
 				});
 
-				//指标2 按照用户统计登录次数
+				//指标2 按照用户统计操作次数
 				addMetricBuilder(new MetricBuilder() {
 					@Override
 					public String buildMetricKey(MapData mapData){
@@ -292,7 +293,7 @@ public class Db2MetricsMapdataDemo {
 				// key metrics中包含两个segment(S0,S1)
 				setSegmentBoundSize(5000000);
 				setTimeWindows(60 );//统计时间窗口
-                this.setTimeWindowType(MetricsConfig.TIME_WINDOW_TYPE_MINUTE);
+                this.setTimeWindowType(MetricsConfig.TIME_WINDOW_TYPE_MINUTE);//统计时间窗口类型
 			}
 
             /**

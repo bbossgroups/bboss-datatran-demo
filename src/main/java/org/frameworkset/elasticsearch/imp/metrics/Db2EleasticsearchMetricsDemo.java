@@ -236,7 +236,7 @@ public class Db2EleasticsearchMetricsDemo {
 		ETLMetrics keyMetrics = new ETLMetrics(Metrics.MetricsType_KeyTimeMetircs){
 			@Override
 			public void builderMetrics(){
-				//指标1 按操作模块统计模块登录次数
+				//指标1 按操作模块统计模块操作次数
 				addMetricBuilder(new MetricBuilder() {
 					@Override
 					public String buildMetricKey(MapData mapData){
@@ -258,7 +258,7 @@ public class Db2EleasticsearchMetricsDemo {
 					}
 				});
 
-				//指标2 按照用户统计登录次数
+				//指标2 按照用户统计操作次数
 				addMetricBuilder(new MetricBuilder() {
 					@Override
 					public String buildMetricKey(MapData mapData){
@@ -343,9 +343,6 @@ public class Db2EleasticsearchMetricsDemo {
         importBuilder.setUseDefaultMapData(false);
 		importBuilder.addMetrics(keyMetrics);
 
-//		importBuilder.addFieldMapping("LOG_CONTENT","message");
-//		importBuilder.addIgnoreFieldMapping("remark1");
-//		importBuilder.setSql("select * from td_sm_log ");
 		ElasticsearchOutputConfig elasticsearchOutputConfig = new ElasticsearchOutputConfig();
 		elasticsearchOutputConfig
                 .setTargetElasticsearch("default")
@@ -353,24 +350,7 @@ public class Db2EleasticsearchMetricsDemo {
 				.setEsIdField("log_id")//设置文档主键，不设置，则自动产生文档id
 				.setDebugResponse(false)//设置是否将每次处理的reponse打印到日志文件中，默认false
 				.setDiscardBulkResponse(false);//设置是否需要批量处理的响应报文，不需要设置为false，true为需要，默认false
-		/**
-		 elasticsearchOutputConfig.setEsIdGenerator(new EsIdGenerator() {
-		 //如果指定EsIdGenerator，则根据下面的方法生成文档id，
-		 // 否则根据setEsIdField方法设置的字段值作为文档id，
-		 // 如果默认没有配置EsIdField和如果指定EsIdGenerator，则由es自动生成文档id
 
-		 @Override
-		 public Object genId(Context context) throws Exception {
-		 return SimpleStringUtil.getUUID();//返回null，则由es自动生成文档id
-		 }
-		 });
-		 */
-//				.setIndexType("dbdemo") ;//es 7以后的版本不需要设置indexType，es7以前的版本必需设置indexType;
-//				.setRefreshOption("refresh")//可选项，null表示不实时刷新，importBuilder.setRefreshOption("refresh");表示实时刷新
-		/**
-		 * es相关配置
-		 */
-//		elasticsearchOutputConfig.setTargetElasticsearch("default,test");//同步数据到两个es集群
 
 		importBuilder.setOutputConfig(elasticsearchOutputConfig);
 
@@ -421,39 +401,7 @@ public class Db2EleasticsearchMetricsDemo {
 //		importBuilder.setLastValueStorePath("logtable_import");//记录上次采集的增量字段值的文件路径，作为下次增量（或者重启后）采集数据的起点，不同的任务这个路径要不一样
 		importBuilder.setLastValueStoreTableName("logstable");//记录上次采集的增量字段值的表，可以不指定，采用默认表名increament_tab
 		importBuilder.setLastValueType(ImportIncreamentConfig.NUMBER_TYPE);//如果没有指定增量查询字段名称，则需要指定字段类型：ImportIncreamentConfig.NUMBER_TYPE 数字类型
-//		SimpleDateFormat format = new SimpleDateFormat("yyyy-MM-dd");
-//		try {
-//			Date date = format.parse("2000-01-01");
-//			importBuilder.setLastValue(date);//增量起始值配置
-//		}
-//		catch (Exception e){
-//			e.printStackTrace();
-//		}
-		// 或者ImportIncreamentConfig.TIMESTAMP_TYPE 日期类型
-		//增量配置结束
 
-		//映射和转换配置开始
-//		/**
-//		 * db-es mapping 表字段名称到es 文档字段的映射：比如document_id -> docId
-//		 * 可以配置mapping，也可以不配置，默认基于java 驼峰规则进行db field-es field的映射和转换
-//		 */
-//		importBuilder.addFieldMapping("document_id","docId")
-//				.addFieldMapping("docwtime","docwTime")
-//				.addIgnoreFieldMapping("channel_id");//添加忽略字段
-//
-//
-//		/**
-//		 * 为每条记录添加额外的字段和值
-//		 * 可以为基本数据类型，也可以是复杂的对象
-//		 */
-//		importBuilder.addFieldValue("testF1","f1value");
-//		importBuilder.addFieldValue("testInt",0);
-//		importBuilder.addFieldValue("testDate",new Date());
-//		importBuilder.addFieldValue("testFormateDate","yyyy-MM-dd HH",new Date());
-//		TestObject testObject = new TestObject();
-//		testObject.setId("testid");
-//		testObject.setName("jackson");
-//		importBuilder.addFieldValue("testObject",testObject);
 //
 		/**
 		 * 重新设置es数据结构
