@@ -15,50 +15,42 @@ package org.frameworkset.elasticsearch.imp.metrics;
  * limitations under the License.
  */
 
-import com.frameworkset.util.SimpleStringUtil;
 import org.frameworkset.elasticsearch.ElasticSearchHelper;
 import org.frameworkset.elasticsearch.boot.ElasticSearchBoot;
 import org.frameworkset.elasticsearch.bulk.*;
 import org.frameworkset.spi.assemble.PropertiesUtil;
-import org.frameworkset.spi.geoip.IpInfo;
 import org.frameworkset.tran.*;
 import org.frameworkset.tran.config.ImportBuilder;
-import org.frameworkset.tran.context.Context;
 import org.frameworkset.tran.context.ImportContext;
 import org.frameworkset.tran.metrics.TaskMetrics;
 import org.frameworkset.tran.metrics.entity.KeyMetric;
 import org.frameworkset.tran.metrics.entity.MapData;
 import org.frameworkset.tran.metrics.job.KeyMetricBuilder;
 import org.frameworkset.tran.metrics.job.Metrics;
-import org.frameworkset.tran.metrics.job.MetricsConfig;
 import org.frameworkset.tran.metrics.job.builder.MetricBuilder;
 import org.frameworkset.tran.plugin.db.input.DBInputConfig;
 import org.frameworkset.tran.plugin.metrics.output.ETLMetrics;
 import org.frameworkset.tran.plugin.metrics.output.MetricsOutputConfig;
-import org.frameworkset.tran.schedule.CallInterceptor;
-import org.frameworkset.tran.schedule.ImportIncreamentConfig;
-import org.frameworkset.tran.schedule.TaskContext;
 import org.frameworkset.tran.task.TaskCommand;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
 import java.util.Collection;
-import java.util.Date;
 import java.util.HashMap;
 import java.util.Map;
 
 /**
- * <p>Description: 基于数字类型db-es增量同步及指标统计计算案例，如需调试功能，直接运行main方法即可
+ * <p>Description: 全量同步KeyMetrics指标统计计算案例，如需调试功能，直接运行main方法即可
  * <p></p>
  * <p>Copyright (c) 2018</p>
  * @Date 2018/9/27 20:38
  * @author biaoping.yin
  * @version 1.0
  */
-public class Db2MetricsDemo {
-	private static Logger logger = LoggerFactory.getLogger(Db2MetricsDemo.class);
+public class Db2KeyMetricsScheduleDemo {
+	private static Logger logger = LoggerFactory.getLogger(Db2KeyMetricsScheduleDemo.class);
 	public static void main(String args[]){
-		Db2MetricsDemo db2EleasticsearchDemo = new Db2MetricsDemo();
+		Db2KeyMetricsScheduleDemo db2EleasticsearchDemo = new Db2KeyMetricsScheduleDemo();
 		//从配置文件application.properties中获取参数值
 		boolean dropIndice = PropertiesUtil.getPropertiesContainer("application.properties").getBooleanSystemEnvProperty("dropIndice",true);
 //		dbdemo.fullImportData(  dropIndice);
@@ -119,7 +111,7 @@ public class Db2MetricsDemo {
 		// 通过setLastValueType方法告诉工具增量字段的类型，默认是数字类型
 
 //		importBuilder.setSql("select * from td_sm_log where LOG_OPERTIME > #[LOG_OPERTIME]");
-		dbInputConfig.setSql("select * from td_sm_log where log_id > #[log_id]")
+		dbInputConfig.setSql("select * from td_sm_log")
 				.setDbName("test")
 				.setDbDriver("com.mysql.cj.jdbc.Driver") //数据库驱动程序，必须导入相关数据库的驱动jar包
 				.setDbUrl("jdbc:mysql://192.168.137.1:3306/bboss?useUnicode=true&characterEncoding=utf-8&useSSL=false&rewriteBatchedStatements=true") //通过useCursorFetch=true启用mysql的游标fetch机制，否则会有严重的性能隐患，useCursorFetch必须和jdbcFetchSize参数配合使用，否则不会生效
@@ -197,7 +189,7 @@ public class Db2MetricsDemo {
 		 * 构建BulkProcessor批处理组件，一般作为单实例使用，单实例多线程安全，可放心使用
 		 */
 		BulkProcessor bulkProcessor = bulkProcessorBuilder.build();//构建批处理作业组件
-		ETLMetrics keyMetrics = new ETLMetrics(Metrics.MetricsType_KeyTimeMetircs){
+		ETLMetrics keyMetrics = new ETLMetrics(Metrics.MetricsType_KeyMetircs){
 			@Override
 			public void builderMetrics(){
 				//指标1 按操作模块统计模块登录次数
@@ -245,8 +237,6 @@ public class Db2MetricsDemo {
 				});
 				// key metrics中包含两个segment(S0,S1)
 				setSegmentBoundSize(5000000);
-				setTimeWindows(60 );//统计时间窗口
-                this.setTimeWindowType(MetricsConfig.TIME_WINDOW_TYPE_MINUTE);
 			}
 
             /**
@@ -260,25 +250,21 @@ public class Db2MetricsDemo {
                         LoginModuleMetric testKeyMetric = (LoginModuleMetric) keyMetric;
 						Map esData = new HashMap();
 						esData.put("dataTime", testKeyMetric.getDataTime());
-						esData.put("hour", testKeyMetric.getDayHour());
-						esData.put("minute", testKeyMetric.getMinute());
-						esData.put("day", testKeyMetric.getDay());
+
 						esData.put("metric", testKeyMetric.getMetric());
 						esData.put("operModule", testKeyMetric.getOperModule());
 						esData.put("count", testKeyMetric.getCount());
-						bulkProcessor.insertData("vops-loginmodulemetrics", esData);
+						bulkProcessor.insertData("vops-loginmodulekeymetrics", esData);
 					}
 					else if(keyMetric instanceof LoginUserMetric) {
                         LoginUserMetric testKeyMetric = (LoginUserMetric) keyMetric;
 						Map esData = new HashMap();
 						esData.put("dataTime", testKeyMetric.getDataTime());
-						esData.put("hour", testKeyMetric.getDayHour());
-						esData.put("minute", testKeyMetric.getMinute());
-						esData.put("day", testKeyMetric.getDay());
+
 						esData.put("metric", testKeyMetric.getMetric());
 						esData.put("logUser", testKeyMetric.getLogUser());
 						esData.put("count", testKeyMetric.getCount());
-						bulkProcessor.insertData("vops-loginusermetrics", esData);
+						bulkProcessor.insertData("vops-loginuserkeymetrics", esData);
 					}
 
 				});
@@ -299,6 +285,10 @@ public class Db2MetricsDemo {
         metricsOutputConfig.setDataTimeField("logOpertime");
         metricsOutputConfig.addMetrics(keyMetrics);
 
+        importBuilder.setFlushMetricsOnScheduleTaskCompleted(true);
+        importBuilder.setWaitCompleteWhenflushMetricsOnScheduleTaskCompleted(true);
+        importBuilder.setCleanKeysWhenflushMetricsOnScheduleTaskCompleted(true);
+
 		importBuilder.setOutputConfig(metricsOutputConfig);
 
 
@@ -308,14 +298,16 @@ public class Db2MetricsDemo {
 				.setPrintTaskLog(true) //可选项，true 打印任务执行日志（耗时，处理记录数） false 不打印，默认值false
 				.setBatchSize(10);  //可选项,批量导入es的记录数，默认为-1，逐条处理，> 0时批量处理
 
-		//定时任务配置，
-		importBuilder.setFixedRate(false)//参考jdk timer task文档对fixedRate的说明
+//定时任务配置，
+        importBuilder.setFixedRate(false)//参考jdk timer task文档对fixedRate的说明
 //					 .setScheduleDate(date) //指定任务开始执行时间：日期
-				.setDeyLay(1000L) // 任务延迟执行deylay毫秒后执行
-				.setPeriod(10000L); //每隔period毫秒执行，如果不设置，只执行一次
-		//定时任务配置结束
+                .setDeyLay(1000L) // 任务延迟执行deylay毫秒后执行
+                .setPeriod(30000L); //每隔period毫秒执行，如果不设置，只执行一次
+        //定时任务配置结束
 
 
+        /**
+         * 全量采集计算案例，如果是增量采集，可以进行增量配置
         //增量配置开始
 //		importBuilder.setStatusDbname("test");//设置增量状态数据源名称
         importBuilder.setLastValueColumn("log_id");//手动指定数字增量查询字段，默认采用上面设置的sql语句中的增量变量名称作为增量查询字段的名称，指定以后就用指定的字段
@@ -324,49 +316,16 @@ public class Db2MetricsDemo {
         importBuilder.setLastValueStorePath("db2metrics_import");//记录上次采集的增量字段值的文件路径，作为下次增量（或者重启后）采集数据的起点，不同的任务这个路径要不一样
 //		importBuilder.setLastValueStoreTableName("logstable");//记录上次采集的增量字段值的表，可以不指定，采用默认表名increament_tab
         importBuilder.setLastValueType(ImportIncreamentConfig.NUMBER_TYPE);//如果没有指定增量查询字段名称，则需要指定字段类型：ImportIncreamentConfig.NUMBER_TYPE 数字类型
+        */
 
-        /**
-         * 重新设置es数据结构
-         */
-        importBuilder.setDataRefactor(new DataRefactor() {
-            public void refactor(Context context) throws Exception  {
-//				Date date = context.getDateValue("LOG_OPERTIME");
-                context.addFieldValue("collecttime",new Date());
-                IpInfo ipInfo = context.getIpInfoByIp("219.133.80.136");
-                if(ipInfo != null)
-                    context.addFieldValue("ipInfo", SimpleStringUtil.object2json(ipInfo));
-            }
-        });
-        //映射和转换配置结束
-
-        /**
-         * 内置线程池配置，实现多线程并行数据导入功能，作业完成退出时自动关闭该线程池
-         */
-        importBuilder.setParallel(true);//设置为多线程并行批量导入,false串行
-        importBuilder.setQueue(10);//设置批量导入线程池等待队列长度
-        importBuilder.setThreadCount(50);//设置批量导入线程池工作线程数量
-        importBuilder.setContinueOnError(true);//任务出现异常，是否继续执行作业：true（默认值）继续执行 false 中断作业执行
-        importBuilder.setAsyn(false);//true 异步方式执行，不等待所有导入作业任务结束，方法快速返回；false（默认值） 同步方式执行，等待所有导入作业任务结束，所有作业结束后方法才返回
-
-
-//		//设置任务执行拦截器，可以添加多个，定时任务每次执行的拦截器
-		importBuilder.addCallInterceptor(new CallInterceptor() {
-			@Override
-			public void preCall(TaskContext taskContext) {
-				System.out.println("preCall");
-			}
-
-			@Override
-			public void afterCall(TaskContext taskContext) {
-				System.out.println("afterCall");
-			}
-
-			@Override
-			public void throwException(TaskContext taskContext, Throwable e) {
-				System.out.println("throwException");
-			}
-		});
-        //		//设置任务执行拦截器结束，可以添加多个
+		/**
+		 * 内置线程池配置，实现多线程并行数据导入功能，作业完成退出时自动关闭该线程池
+		 */
+		importBuilder.setParallel(true);//设置为多线程并行批量导入,false串行
+		importBuilder.setQueue(10);//设置批量导入线程池等待队列长度
+		importBuilder.setThreadCount(50);//设置批量导入线程池工作线程数量
+		importBuilder.setContinueOnError(true);//任务出现异常，是否继续执行作业：true（默认值）继续执行 false 中断作业执行
+		importBuilder.setAsyn(false);//true 异步方式执行，不等待所有导入作业任务结束，方法快速返回；false（默认值） 同步方式执行，等待所有导入作业任务结束，所有作业结束后方法才返回
 
 		importBuilder.setExportResultHandler(new ExportResultHandler<String,String>() {
 			@Override

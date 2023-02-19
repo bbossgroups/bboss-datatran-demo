@@ -55,7 +55,7 @@ public class Db2KeyMetricsDemo {
 		boolean dropIndice = PropertiesUtil.getPropertiesContainer("application.properties").getBooleanSystemEnvProperty("dropIndice",true);
 //		dbdemo.fullImportData(  dropIndice);
 //		dbdemo.scheduleImportData(dropIndice);
-		db2EleasticsearchDemo.scheduleTimestampImportData(dropIndice);
+		db2EleasticsearchDemo.doImportData(dropIndice);
 //		dbdemo.scheduleImportData(dropIndice);
 //		args[1].charAt(0) == args[2].charAt(0);
 	}
@@ -66,7 +66,7 @@ public class Db2KeyMetricsDemo {
 	 * boolean dropIndice = PropertiesUtil.getPropertiesContainer().getBooleanSystemEnvProperty("dropIndice",true);
 	 * int threadCount = PropertiesUtil.getPropertiesContainer().getIntSystemEnvProperty("log.threadCount",2);
 	 */
-	public void scheduleTimestampImportData(boolean dropIndice){
+	public void doImportData(boolean dropIndice){
 
 		ImportBuilder importBuilder = new ImportBuilder() ;
 		//在任务数据抽取之前做一些初始化处理，例如：通过删表来做初始化操作
