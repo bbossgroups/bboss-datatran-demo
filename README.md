@@ -76,7 +76,7 @@ gradle安装配置参考文档：
 https://esdoc.bbossgroups.com/#/bboss-build
 
 ## 下载源码工程-基于gradle
-<https://github.com/bbossgroups/db-elasticsearch-tool>
+https://gitee.com/bboss/bboss-datatran-demo
 
 从上面的地址下载源码工程，然后导入idea或者eclipse，根据自己的需求，修改导入程序逻辑
 
