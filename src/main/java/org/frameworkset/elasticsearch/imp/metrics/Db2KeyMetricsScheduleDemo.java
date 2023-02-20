@@ -27,10 +27,10 @@ import org.frameworkset.tran.metrics.entity.KeyMetric;
 import org.frameworkset.tran.metrics.entity.MapData;
 import org.frameworkset.tran.metrics.job.KeyMetricBuilder;
 import org.frameworkset.tran.metrics.job.Metrics;
-import org.frameworkset.tran.metrics.job.builder.MetricBuilder;
 import org.frameworkset.tran.plugin.db.input.DBInputConfig;
 import org.frameworkset.tran.plugin.metrics.output.ETLMetrics;
 import org.frameworkset.tran.plugin.metrics.output.MetricsOutputConfig;
+import org.frameworkset.tran.schedule.ImportIncreamentConfig;
 import org.frameworkset.tran.task.TaskCommand;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
@@ -111,7 +111,7 @@ public class Db2KeyMetricsScheduleDemo {
 		// 通过setLastValueType方法告诉工具增量字段的类型，默认是数字类型
 
 //		importBuilder.setSql("select * from td_sm_log where LOG_OPERTIME > #[LOG_OPERTIME]");
-		dbInputConfig.setSql("select * from td_sm_log")
+		dbInputConfig.setSql("select * from td_sm_log  where log_id > #[log_id]")
 				.setDbName("test")
 				.setDbDriver("com.mysql.cj.jdbc.Driver") //数据库驱动程序，必须导入相关数据库的驱动jar包
 				.setDbUrl("jdbc:mysql://192.168.137.1:3306/bboss?useUnicode=true&characterEncoding=utf-8&useSSL=false&rewriteBatchedStatements=true") //通过useCursorFetch=true启用mysql的游标fetch机制，否则会有严重的性能隐患，useCursorFetch必须和jdbcFetchSize参数配合使用，否则不会生效
@@ -126,7 +126,7 @@ public class Db2KeyMetricsScheduleDemo {
 		importBuilder.setInputConfig(dbInputConfig);
 
 
-        //bulkprocessor和Elasticsearch输出插件共用Elasticsearch数据源，因此额外进行数据源初始化定义
+        //定义bulkprocessor依赖的Elasticsearch数据源
         Map properties = new HashMap();
 
 //default为默认的Elasitcsearch数据源名称
@@ -190,86 +190,70 @@ public class Db2KeyMetricsScheduleDemo {
 		 */
 		BulkProcessor bulkProcessor = bulkProcessorBuilder.build();//构建批处理作业组件
 		ETLMetrics keyMetrics = new ETLMetrics(Metrics.MetricsType_KeyMetircs){
-			@Override
-			public void builderMetrics(){
-				//指标1 按操作模块统计模块操作次数
-				addMetricBuilder(new MetricBuilder() {
-					@Override
-					public String buildMetricKey(MapData mapData){
-                        CommonRecord data = (CommonRecord) mapData.getData();
-                        String operModule = (String) data.getData("operModule");
-                        if(operModule == null || operModule.equals("")){
-                            operModule = "未知模块";
-                        }
-						return operModule;
-					}
-					@Override
-					public KeyMetricBuilder metricBuilder(){
-						return new KeyMetricBuilder() {
-							@Override
-							public KeyMetric build() {
-								return new LoginModuleMetric();
-							}
-						};
-					}
-				});
+            @Override
+            public void map(MapData mapData) {
+                CommonRecord data = (CommonRecord) mapData.getData();
+                //可以添加多个指标
 
-				//指标2 按照用户统计操作次数
-				addMetricBuilder(new MetricBuilder() {
-					@Override
-					public String buildMetricKey(MapData mapData){
-                        CommonRecord data = (CommonRecord) mapData.getData();
-                        String logUser = (String) data.getData("logOperuser");//
-                        if(logUser == null || logUser.equals("")){
-                            logUser = "未知用户";
-                        }
-						return logUser;
-					}
-					@Override
-					public KeyMetricBuilder metricBuilder(){
-						return new KeyMetricBuilder() {
-							@Override
-							public KeyMetric build() {
-								return new LoginUserMetric();
-							}
-						};
-					}
-				});
-				// key metrics中包含两个segment(S0,S1)
-				setSegmentBoundSize(5000000);
-			}
+                //指标1 按操作模块统计模块操作次数
+                String operModule = (String) data.getData("operModule");
+                if(operModule == null || operModule.equals("")){
+                    operModule = "未知模块";
+                }
+                String metricKey = operModule;
+                metric(metricKey, mapData, new KeyMetricBuilder() {
+                    @Override
+                    public KeyMetric build() {
+                        return new LoginModuleMetric();
+                    }
 
-            /**
-             * 存储指标计算结果
-             * @param metrics
-             */
-			@Override
-			public void persistent(Collection< KeyMetric> metrics) {
-				metrics.forEach(keyMetric->{
-					if(keyMetric instanceof LoginModuleMetric) {
+                });
+
+                //指标2 按照用户统计操作次数
+                String logUser = (String) data.getData("logOperuser");
+                metricKey = logUser;
+                metric(metricKey, mapData, new KeyMetricBuilder() {
+                    @Override
+                    public KeyMetric build() {
+                        return new LoginUserMetric();
+                    }
+
+                });
+
+
+            }
+
+            @Override
+            public void persistent(Collection< KeyMetric> metrics) {
+                metrics.forEach(keyMetric->{
+                    if(keyMetric instanceof LoginModuleMetric) {
                         LoginModuleMetric testKeyMetric = (LoginModuleMetric) keyMetric;
-						Map esData = new HashMap();
-						esData.put("dataTime", testKeyMetric.getDataTime());
-
-						esData.put("metric", testKeyMetric.getMetric());
-						esData.put("operModule", testKeyMetric.getOperModule());
-						esData.put("count", testKeyMetric.getCount());
-						bulkProcessor.insertData("vops-loginmodulekeymetrics", esData);
-					}
-					else if(keyMetric instanceof LoginUserMetric) {
+                        Map esData = new HashMap();
+                        esData.put("dataTime", testKeyMetric.getDataTime());
+                        esData.put("hour", testKeyMetric.getDayHour());
+                        esData.put("minute", testKeyMetric.getMinute());
+                        esData.put("day", testKeyMetric.getDay());
+                        esData.put("metric", testKeyMetric.getMetric());
+                        esData.put("operModule", testKeyMetric.getOperModule());
+                        esData.put("count", testKeyMetric.getCount());
+                        bulkProcessor.insertData("vops-loginmodulemetrics", esData);
+                    }
+                    else if(keyMetric instanceof LoginUserMetric) {
                         LoginUserMetric testKeyMetric = (LoginUserMetric) keyMetric;
-						Map esData = new HashMap();
-						esData.put("dataTime", testKeyMetric.getDataTime());
+                        Map esData = new HashMap();
+                        esData.put("dataTime", testKeyMetric.getDataTime());
+                        esData.put("hour", testKeyMetric.getDayHour());
+                        esData.put("minute", testKeyMetric.getMinute());
+                        esData.put("day", testKeyMetric.getDay());
+                        esData.put("metric", testKeyMetric.getMetric());
+                        esData.put("logUser", testKeyMetric.getLogUser());
+                        esData.put("count", testKeyMetric.getCount());
+                        bulkProcessor.insertData("vops-loginusermetrics", esData);
+                    }
 
-						esData.put("metric", testKeyMetric.getMetric());
-						esData.put("logUser", testKeyMetric.getLogUser());
-						esData.put("count", testKeyMetric.getCount());
-						bulkProcessor.insertData("vops-loginuserkeymetrics", esData);
-					}
+                });
 
-				});
-
-			}
+            }
 		};
         //作业结束后销毁初始化阶段自定义的http数据源
         importBuilder.setImportEndAction(new ImportEndAction() {
@@ -306,21 +290,20 @@ public class Db2KeyMetricsScheduleDemo {
         //定时任务配置结束
 
 
-        /**
-         * 全量采集计算案例，如果是增量采集，可以进行增量配置
-        //增量配置开始
-//		importBuilder.setStatusDbname("test");//设置增量状态数据源名称
-        importBuilder.setLastValueColumn("log_id");//手动指定数字增量查询字段，默认采用上面设置的sql语句中的增量变量名称作为增量查询字段的名称，指定以后就用指定的字段
-        importBuilder.setFromFirst(true);//setFromfirst(false)，如果作业停了，作业重启后从上次截止位置开始采集数据，
-//		setFromfirst(true) 如果作业停了，作业重启后，重新开始采集数据
-        importBuilder.setLastValueStorePath("db2metrics_import");//记录上次采集的增量字段值的文件路径，作为下次增量（或者重启后）采集数据的起点，不同的任务这个路径要不一样
-//		importBuilder.setLastValueStoreTableName("logstable");//记录上次采集的增量字段值的表，可以不指定，采用默认表名increament_tab
-        importBuilder.setLastValueType(ImportIncreamentConfig.NUMBER_TYPE);//如果没有指定增量查询字段名称，则需要指定字段类型：ImportIncreamentConfig.NUMBER_TYPE 数字类型
-        */
 
-		/**
-		 * 内置线程池配置，实现多线程并行数据导入功能，作业完成退出时自动关闭该线程池
-		 */
+        //增量配置开始
+//
+
+        importBuilder.setLastValueColumn("log_id");//手动指定数字增量查询字段，默认采用上面设置的sql语句中的增量变量名称作为增量查询字段的名称，指定以后就用指定的字段
+        importBuilder.setFromFirst(false);//setFromfirst(false)，如果作业停了，作业重启后从上次截止位置开始采集数据，
+//		setFromfirst(true) 如果作业停了，作业重启后，重新开始采集数据
+		importBuilder.setLastValueStorePath("logtablemetrics_import");//记录上次采集的增量字段值的文件路径，作为下次增量（或者重启后）采集数据的起点，不同的任务这个路径要不一样
+        importBuilder.setLastValueType(ImportIncreamentConfig.NUMBER_TYPE);//如果没有指定增量查询字段名称，则需要指定字段类型：ImportIncreamentConfig.NUMBER_TYPE 数字类型
+
+
+        /**
+         * 内置线程池配置，实现多线程并行数据导入功能，作业完成退出时自动关闭该线程池
+         */
 		importBuilder.setParallel(true);//设置为多线程并行批量导入,false串行
 		importBuilder.setQueue(10);//设置批量导入线程池等待队列长度
 		importBuilder.setThreadCount(50);//设置批量导入线程池工作线程数量
