@@ -41,7 +41,7 @@ import static java.lang.Thread.sleep;
 public class TestKeyTimeMetrics {
 	private static Logger logger = LoggerFactory.getLogger(TestKeyTimeMetrics.class);
 	public static void main(String[] args){
-		//定义Elasticsearch数据入库BulkProcessor批处理组件构建器
+		//1. 定义Elasticsearch数据入库BulkProcessor批处理组件构建器
 		BulkProcessorBuilder bulkProcessorBuilder = new BulkProcessorBuilder();
 		bulkProcessorBuilder.setBlockedWaitTimeout(-1)//指定bulk工作线程缓冲队列已满时后续添加的bulk处理排队等待时间，如果超过指定的时候bulk将被拒绝处理，单位：毫秒，默认为0，不拒绝并一直等待成功为止
 
@@ -79,12 +79,13 @@ public class TestKeyTimeMetrics {
 				})//添加批量处理执行拦截器，可以通过addBulkInterceptor方法添加多个拦截器
 		;
 		/**
-		 * 构建BulkProcessor批处理组件，一般作为单实例使用，单实例多线程安全，可放心使用
+		 * 2. 构建BulkProcessor批处理组件，一般作为单实例使用，单实例多线程安全，可放心使用
 		 */
 		BulkProcessor bulkProcessor = bulkProcessorBuilder.build();//构建批处理作业组件
+        //3. 定义KeyTimeMetircs类型指标计算器Metrics
 		Metrics keyMetrics = new Metrics(Metrics.MetricsType_KeyTimeMetircs){
 
-
+            //4. 添加具体的指标对象及对应的指标key到Metrics
 			@Override
 			public void builderMetrics(){
 				addMetricBuilder(new MetricBuilder() {
@@ -104,35 +105,41 @@ public class TestKeyTimeMetrics {
 						};
 					}
 				});
-				// key metrics中包含两个segment(S0,S1)
+				// 5. key metrics中包含两个segment(S0,S1)，设置每个分区的大小（元素个数）
 				setSegmentBoundSize(5000000);
-				setTimeWindows(10);
+                // 6. 定义时间窗口
+				setTimeWindows(60);
 			}
 
+            /**
+             * 6. 定义指标持久化机制，将计算好的指标结果通过异步批处理组件存储到Elasticsearch中的指标表
+             * @param metrics
+             */
 			@Override
 			public void persistent(Collection< KeyMetric> metrics) {
 				metrics.forEach(keyMetric->{
 					TestTimeMetric testKeyMetric = (TestTimeMetric)keyMetric;
-					Map esData = new HashMap();
-					esData.put("dataTime", testKeyMetric.getDataTime());
-					esData.put("hour", testKeyMetric.getDayHour());
-					esData.put("minute", testKeyMetric.getMinute());
-					esData.put("day", testKeyMetric.getDay());
-					esData.put("metric", testKeyMetric.getMetric());
-					esData.put("name", testKeyMetric.getName());
-					esData.put("count", testKeyMetric.getCount());
-					bulkProcessor.insertData("vops-testkeytimemetrics",esData);
+					Map esData = new HashMap();//封装指标统计结果
+					esData.put("dataTime", testKeyMetric.getDataTime());//指标统计计算时间
+					esData.put("hour", testKeyMetric.getDayHour());//指标小时字段，例如2023-02-19 16
+					esData.put("minute", testKeyMetric.getMinute());//指标日期字段，例如2023-02-19 16:53
+					esData.put("day", testKeyMetric.getDay());//指标日期字段，例如2023-02-19
+					esData.put("metric", testKeyMetric.getMetric());//指标key
+					esData.put("name", testKeyMetric.getName());//维度字段
+					esData.put("count", testKeyMetric.getCount());//统计指标
+					bulkProcessor.insertData("vops-testkeytimemetrics",esData);//将指标结果保存到Elasticsearch指标表vops-testkeytimemetrics
 
 				});
 
 			}
 		};
-
+        // 7. 初始化指标计算器
 		keyMetrics.init();
 
+        // 8. 模拟并发（10线程）产生数据，并持续运行10分钟
 		long startTime = System.currentTimeMillis();
 		long times = 10l * 60l * 1000l;
-		//模拟并发（10线程）产生数据，并持续运行10分钟
+
 		Runnable runnable = new Runnable() {
 			@Override
 			public void run() {
@@ -144,6 +151,7 @@ public class TestKeyTimeMetrics {
 				DateFormat minuteFormat = MetricsConfig.getMinuteFormat();
 				while(true) {
 					for (int i = 0; i < 1590; i++) {
+                        // 9. 通过MapData封装待统计的原始数据（一个Map类型的对象）、时间维度值、各种时间格式化对象
 						MapData<Map> mapData = new MapData<>();
 						mapData.setDataTime(new Date());
 						Map<String, String> data = new LinkedHashMap<>();
@@ -155,6 +163,7 @@ public class TestKeyTimeMetrics {
 						mapData.setYearFormat(yearFormat);
 						mapData.setMonthFormat(monthFormat);
 						mapData.setWeekFormat(weekFormat);
+                        // 10. 将mapData交给keyMetrics，进行指标统计计算
 						keyMetrics.map(mapData);
 					}
 					try {
@@ -185,6 +194,7 @@ public class TestKeyTimeMetrics {
 		});
 
 		//强制刷指标数据
-		keyMetrics.forceFlush(true,true);
+		keyMetrics.forceFlush(true,//清楚指标key
+                              true );//等待数据处理完成后再返回
 	}
 }
