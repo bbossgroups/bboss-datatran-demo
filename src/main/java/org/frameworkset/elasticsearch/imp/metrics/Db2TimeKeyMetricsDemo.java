@@ -28,6 +28,7 @@ import org.frameworkset.tran.metrics.entity.KeyMetric;
 import org.frameworkset.tran.metrics.entity.MapData;
 import org.frameworkset.tran.metrics.job.KeyMetricBuilder;
 import org.frameworkset.tran.metrics.job.Metrics;
+import org.frameworkset.tran.metrics.job.MetricsConfig;
 import org.frameworkset.tran.metrics.job.builder.MetricBuilder;
 import org.frameworkset.tran.plugin.db.input.DBInputConfig;
 import org.frameworkset.tran.plugin.metrics.output.ETLMetrics;
@@ -48,10 +49,10 @@ import java.util.Map;
  * @author biaoping.yin
  * @version 1.0
  */
-public class Db2KeyMetricsDemo {
-	private static Logger logger = LoggerFactory.getLogger(Db2KeyMetricsDemo.class);
+public class Db2TimeKeyMetricsDemo {
+	private static Logger logger = LoggerFactory.getLogger(Db2TimeKeyMetricsDemo.class);
 	public static void main(String args[]){
-		Db2KeyMetricsDemo db2EleasticsearchDemo = new Db2KeyMetricsDemo();
+		Db2TimeKeyMetricsDemo db2EleasticsearchDemo = new Db2TimeKeyMetricsDemo();
 		//从配置文件application.properties中获取参数值
 		boolean dropIndice = PropertiesUtil.getPropertiesContainer("application.properties").getBooleanSystemEnvProperty("dropIndice",true);
 //		dbdemo.fullImportData(  dropIndice);
@@ -190,7 +191,8 @@ public class Db2KeyMetricsDemo {
 		 * 构建BulkProcessor批处理组件，一般作为单实例使用，单实例多线程安全，可放心使用
 		 */
 		BulkProcessor bulkProcessor = bulkProcessorBuilder.build();//构建批处理作业组件
-		ETLMetrics keyMetrics = new ETLMetrics(Metrics.MetricsType_KeyMetircs){
+//		ETLMetrics keyMetrics = new ETLMetrics(Metrics.MetricsType_TimeKeyMetircs){
+        ETLMetrics keyMetrics = new ETLMetrics(Metrics.MetricsType_KeyTimeMetircs){
 			@Override
 			public void builderMetrics(){
 				//指标1 按操作模块统计模块操作次数
@@ -239,6 +241,7 @@ public class Db2KeyMetricsDemo {
 				});
 				// key metrics中包含两个segment(S0,S1)
 				setSegmentBoundSize(5000000);
+                setTimeWindowType(MetricsConfig.TIME_WINDOW_TYPE_DAY);
 			}
 
             /**
@@ -252,7 +255,12 @@ public class Db2KeyMetricsDemo {
                         LoginModuleMetric testKeyMetric = (LoginModuleMetric) keyMetric;
 						Map esData = new HashMap();
 						esData.put("dataTime", testKeyMetric.getDataTime());
-
+                        esData.put("year", testKeyMetric.getYear());
+                        esData.put("month", testKeyMetric.getMonth());
+                        esData.put("hour", testKeyMetric.getDayHour());
+                        esData.put("minute", testKeyMetric.getMinute());
+                        esData.put("day", testKeyMetric.getDay());
+                        esData.put("timeMetricKey", testKeyMetric.getMetricTimeKey());
 						esData.put("metric", testKeyMetric.getMetric());
 						esData.put("operModule", testKeyMetric.getOperModule());
 						esData.put("count", testKeyMetric.getCount());
@@ -262,9 +270,14 @@ public class Db2KeyMetricsDemo {
                         LoginUserMetric testKeyMetric = (LoginUserMetric) keyMetric;
 						Map esData = new HashMap();
 						esData.put("dataTime", testKeyMetric.getDataTime());
-
+                        esData.put("year", testKeyMetric.getYear());
+                        esData.put("month", testKeyMetric.getMonth());
+                        esData.put("hour", testKeyMetric.getDayHour());
+                        esData.put("minute", testKeyMetric.getMinute());
+                        esData.put("day", testKeyMetric.getDay());
 						esData.put("metric", testKeyMetric.getMetric());
 						esData.put("logUser", testKeyMetric.getLogUser());
+                        esData.put("timeMetricKey", testKeyMetric.getMetricTimeKey());
 						esData.put("count", testKeyMetric.getCount());
 						bulkProcessor.insertData("vops-loginuserkeymetrics", esData);
 					}

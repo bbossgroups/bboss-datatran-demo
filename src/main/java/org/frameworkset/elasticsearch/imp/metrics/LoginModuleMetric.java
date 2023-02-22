@@ -33,6 +33,9 @@ public class LoginModuleMetric extends TimeMetric {
     public void init(MapData firstData) {
         CommonRecord data = (CommonRecord) firstData.getData();
         operModule = (String) data.getData("operModule");
+        if(operModule == null || operModule.equals("")){
+            operModule = "未知模块";
+        }
     }
 
     @Override

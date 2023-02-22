@@ -33,6 +33,9 @@ public class LoginUserMetric extends TimeMetric {
     public void init(MapData firstData) {
         CommonRecord data = (CommonRecord) firstData.getData();
         logUser = (String) data.getData("logOperuser");
+        if(logUser == null || logUser.equals("")){
+            logUser = "未知用户";
+        }
     }
 
     @Override
