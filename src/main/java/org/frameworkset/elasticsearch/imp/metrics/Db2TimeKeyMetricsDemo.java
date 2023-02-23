@@ -191,8 +191,8 @@ public class Db2TimeKeyMetricsDemo {
 		 * 构建BulkProcessor批处理组件，一般作为单实例使用，单实例多线程安全，可放心使用
 		 */
 		BulkProcessor bulkProcessor = bulkProcessorBuilder.build();//构建批处理作业组件
-//		ETLMetrics keyMetrics = new ETLMetrics(Metrics.MetricsType_TimeKeyMetircs){
-        ETLMetrics keyMetrics = new ETLMetrics(Metrics.MetricsType_KeyTimeMetircs){
+		ETLMetrics keyMetrics = new ETLMetrics(Metrics.MetricsType_TimeKeyMetircs){
+//        ETLMetrics keyMetrics = new ETLMetrics(Metrics.MetricsType_KeyTimeMetircs){
 			@Override
 			public void builderMetrics(){
 				//指标1 按操作模块统计模块操作次数
@@ -257,6 +257,7 @@ public class Db2TimeKeyMetricsDemo {
 						esData.put("dataTime", testKeyMetric.getDataTime());
                         esData.put("year", testKeyMetric.getYear());
                         esData.put("month", testKeyMetric.getMonth());
+                        esData.put("week", testKeyMetric.getWeek());
                         esData.put("hour", testKeyMetric.getDayHour());
                         esData.put("minute", testKeyMetric.getMinute());
                         esData.put("day", testKeyMetric.getDay());
@@ -272,6 +273,7 @@ public class Db2TimeKeyMetricsDemo {
 						esData.put("dataTime", testKeyMetric.getDataTime());
                         esData.put("year", testKeyMetric.getYear());
                         esData.put("month", testKeyMetric.getMonth());
+                        esData.put("week", testKeyMetric.getWeek());
                         esData.put("hour", testKeyMetric.getDayHour());
                         esData.put("minute", testKeyMetric.getMinute());
                         esData.put("day", testKeyMetric.getDay());
