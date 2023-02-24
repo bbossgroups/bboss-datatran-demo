@@ -251,7 +251,7 @@ public class Db2MetricsMapdata2DBDemo {
                                 //直接使用dbinput插件配置的数据源test，可以参考文档自定义数据库数据源
                                 SQLExecutor.executeBatch("test","insert into logusermetrics(dataTime,hour,minute,day,metric,logUser,count) values(?,?,?,?,?,?,?)", logUserMetrics, 150, new BatchHandler<Map>() {
                                     public void handler(PreparedStatement stmt, Map record, int i) throws SQLException {
-                                        stmt.setDate(1, new java.sql.Date(((Date)record.get("dataTime")).getTime()));
+                                        stmt.setTimestamp(1, new java.sql.Timestamp(((Date)record.get("dataTime")).getTime()));
                                         stmt.setString(2, (String)record.get("hour"));
                                         stmt.setString(3, (String)record.get("minute"));
                                         stmt.setString(4, (String)record.get("day"));
@@ -266,7 +266,7 @@ public class Db2MetricsMapdata2DBDemo {
                                 //直接使用dbinput插件配置的数据源test
                                 SQLExecutor.executeBatch("test","insert into logmodulermetrics(dataTime,hour,minute,day,metric,operModule,count) values(?,?,?,?,?,?,?)", logModuleMetrics, 150, new BatchHandler<Map>() {
                                     public void handler(PreparedStatement stmt, Map record, int i) throws SQLException {
-                                        stmt.setDate(1, new java.sql.Date(((Date)record.get("dataTime")).getTime()));
+                                        stmt.setTimestamp(1, new java.sql.Timestamp(((Date)record.get("dataTime")).getTime()));
                                         stmt.setString(2, (String)record.get("hour"));
                                         stmt.setString(3, (String)record.get("minute"));
                                         stmt.setString(4, (String)record.get("day"));
