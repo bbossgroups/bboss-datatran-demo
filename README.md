@@ -13,9 +13,13 @@ mysql,maridb，postgress,oracle ,sqlserver,db2、clickhouse等
 
 1.x,2.X,5.X,6.X,7.x,8,x,+
 
-支持海量PB级数据同步导入功能
+海量PB级数据同步导入功能使用指南
 
 [使用参考文档](https://esdoc.bbossgroups.com/#/db-es-tool)
+
+流批一体化计算功能使用指南
+
+https://esdoc.bbossgroups.com/#/etl-metrics
 
 # BBoss Environmental requirements
 
