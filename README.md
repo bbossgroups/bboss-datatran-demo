@@ -43,7 +43,7 @@ org.frameworkset.elasticsearch.imp.Db2EleasticsearchDemo
 
 
 ```java
-public class Dbdemo {
+public class Db2EleasticsearchDemo {
 	public static void main(String args[]){
 
 		Db2EleasticsearchDemo db2EleasticsearchDemo = new Db2EleasticsearchDemo();
@@ -58,7 +58,7 @@ public class Dbdemo {
 
 测试调试通过后
 修改application.properties中的mainclass配置。
-mainclass=org.frameworkset.elasticsearch.imp.metrics.Db2EleasticsearchMetricsDemo
+mainclass=org.frameworkset.elasticsearch.imp.Db2EleasticsearchDemo
 
 构建发布可运行的版本：进入命令行模式，在源码工程根目录bboss-datatran-demo下运行以下gradle指令打包发布版本
 release.bat
@@ -88,7 +88,7 @@ windows: restart.bat
 
 1.首先，新建一个带main方法的类org.frameworkset.elasticsearch.imp.CMSDocumentImport,实现同步的逻辑
 
-如果需要测试调试，就在test目录下面编写 src\test\java\org\frameworkset\elasticsearch\imp\CMSDocumentImportTest.java测试类,然后debug即可
+如果需要测试调试，编写 src\main\java\org\frameworkset\elasticsearch\imp\CMSDocumentImportTest.java测试类,然后debug即可
 
 2.然后，在runfiles目录下新建CMSDocumentImport作业主程序和作业进程配置文件：runfiles/config-cmsdocmenttable.properties，内容如下：
 
