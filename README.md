@@ -7,7 +7,7 @@
 
 支持的数据库：
 
-mysql,maridb，postgress,oracle ,sqlserver,db2等
+mysql,maridb，postgress,oracle ,sqlserver,db2、clickhouse等
 
 支持的Elasticsearch版本：
 
@@ -26,43 +26,6 @@ Elasticsearch version requirements: 1.x,2.X,5.X,6.X,7.x,8,x,+
 Spring booter 1.x,2.x,+
 
 
-# 建表sql
-```
-mysql :
-CREATE TABLE
-    batchtest
-    (
-        id bigint NOT NULL AUTO_INCREMENT,
-        name VARCHAR(4000),
-        author VARCHAR(1000),
-        content longtext,
-        title VARCHAR(1000),
-        optime DATETIME,
-        oper VARCHAR(1000),
-        subtitle VARCHAR(1000),
-        collecttime DATETIME,
-        ipinfo VARCHAR(2000),
-        PRIMARY KEY (id)
-    )
-    ENGINE=InnoDB DEFAULT CHARSET=utf8;
-postgresql:
-
-CREATE TABLE
-    batchtest
-    (
-        id bigint ,
-        name VARCHAR(4000),
-        author VARCHAR(1000),
-        content text,
-        title VARCHAR(1000),
-        optime timestamp,
-        oper VARCHAR(1000),
-        subtitle VARCHAR(1000),
-        collecttime timestamp,
-        ipinfo VARCHAR(2000),
-        PRIMARY KEY (id)
-    )
-```    
 # 构建部署
 ## 准备工作
 需要通过gradle构建发布版本，gradle安装配置参考文档：
@@ -93,15 +56,11 @@ public class Dbdemo {
 }
 ```
 
-修改es和数据库配置-bboss-datatran-demo\src\main\resources\application.properties
+测试调试通过后
+修改application.properties中的mainclass配置。
+mainclass=org.frameworkset.elasticsearch.imp.metrics.Db2EleasticsearchMetricsDemo
 
-bboss-datatran-demo工程已经内置mysql jdbc驱动，如果有依赖的第三方jdbc包（比如oracle驱动），可以将第三方jdbc依赖包放入bboss-datatran-demo\lib目录下
-
-修改完毕配置后，就可以进行功能调试了。
-
-
-测试调试通过后，就可以构建发布可运行的版本了：进入命令行模式，在源码工程根目录bboss-datatran-demo下运行以下gradle指令打包发布版本
-
+构建发布可运行的版本：进入命令行模式，在源码工程根目录bboss-datatran-demo下运行以下gradle指令打包发布版本
 release.bat
 
 ## 运行作业
@@ -217,7 +176,44 @@ importBuilder.setQueue(queueSize);//设置批量导入线程池等待队列长�
 importBuilder.setThreadCount(workThreads);//设置批量导入线程池工作线程数量
 ```
 
- 
+
+# 建表sql
+```
+mysql :
+CREATE TABLE
+    batchtest
+    (
+        id bigint NOT NULL AUTO_INCREMENT,
+        name VARCHAR(4000),
+        author VARCHAR(1000),
+        content longtext,
+        title VARCHAR(1000),
+        optime DATETIME,
+        oper VARCHAR(1000),
+        subtitle VARCHAR(1000),
+        collecttime DATETIME,
+        ipinfo VARCHAR(2000),
+        PRIMARY KEY (id)
+    )
+    ENGINE=InnoDB DEFAULT CHARSET=utf8;
+postgresql:
+
+CREATE TABLE
+    batchtest
+    (
+        id bigint ,
+        name VARCHAR(4000),
+        author VARCHAR(1000),
+        content text,
+        title VARCHAR(1000),
+        optime timestamp,
+        oper VARCHAR(1000),
+        subtitle VARCHAR(1000),
+        collecttime timestamp,
+        ipinfo VARCHAR(2000),
+        PRIMARY KEY (id)
+    )
+```     
 
 ## elasticsearch技术交流群:166471282 
 
