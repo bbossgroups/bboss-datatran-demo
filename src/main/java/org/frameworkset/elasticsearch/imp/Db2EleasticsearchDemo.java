@@ -356,10 +356,7 @@ public class Db2EleasticsearchDemo {
 				logger.debug(taskMetrics.toString());
 			}
 
-			@Override
-			public int getMaxRetry() {
-				return 0;
-			}
+
 		});
 
 
