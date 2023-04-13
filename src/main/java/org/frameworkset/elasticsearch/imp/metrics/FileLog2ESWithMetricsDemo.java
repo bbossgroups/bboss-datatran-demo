@@ -324,7 +324,7 @@ public class FileLog2ESWithMetricsDemo {
                         }
                     }
                 });
-                bulkProcessor.shutDown();
+                bulkProcessor.shutDown();//作业结束时关闭批处理器
 
             }
         });
@@ -504,7 +504,7 @@ public class FileLog2ESWithMetricsDemo {
 			}
 		});
 		/**
-		 * 启动es数据导入文件并上传sftp/ftp作业
+		 * 构建作业
 		 */
 		DataStream dataStream = importBuilder.builder();
 		dataStream.execute();//启动同步作业
