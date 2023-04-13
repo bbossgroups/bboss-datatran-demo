@@ -90,7 +90,6 @@ public class FileLog2ESWithMetricsDemo {
 //				return splitDatas;
 //			}
 //		});
-		importBuilder.addFieldMapping("@message","message");
 		FileInputConfig config = new FileInputConfig();
 		config.setCharsetEncode("GB2312");
 		//.*.txt.[0-9]+$
@@ -128,9 +127,16 @@ public class FileLog2ESWithMetricsDemo {
 ////				.setIncludeLines(new String[]{".*ERROR.*"})//采集包含ERROR的日志
 //				//.setExcludeLines(new String[]{".*endpoint.*"}))//采集不包含endpoint的日志
 //		);
+        FileConfig fileConfig = new FileConfig();
+        fileConfig.setFieldSplit(";");//指定日志记录字段分割符
+        //指定字段映射配置
+        fileConfig.addCellMapping(0, "logOperTime");
+
+        fileConfig.addCellMapping(1, "operModule");
+        fileConfig.addCellMapping(2, "logOperuser");
 
 
-		config.addConfig(new FileConfig().setSourcePath("D:\\logs")//指定目录
+		config.addConfig(fileConfig.setSourcePath("D:\\logs")//指定目录
 										.setFileHeadLineRegular("^\\[[0-9]{4}-[0-9]{2}-[0-9]{2} [0-9]{2}:[0-9]{2}:[0-9]{2}:[0-9]{3}\\]")//指定多行记录的开头识别标记，正则表达式
 										.setFileFilter(new FileFilter() {
 											@Override
@@ -139,7 +145,6 @@ public class FileLog2ESWithMetricsDemo {
 												return fileInfo.getFileName().equals("metrics-report.log");
 											}
 										})//指定文件过滤器
-										.setCloseEOF(false)//已经结束的文件内容采集完毕后关闭文件对应的采集通道，后续不再监听对应文件的内容变化
 										.addField("tag","elasticsearch")//添加字段tag到记录中
 										.setEnableInode(false)
 				//				.setIncludeLines(new String[]{".*ERROR.*"})//采集包含ERROR的日志
@@ -183,6 +188,7 @@ public class FileLog2ESWithMetricsDemo {
 		 * true 开启 false 关闭
 		 */
 		config.setEnableMeta(true);
+
 		importBuilder.setInputConfig(config);
 		//指定elasticsearch数据源名称，在application.properties文件中配置，default为默认的es数据源名称
 		ElasticsearchOutputConfig elasticsearchOutputConfig = new ElasticsearchOutputConfig();
@@ -289,7 +295,7 @@ public class FileLog2ESWithMetricsDemo {
                         esData.put("metric", testKeyMetric.getMetric());
                         esData.put("operModule", testKeyMetric.getOperModule());
                         esData.put("count", testKeyMetric.getCount());
-                        bulkProcessor.insertData("vops-loginmodulemetrics", esData);
+                        bulkProcessor.insertData("vops-loginmodulemetrics", esData);//将指标计算结果异步批量写入Elasticsearch表vops-loginmodulemetrics
                     }
                     else if(keyMetric instanceof LoginUserMetric) {
                         LoginUserMetric testKeyMetric = (LoginUserMetric) keyMetric;
@@ -301,7 +307,7 @@ public class FileLog2ESWithMetricsDemo {
                         esData.put("metric", testKeyMetric.getMetric());
                         esData.put("logUser", testKeyMetric.getLogUser());
                         esData.put("count", testKeyMetric.getCount());
-                        bulkProcessor.insertData("vops-loginusermetrics", esData);
+                        bulkProcessor.insertData("vops-loginusermetrics", esData);//将指标计算结果异步批量写入Elasticsearch表vops-loginusermetrics
                     }
 
                 });
@@ -372,17 +378,7 @@ public class FileLog2ESWithMetricsDemo {
 				context.addFieldValue("title","解放");
 				context.addFieldValue("subtitle","小康");
 				
-				//如果日志是普通的文本日志，非json格式，则可以自己根据规则对包含日志记录内容的message字段进行解析
-				String message = context.getStringValue("@message");
-				String[] fvs = message.split(" ");//空格解析字段
-				/**
-				 * //解析示意代码
-				 * String[] fvs = message.split(" ");//空格解析字段
-				 * //将解析后的信息添加到记录中
-				 * context.addFieldValue("f1",fvs[0]);
-				 * context.addFieldValue("f2",fvs[1]);
-				 * context.addFieldValue("logVisitorial",fvs[2]);//包含ip信息
-				 */
+
 				//直接获取文件元信息
 				Map fileMata = (Map)context.getValue("@filemeta");
 				/**
