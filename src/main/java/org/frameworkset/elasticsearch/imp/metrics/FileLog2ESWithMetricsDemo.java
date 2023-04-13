@@ -15,7 +15,6 @@ package org.frameworkset.elasticsearch.imp.metrics;
  * limitations under the License.
  */
 
-import com.frameworkset.common.poolman.util.DBStartResult;
 import org.frameworkset.elasticsearch.ElasticSearchHelper;
 import org.frameworkset.elasticsearch.bulk.*;
 import org.frameworkset.elasticsearch.serial.SerialUtil;
@@ -37,8 +36,6 @@ import org.frameworkset.tran.plugin.metrics.output.ETLMetrics;
 import org.frameworkset.tran.schedule.CallInterceptor;
 import org.frameworkset.tran.schedule.TaskContext;
 import org.frameworkset.tran.task.TaskCommand;
-import org.frameworkset.util.ResourceEnd;
-import org.frameworkset.util.ResourceStartResult;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
@@ -315,15 +312,7 @@ public class FileLog2ESWithMetricsDemo {
         importBuilder.setImportEndAction(new ImportEndAction() {
             @Override
             public void endAction(ImportContext importContext, Exception e) {
-                //销毁初始化阶段自定义的数据源
-                importContext.destroyResources(new ResourceEnd() {
-                    @Override
-                    public void endResource(ResourceStartResult resourceStartResult) {
-                        if(resourceStartResult instanceof DBStartResult) { //作业停止时，释放db数据源
-                            DataTranPluginImpl.stopDatasources((DBStartResult) resourceStartResult);
-                        }
-                    }
-                });
+
                 bulkProcessor.shutDown();//作业结束时关闭批处理器
 
             }
