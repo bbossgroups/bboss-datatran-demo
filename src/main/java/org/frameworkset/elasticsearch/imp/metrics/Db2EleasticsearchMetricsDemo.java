@@ -193,6 +193,9 @@ public class Db2EleasticsearchMetricsDemo {
         properties.put("default.http.defaultMaxPerRoute","100");
         ElasticSearchBoot.boot(properties);
 
+        /**
+         * 构建一个指标数据写入Elasticsearch批处理器
+         */
 		BulkProcessorBuilder bulkProcessorBuilder = new BulkProcessorBuilder();
 		bulkProcessorBuilder.setBlockedWaitTimeout(-1)//指定bulk工作线程缓冲队列已满时后续添加的bulk处理排队等待时间，如果超过指定的时候bulk将被拒绝处理，单位：毫秒，默认为0，不拒绝并一直等待成功为止
 
