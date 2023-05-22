@@ -75,6 +75,7 @@ public class Binlog2CustomOutput {
 
                     if(record.isUpdate()){
                         logger.info("record.isUpate");
+                        Map<String,Object> oldDatas = record.getUpdateFromDatas();
                     }
 //                    logger.info(SimpleStringUtil.object2json(data));
                 }
