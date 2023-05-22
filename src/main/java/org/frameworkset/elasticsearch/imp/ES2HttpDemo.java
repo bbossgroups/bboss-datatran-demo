@@ -150,6 +150,8 @@ public class ES2HttpDemo {
 		importBuilder.setLastValueStorePath("es2http_import");//记录上次采集的增量字段值的文件路径，作为下次增量（或者重启后）采集数据的起点，不同的任务这个路径要不一样
 		importBuilder.setLastValueStoreTableName("es2http");//记录上次采集的增量字段值的表，可以不指定，采用默认表名increament_tab
 		importBuilder.setLastValueType(ImportIncreamentConfig.TIMESTAMP_TYPE);//如果没有指定增量查询字段名称，则需要指定字段类型：ImportIncreamentConfig.NUMBER_TYPE 数字类型
+//        importBuilder.setLastValueDateformat("yyyy-MM-ddTHH:mm:ss.SSSZ");//默认
+
 		importBuilder.setIncreamentEndOffset(60*1);//单位：秒
 //		SimpleDateFormat format = new SimpleDateFormat("yyyy-MM-dd");
 //		try {
