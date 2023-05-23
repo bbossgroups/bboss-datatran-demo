@@ -144,8 +144,8 @@ public class SFtpLog2FullfeatureHttpDemo {
 			logger.error("",e);
 		}
 		final Date startDate = _startDate;
-		FtpConfig ftpConfig = new FtpConfig().setFtpIP("10.13.6.127").setFtpPort(5322)
-				.setFtpUser("ecs").setFtpPassword("ecs@123")
+		FtpConfig ftpConfig = new FtpConfig().setFtpIP("101.13.6.55").setFtpPort(233)
+				.setFtpUser("1q").setFtpPassword("123")
 				.setRemoteFileDir("/home/ecs/failLog")
 				.setTransferProtocol(FtpConfig.TRANSFER_PROTOCOL_SFTP) ;//采用sftp协议
 		config.addConfig(new FileConfig().setFtpConfig(ftpConfig)
