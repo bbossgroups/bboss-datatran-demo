@@ -82,6 +82,8 @@ public class Binlog2DBOutput {
             @Override
             public void refactor(Context context) throws Exception {
                 int action = (int)context.getMetaValue("action");
+                if(context.isUpdate() || context.isDelete())
+                    context.setDrop(true); //丢弃修改和删除数据
 //                int action1 = (int)context.getMetaValue("action1");
             }
         });

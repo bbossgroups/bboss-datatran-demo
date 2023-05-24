@@ -186,7 +186,7 @@
 
     <property name="insertcitypersonSQL">
         <![CDATA[
-        INSERT INTO cityperson
+        INSERT INTO cityperson1
             (rowNo,
             shebao_org,
             person_no,
