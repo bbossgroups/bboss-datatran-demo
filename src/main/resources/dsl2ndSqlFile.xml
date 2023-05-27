@@ -49,6 +49,19 @@
                                     "lte": #[collecttime__endTime]
                                 }
                                 #end
+                                #if($agentStarttime)
+                                "agentStarttime": {
+                                    "gt": #[agentStarttime],
+                                    "lte": #[agentStarttime__endTime]
+                                }
+                                #end
+                                #if($localDateTime)
+                                "localDateTime": {
+                                    "gt": #[localDateTime],
+                                    "lte": #[localDateTime__endTime]
+                                }
+                                #end
+
                             }
                         }
                     ]
