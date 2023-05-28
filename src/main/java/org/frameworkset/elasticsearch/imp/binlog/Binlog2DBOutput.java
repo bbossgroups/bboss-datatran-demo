@@ -15,6 +15,8 @@ package org.frameworkset.elasticsearch.imp.binlog;
  * limitations under the License.
  */
 
+import org.frameworkset.spi.assemble.PropertiesContainer;
+import org.frameworkset.spi.assemble.PropertiesUtil;
 import org.frameworkset.tran.DataRefactor;
 import org.frameworkset.tran.DataStream;
 import org.frameworkset.tran.config.ImportBuilder;
@@ -36,8 +38,10 @@ import org.slf4j.LoggerFactory;
 public class Binlog2DBOutput {
     private static Logger logger = LoggerFactory.getLogger(Binlog2DBOutput.class);
     public static void main(String[] args){
+        PropertiesContainer propertiesContainer = PropertiesUtil.getPropertiesContainer();
+        int batchSize = propertiesContainer.getIntSystemEnvProperty("batchSize",500);//同时指定了默认值
         ImportBuilder importBuilder = new ImportBuilder();
-        importBuilder.setBatchSize(500);//设置批量入库的记录数
+        importBuilder.setBatchSize(batchSize);//设置批量入库的记录数
 
         MySQLBinlogConfig mySQLBinlogConfig = new MySQLBinlogConfig();
         mySQLBinlogConfig.setHost("192.168.137.1");
@@ -68,14 +72,14 @@ public class Binlog2DBOutput {
         //设置不同表对应的增删改sql语句
         SQLConf sqlConf = new SQLConf();
         sqlConf.setInsertSqlName("insertcitypersonSQL");//对应sql配置文件dsl2ndSqlFile.xml配置的sql语句insertcitypersonSQL
-//        sqlConf.setUpdateSqlName("insertcitypersonUpdateSQL");//可选
-//        sqlConf.setDeleteSqlName("insertcitypersonDeleteSQL");//可选
+//        sqlConf.setUpdateSqlName("citypersonUpdateSQL");//可选
+//        sqlConf.setDeleteSqlName("citypersonDeleteSQL");//可选
         dbOutputConfig.addSQLConf("cityperson",sqlConf);
 
         sqlConf = new SQLConf();
         sqlConf.setInsertSqlName("insertbatchtestSQL");//对应sql配置文件dsl2ndSqlFile.xml配置的sql语句insertbatchtestSQL
-//        sqlConf.setUpdateSqlName("insertbatchtestUpdateSQL");//可选
-//        sqlConf.setDeleteSqlName("insertbatchtestDeleteSQL");//可选
+//        sqlConf.setUpdateSqlName("batchtestUpdateSQL");//可选
+//        sqlConf.setDeleteSqlName("batchtestDeleteSQL");//可选
         dbOutputConfig.addSQLConf("batchtest",sqlConf);
         importBuilder.setOutputConfig(dbOutputConfig);
         importBuilder.setDataRefactor(new DataRefactor() {
