@@ -33,12 +33,13 @@ import org.frameworkset.tran.task.TaskCommand;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
+import java.time.LocalDateTime;
 import java.util.Date;
 import java.util.List;
 import java.util.Map;
 
 /**
- * <p>Description: </p>
+ * <p>Description: localdatetime类型，纳秒级精度增量同步案例</p>
  * <p></p>
  * <p>Copyright (c) 2020</p>
  * @Date 2022/7/1
@@ -165,7 +166,8 @@ public class ES2CustomDemo {
 //				context.addFieldValue("oldLogTimeEndTime",new Date(oldLogTimeEndTime));
 //				Date date = context.getDateValue("LOG_OPERTIME");
 
-
+                LocalDateTime localDateTime = context.getLocalDateTime("localDateTime");
+                Date date = context.getDateValue("localDateTime");
 				context.addFieldValue("newCollecttime",new Date());//添加采集时间
 
 			}
