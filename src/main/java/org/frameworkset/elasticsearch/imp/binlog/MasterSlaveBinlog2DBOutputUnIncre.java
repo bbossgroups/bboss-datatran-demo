@@ -35,8 +35,8 @@ import org.slf4j.LoggerFactory;
  * @author biaoping.yin
  * @version 1.0
  */
-public class MasterSlaveBinlog2DBOutput {
-    private static Logger logger = LoggerFactory.getLogger(MasterSlaveBinlog2DBOutput.class);
+public class MasterSlaveBinlog2DBOutputUnIncre {
+    private static Logger logger = LoggerFactory.getLogger(MasterSlaveBinlog2DBOutputUnIncre.class);
     public static void main(String[] args){
         PropertiesContainer propertiesContainer = PropertiesUtil.getPropertiesContainer();
         int batchSize = propertiesContainer.getIntSystemEnvProperty("batchSize",500);//同时指定了默认值
@@ -51,15 +51,11 @@ public class MasterSlaveBinlog2DBOutput {
         mySQLBinlogConfig.setServerId(100000L);
         mySQLBinlogConfig.setTables("cityperson,batchtest");//
         mySQLBinlogConfig.setDatabase("bboss");
-        mySQLBinlogConfig.setEnableIncrement(true);
+        mySQLBinlogConfig.setEnableIncrement(false);
         importBuilder.setInputConfig(mySQLBinlogConfig);
         importBuilder.setPrintTaskLog(true);
 
-        importBuilder.setFromFirst(false);//setFromfirst(false)，如果作业停了，作业重启后从上次截止位置开始采集数据，
-//		setFromfirst(true) 如果作业停了，作业重启后，重新开始采集数据
-//        importBuilder.setStatusDbname("testStatus");//指定增量状态数据源名称
-		importBuilder.setLastValueStorePath("binlog2db_import");//记录上次采集的增量字段值的文件路径，作为下次增量（或者重启后）采集数据的起点，不同的任务这个路径要不一样
-        importBuilder.setLastValueStoreTableName("binlog");//记录上次采集的增量字段值的表，可以不指定，采用默认表名increament_tab
+
 
         DBOutputConfig dbOutputConfig = new DBOutputConfig();
         dbOutputConfig

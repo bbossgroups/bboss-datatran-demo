@@ -55,7 +55,6 @@ public class Binlog2EleasticsearchOutput {
         mySQLBinlogConfig.setServerId(65536L);
         //binlog插件配置结束​
         importBuilder.setInputConfig(mySQLBinlogConfig);
-        importBuilder.setInputConfig(mySQLBinlogConfig);
         importBuilder.setPrintTaskLog(true);
 
         ElasticsearchOutputConfig elasticsearchOutputConfig = new ElasticsearchOutputConfig();
@@ -97,6 +96,7 @@ public class Binlog2EleasticsearchOutput {
 //                int action1 = (int)context.getMetaValue("action1");
             }
         });
+
         DataStream dataStream = importBuilder.builder();
         dataStream.execute();
     }
