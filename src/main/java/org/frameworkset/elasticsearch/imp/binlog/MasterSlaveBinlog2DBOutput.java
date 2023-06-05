@@ -52,11 +52,10 @@ public class MasterSlaveBinlog2DBOutput {
         mySQLBinlogConfig.setTables("cityperson,batchtest");//
         mySQLBinlogConfig.setDatabase("bboss");
         mySQLBinlogConfig.setEnableIncrement(true);
+
         importBuilder.setInputConfig(mySQLBinlogConfig);
         importBuilder.setPrintTaskLog(true);
 
-        importBuilder.setFromFirst(false);//setFromfirst(false)，如果作业停了，作业重启后从上次截止位置开始采集数据，
-//		setFromfirst(true) 如果作业停了，作业重启后，重新开始采集数据
 //        importBuilder.setStatusDbname("testStatus");//指定增量状态数据源名称
 		importBuilder.setLastValueStorePath("binlog2db_import");//记录上次采集的增量字段值的文件路径，作为下次增量（或者重启后）采集数据的起点，不同的任务这个路径要不一样
         importBuilder.setLastValueStoreTableName("binlog");//记录上次采集的增量字段值的表，可以不指定，采用默认表名increament_tab
