@@ -55,6 +55,7 @@ public class MasterSlaveBinlog2DBOutput {
 
         importBuilder.setInputConfig(mySQLBinlogConfig);
         importBuilder.setPrintTaskLog(true);
+        importBuilder.setContinueOnError(false);
 
 //        importBuilder.setStatusDbname("testStatus");//指定增量状态数据源名称
 		importBuilder.setLastValueStorePath("binlog2db_import");//记录上次采集的增量字段值的文件路径，作为下次增量（或者重启后）采集数据的起点，不同的任务这个路径要不一样

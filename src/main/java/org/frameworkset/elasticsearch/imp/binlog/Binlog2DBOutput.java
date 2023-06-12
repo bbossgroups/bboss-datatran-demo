@@ -53,7 +53,7 @@ public class Binlog2DBOutput {
         mySQLBinlogConfig.setDatabase("bboss");
         importBuilder.setInputConfig(mySQLBinlogConfig);
         importBuilder.setPrintTaskLog(true);
-
+        importBuilder.setContinueOnError(false);
         DBOutputConfig dbOutputConfig = new DBOutputConfig();
         dbOutputConfig
                 .setDbName("test")
