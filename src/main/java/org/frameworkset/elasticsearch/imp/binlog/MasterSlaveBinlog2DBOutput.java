@@ -19,8 +19,10 @@ import org.frameworkset.spi.assemble.PropertiesContainer;
 import org.frameworkset.spi.assemble.PropertiesUtil;
 import org.frameworkset.tran.DataRefactor;
 import org.frameworkset.tran.DataStream;
+import org.frameworkset.tran.JobClosedListener;
 import org.frameworkset.tran.config.ImportBuilder;
 import org.frameworkset.tran.context.Context;
+import org.frameworkset.tran.context.ImportContext;
 import org.frameworkset.tran.plugin.db.output.DBOutputConfig;
 import org.frameworkset.tran.plugin.db.output.SQLConf;
 import org.frameworkset.tran.plugin.mysqlbinlog.input.MySQLBinlogConfig;
@@ -65,9 +67,9 @@ public class MasterSlaveBinlog2DBOutput {
         dbOutputConfig
                 .setDbName("test")
                 .setDbDriver("com.mysql.cj.jdbc.Driver") //数据库驱动程序，必须导入相关数据库的驱动jar包
-                .setDbUrl("jdbc:mysql://192.168.137.1:3306/bboss?useUnicode=true&characterEncoding=utf-8&useSSL=false&rewriteBatchedStatements=true") //通过useCursorFetch=true启用mysql的游标fetch机制，否则会有严重的性能隐患，useCursorFetch必须和jdbcFetchSize参数配合使用，否则不会生效
+                .setDbUrl("jdbc:mysql://10.13.6.127:3306/visualops?useUnicode=true&characterEncoding=utf-8&useSSL=false&rewriteBatchedStatements=true") //通过useCursorFetch=true启用mysql的游标fetch机制，否则会有严重的性能隐患，useCursorFetch必须和jdbcFetchSize参数配合使用，否则不会生效
                 .setDbUser("root")
-                .setDbPassword("123456")
+                .setDbPassword("passwd")
                 .setValidateSQL("select 1")
                 .setUsePool(true)
                 .setDbInitSize(5)
@@ -96,6 +98,18 @@ public class MasterSlaveBinlog2DBOutput {
                 if(context.isUpdate() || context.isDelete())
                     context.setDrop(true); //丢弃修改和删除数据
 //                int action1 = (int)context.getMetaValue("action1");
+            }
+        });
+        importBuilder.setJobClosedListener(new JobClosedListener() {
+            @Override
+            public void jobClosed(ImportContext importContext, Throwable throwable) {
+                if(throwable != null) {
+                    logger.info("Job Closed by exception:",throwable);
+                }
+                else{
+                    logger.info("Job Closed normal.");
+                }
+
             }
         });
         DataStream dataStream = importBuilder.builder();
