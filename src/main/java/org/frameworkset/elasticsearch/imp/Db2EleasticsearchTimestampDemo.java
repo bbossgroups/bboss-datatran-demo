@@ -189,7 +189,7 @@ public class Db2EleasticsearchTimestampDemo {
 		//增量配置开始
 //		importBuilder.setStatusDbname("test");//设置增量状态数据源名称
 		importBuilder.setLastValueColumn("LOG_OPERTIME");//手动指定数字增量查询字段，默认采用上面设置的sql语句中的增量变量名称作为增量查询字段的名称，指定以后就用指定的字段
-		importBuilder.setFromFirst(true);//setFromfirst(false)，如果作业停了，作业重启后从上次截止位置开始采集数据，
+		importBuilder.setFromFirst(false);//setFromfirst(false)，如果作业停了，作业重启后从上次截止位置开始采集数据，
 //		setFromfirst(true) 如果作业停了，作业重启后，重新开始采集数据
 		importBuilder.setStatusDbname("test");//指定增量状态数据源名称
 		importBuilder.setLastValueStorePath("d:/logtabletmp_import");//记录上次采集的增量字段值的文件路径，作为下次增量（或者重启后）采集数据的起点，不同的任务这个路径要不一样
