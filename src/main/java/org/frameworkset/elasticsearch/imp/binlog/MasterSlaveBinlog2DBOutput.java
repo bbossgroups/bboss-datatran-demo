@@ -19,10 +19,10 @@ import org.frameworkset.spi.assemble.PropertiesContainer;
 import org.frameworkset.spi.assemble.PropertiesUtil;
 import org.frameworkset.tran.DataRefactor;
 import org.frameworkset.tran.DataStream;
-import org.frameworkset.tran.JobClosedListener;
 import org.frameworkset.tran.config.ImportBuilder;
 import org.frameworkset.tran.context.Context;
 import org.frameworkset.tran.context.ImportContext;
+import org.frameworkset.tran.listener.AsynJobClosedListener;
 import org.frameworkset.tran.plugin.db.output.DBOutputConfig;
 import org.frameworkset.tran.plugin.db.output.SQLConf;
 import org.frameworkset.tran.plugin.mysqlbinlog.input.MySQLBinlogConfig;
@@ -100,7 +100,23 @@ public class MasterSlaveBinlog2DBOutput {
 //                int action1 = (int)context.getMetaValue("action1");
             }
         });
+        /**
+        //同步执行JobClosedListener
         importBuilder.setJobClosedListener(new JobClosedListener() {
+            @Override
+            public void jobClosed(ImportContext importContext, Throwable throwable) {
+                if(throwable != null) {
+                    logger.info("Job Closed by exception:",throwable);
+                }
+                else{
+                    logger.info("Job Closed normal.");
+                }
+
+            }
+        });*/
+
+        //异步执行JobClosedListener
+        importBuilder.setJobClosedListener(new AsynJobClosedListener() {
             @Override
             public void jobClosed(ImportContext importContext, Throwable throwable) {
                 if(throwable != null) {
