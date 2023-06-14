@@ -19,6 +19,7 @@ import org.frameworkset.spi.assemble.PropertiesContainer;
 import org.frameworkset.spi.assemble.PropertiesUtil;
 import org.frameworkset.tran.DataRefactor;
 import org.frameworkset.tran.DataStream;
+import org.frameworkset.tran.ExportResultHandler;
 import org.frameworkset.tran.config.ImportBuilder;
 import org.frameworkset.tran.context.Context;
 import org.frameworkset.tran.context.ImportContext;
@@ -26,6 +27,7 @@ import org.frameworkset.tran.listener.AsynJobClosedListener;
 import org.frameworkset.tran.plugin.db.output.DBOutputConfig;
 import org.frameworkset.tran.plugin.db.output.SQLConf;
 import org.frameworkset.tran.plugin.mysqlbinlog.input.MySQLBinlogConfig;
+import org.frameworkset.tran.task.TaskCommand;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
@@ -126,6 +128,22 @@ public class MasterSlaveBinlog2DBOutput {
                     logger.info("Job Closed normal.");
                 }
 
+            }
+        });
+        importBuilder.setExportResultHandler(new ExportResultHandler() {
+            @Override
+            public void success(TaskCommand taskCommand, Object o) {
+
+            }
+
+            @Override
+            public void error(TaskCommand taskCommand, Object o) {
+
+            }
+
+            @Override
+            public void exception(TaskCommand taskCommand, Throwable exception) {
+                logger.warn("exception come:",exception);
             }
         });
         DataStream dataStream = importBuilder.builder();
