@@ -87,6 +87,62 @@
         ]]>
     </property>
     <!--
+   简单的scroll query案例，复杂的条件修改query dsl即可
+   -->
+    <property name="simplescrollQuery">
+        <![CDATA[
+         {
+            "size":#[size],
+            "query": {
+                "bool": {
+                    "filter": [
+
+                        {   ## 增量检索范围，可以是时间范围，也可以是数字范围，这里采用的是数字增量字段
+                            "range": {
+
+                                "@timestamp": {
+                                    "gt": #[@timestamp],
+                                    "lte": #[@timestamp__endTime]
+                                }
+
+
+                            }
+                        }
+                    ]
+                }
+            }
+        }
+        ]]>
+    </property>
+
+    <!--
+ 简单的scroll query案例，复杂的条件修改query dsl即可
+ -->
+    <property name="ssimplescrollQuery">
+        <![CDATA[
+         {
+            "size":#[size],
+            "query": {
+                "bool": {
+                    "filter": [
+
+                        {   ## 增量检索范围，可以是时间范围，也可以是数字范围，这里采用的是数字增量字段
+                            "range": {
+
+                                "@timestamp": {
+                                    "gt": #[@timestamp]
+                                }
+
+
+                            }
+                        }
+                    ]
+                }
+            }
+        }
+        ]]>
+    </property>
+    <!--
        简单的scroll query案例，复杂的条件修改query dsl即可
        -->
     <property name="scrollQuery">

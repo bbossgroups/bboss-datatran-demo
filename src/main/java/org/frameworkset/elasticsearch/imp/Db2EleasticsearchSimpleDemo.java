@@ -142,8 +142,6 @@ public class Db2EleasticsearchSimpleDemo {
 		importBuilder
 //
 				.setUseJavaName(true) //可选项,将数据库字段名称转换为java驼峰规范的名称，true转换，false不转换，默认false，例如:doc_id -> docId
-				.setUseLowcase(true)  //可选项，true 列名称转小写，false列名称不转换小写，默认false，只要在UseJavaName为false的情况下，配置才起作用
-				.setPrintTaskLog(true) //可选项，true 打印任务执行日志（耗时，处理记录数） false 不打印，默认值false
 				.setBatchSize(10);  //可选项,批量导入es的记录数，默认为-1，逐条处理，> 0时批量处理
 
 		//定时任务配置，
@@ -169,27 +167,12 @@ public class Db2EleasticsearchSimpleDemo {
 			public void throwException(TaskContext taskContext, Throwable e) {
 				System.out.println("throwException");
 			}
-		}).addCallInterceptor(new CallInterceptor() {
-			@Override
-			public void preCall(TaskContext taskContext) {
-				System.out.println("preCall 1");
-			}
-
-			@Override
-			public void afterCall(TaskContext taskContext) {
-				System.out.println("afterCall 1");
-			}
-
-			@Override
-			public void throwException(TaskContext taskContext, Throwable e) {
-				System.out.println("throwException 1");
-			}
 		});
 //		//设置任务执行拦截器结束，可以添加多个
 		//增量配置开始
 //		importBuilder.setStatusDbname("test");//设置增量状态数据源名称
 		importBuilder.setLastValueColumn("log_id");//手动指定数字增量查询字段，默认采用上面设置的sql语句中的增量变量名称作为增量查询字段的名称，指定以后就用指定的字段
-		importBuilder.setFromFirst(false);//setFromfirst(false)，如果作业停了，作业重启后从上次截止位置开始采集数据，
+		importBuilder.setFromFirst(true);//setFromfirst(false)，如果作业停了，作业重启后从上次截止位置开始采集数据，
 //		setFromfirst(true) 如果作业停了，作业重启后，重新开始采集数据
 		importBuilder.setStatusDbname("test");//指定增量状态数据源名称
 //		importBuilder.setLastValueStorePath("logtable_import");//记录上次采集的增量字段值的文件路径，作为下次增量（或者重启后）采集数据的起点，不同的任务这个路径要不一样
@@ -239,6 +222,7 @@ public class Db2EleasticsearchSimpleDemo {
 				IpInfo ipInfo = context.getIpInfoByIp("219.133.80.136");
 				if(ipInfo != null)
 					context.addFieldValue("ipInfo", SimpleStringUtil.object2json(ipInfo));
+                context.addFieldValue("@timestamp",new Date());
 			}
 		});
 		//映射和转换配置结束
@@ -249,7 +233,7 @@ public class Db2EleasticsearchSimpleDemo {
 		importBuilder.setParallel(true);//设置为多线程并行批量导入,false串行
 		importBuilder.setQueue(10);//设置批量导入线程池等待队列长度
 		importBuilder.setThreadCount(50);//设置批量导入线程池工作线程数量
-		importBuilder.setContinueOnError(true);//任务出现异常，是否继续执行作业：true（默认值）继续执行 false 中断作业执行
+		importBuilder.setContinueOnError(false);//任务出现异常，是否继续执行作业：true（默认值）继续执行 false 中断作业执行
 
 		importBuilder.setExportResultHandler(new ExportResultHandler<String,String>() {
 			@Override
