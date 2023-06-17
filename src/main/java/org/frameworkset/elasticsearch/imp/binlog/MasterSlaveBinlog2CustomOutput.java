@@ -75,11 +75,12 @@ public class MasterSlaveBinlog2CustomOutput {
 
                 //You can do any thing here for datas
                 for(CommonRecord record:datas){
-                    Map<String,Object> data = record.getDatas();
-                    int action = (int)record.getMetaValue("action");
+                    Map<String,Object> data = record.getDatas();//获取原始数据记录，key/vlaue，代表字段和值
+                    int action = (int)record.getMetaValue("action");//获取元数据,记录类型，可以是新增（默认类型）/修改/删除/其他类型
+                    String table = (String)record.getMetaValue("table");//获取元数据中的表名称
                     logger.info("data:{},action:{},record action type:insert={},update={},delete={}",data,action,record.isInsert(),record.isUpdate(),record.isDelete());
 
-                    logger.info(SimpleStringUtil.object2json(record.getMetaDatas()));
+                    logger.info(SimpleStringUtil.object2json(record.getMetaDatas()));//获取并打印所有元数据信息
                     if(record.isDelete()){
                         logger.info("record.isDelete");
                     }

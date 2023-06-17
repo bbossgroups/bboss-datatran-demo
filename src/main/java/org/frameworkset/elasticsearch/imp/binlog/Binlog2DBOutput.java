@@ -51,6 +51,7 @@ public class Binlog2DBOutput {
         mySQLBinlogConfig.setFileNames("F:\\6_environment\\mysql\\binlog.000107,F:\\6_environment\\mysql\\binlog.000127");
         mySQLBinlogConfig.setTables("cityperson,batchtest");//
         mySQLBinlogConfig.setDatabase("bboss");
+        mySQLBinlogConfig.setMetricsInterval(30 * 1000L);//30秒时间间隔做一次任务拦截器调用
         importBuilder.setInputConfig(mySQLBinlogConfig);
         importBuilder.setPrintTaskLog(true);
         importBuilder.setContinueOnError(false);
