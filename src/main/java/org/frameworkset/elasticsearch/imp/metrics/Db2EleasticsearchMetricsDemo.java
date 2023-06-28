@@ -139,6 +139,8 @@ public class Db2EleasticsearchMetricsDemo {
                     try {
                         //清除测试表,导入的时候回重建表，测试的时候加上为了看测试效果，实际线上环境不要删表
                         ElasticSearchHelper.getRestClientUtil().dropIndice("dbdemo");
+                        //指定集群数据源名称
+//                        ElasticSearchHelper.getRestClientUtil("default").dropIndice("dbdemo");
                     } catch (Exception e) {
                         logger.error("Drop indice dbdemo failed:",e);
                     }

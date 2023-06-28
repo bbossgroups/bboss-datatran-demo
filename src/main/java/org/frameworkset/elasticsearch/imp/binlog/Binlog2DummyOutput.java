@@ -49,6 +49,7 @@ public class Binlog2DummyOutput {
         importBuilder.setFlushInterval(10000L);
         //binlog插件配置开始​
         MySQLBinlogConfig mySQLBinlogConfig = new MySQLBinlogConfig();
+        mySQLBinlogConfig.setJoinToConnectTimeOut(20000L);
         mySQLBinlogConfig.setHost("192.168.137.1");
         mySQLBinlogConfig.setPort(3306);
         mySQLBinlogConfig.setDbUser("root");
@@ -101,5 +102,6 @@ public class Binlog2DummyOutput {
         importBuilder.setThreadCount(50);//设置批量导入线程池工作线程数量
         DataStream dataStream = importBuilder.builder();
         dataStream.execute();
+        logger.info("dataStream.executed");
     }
 }
