@@ -418,8 +418,8 @@ public class FileLog2ESWithMetricsDemo {
 				}*/
 				DateFormat dateFormat = SerialUtil.getDateFormateMeta().toDateFormat();
 //				Date optime = context.getDateValue("LOG_OPERTIME",dateFormat);
-//				context.addFieldValue("logOpertime",optime);
-				context.addFieldValue("newcollecttime",new Date());
+				context.addFieldValue("logOpertime",new Date());
+				context.addFieldValue("collecttime",new Date());
 
 				/**
 				 //关联查询数据,单值查询
