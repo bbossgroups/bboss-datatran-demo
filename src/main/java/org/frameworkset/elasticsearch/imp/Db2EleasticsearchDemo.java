@@ -194,18 +194,18 @@ public class Db2EleasticsearchDemo {
 				.setEsIdField("log_id")//设置文档主键，不设置，则自动产生文档id
 				.setDebugResponse(false)//设置是否将每次处理的reponse打印到日志文件中，默认false
 				.setDiscardBulkResponse(false);//设置是否需要批量处理的响应报文，不需要设置为false，true为需要，默认false
-		/**
+
 		 elasticsearchOutputConfig.setEsIdGenerator(new EsIdGenerator() {
 		 //如果指定EsIdGenerator，则根据下面的方法生成文档id，
 		 // 否则根据setEsIdField方法设置的字段值作为文档id，
 		 // 如果默认没有配置EsIdField和如果指定EsIdGenerator，则由es自动生成文档id
 
-		 @Override
-		 public Object genId(Context context) throws Exception {
-		 return SimpleStringUtil.getUUID();//返回null，则由es自动生成文档id
-		 }
+             @Override
+             public Object genId(Context context) throws Exception {
+                 return context.getValue("log_id")+"-" + context.getValue("log_id");
+             }
 		 });
-		 */
+
 //				.setIndexType("dbdemo") ;//es 7以后的版本不需要设置indexType，es7以前的版本必需设置indexType;
 //				.setRefreshOption("refresh")//可选项，null表示不实时刷新，importBuilder.setRefreshOption("refresh");表示实时刷新
 		/**
@@ -218,9 +218,9 @@ public class Db2EleasticsearchDemo {
 		/**
 		 * 设置IP地址信息库
 		 */
-		importBuilder.setGeoipDatabase("E:/workspace/hnai/terminal/geolite2/GeoLite2-City.mmdb");
-		importBuilder.setGeoipAsnDatabase("E:/workspace/hnai/terminal/geolite2/GeoLite2-ASN.mmdb");
-		importBuilder.setGeoip2regionDatabase("E:/workspace/hnai/terminal/geolite2/ip2region.db");
+		importBuilder.setGeoipDatabase("d:/geolite2/GeoLite2-City.mmdb");
+		importBuilder.setGeoipAsnDatabase("d:/geolite2/GeoLite2-ASN.mmdb");
+		importBuilder.setGeoip2regionDatabase("d:/geolite2/ip2region.db");
 
 		importBuilder
 //

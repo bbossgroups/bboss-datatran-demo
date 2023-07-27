@@ -15,36 +15,27 @@ package org.frameworkset.elasticsearch.imp;
  * limitations under the License.
  */
 
-import com.frameworkset.common.poolman.util.DBConf;
-import com.frameworkset.common.poolman.util.DBStartResult;
-import com.frameworkset.common.poolman.util.SQLManager;
 import com.frameworkset.util.SimpleStringUtil;
-import org.frameworkset.elasticsearch.ElasticSearchHelper;
 import org.frameworkset.spi.assemble.PropertiesUtil;
 import org.frameworkset.spi.geoip.IpInfo;
-import org.frameworkset.spi.remote.http.HttpRequestProxy;
-import org.frameworkset.spi.remote.http.HttpResourceStartResult;
-import org.frameworkset.tran.*;
+import org.frameworkset.tran.DataRefactor;
+import org.frameworkset.tran.DataStream;
+import org.frameworkset.tran.ExportResultHandler;
+import org.frameworkset.tran.TranMeta;
 import org.frameworkset.tran.config.ImportBuilder;
 import org.frameworkset.tran.context.Context;
-import org.frameworkset.tran.context.ImportContext;
 import org.frameworkset.tran.metrics.TaskMetrics;
 import org.frameworkset.tran.plugin.db.input.DBInputConfig;
 import org.frameworkset.tran.plugin.es.output.ElasticsearchOutputConfig;
 import org.frameworkset.tran.schedule.CallInterceptor;
 import org.frameworkset.tran.schedule.TaskContext;
 import org.frameworkset.tran.task.TaskCommand;
-import org.frameworkset.util.ResourceEnd;
-import org.frameworkset.util.ResourceStart;
-import org.frameworkset.util.ResourceStartResult;
 import org.frameworkset.util.TimeUtil;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.sqlite.SQLiteConfig;
 
 import java.util.Date;
-import java.util.LinkedHashMap;
-import java.util.Map;
 
 /**
  * <p>Description: 基于数字类型db-es一次性同步案例，同步处理程序，如需调试同步功能，直接运行main方法即可
@@ -55,10 +46,10 @@ import java.util.Map;
  * @author biaoping.yin
  * @version 1.0
  */
-public class Db2EleasticsearchOnceScheduleDateDemo {
-	private static Logger logger = LoggerFactory.getLogger(Db2EleasticsearchOnceScheduleDateDemo.class);
+public class Db2EleasticsearchOnceScheduleDateDemo1 {
+	private static Logger logger = LoggerFactory.getLogger(Db2EleasticsearchOnceScheduleDateDemo1.class);
 	public static void main(String args[]){
-		Db2EleasticsearchOnceScheduleDateDemo db2EleasticsearchDemo = new Db2EleasticsearchOnceScheduleDateDemo();
+		Db2EleasticsearchOnceScheduleDateDemo1 db2EleasticsearchDemo = new Db2EleasticsearchOnceScheduleDateDemo1();
 		//从配置文件application.properties中获取参数值
 		boolean dropIndice = PropertiesUtil.getPropertiesContainer("application.properties").getBooleanSystemEnvProperty("dropIndice",true);
 //		dbdemo.fullImportData(  dropIndice);
@@ -94,114 +85,15 @@ public class Db2EleasticsearchOnceScheduleDateDemo {
 				.setDbUser("root")
 				.setDbPassword("123456")
 				.setValidateSQL("select 1")
-				.setUsePool(true)
+                .setJdbcFetchSize(-2147483648)//使用mysql 缺省流处理机制
+				.setUsePool(false)//其实可以不用连接池
 				.setDbInitSize(5)
 				.setDbMinIdleSize(5)
 				.setDbMaxSize(10)
 				.setShowSql(true);//是否使用连接池;
 		importBuilder.setInputConfig(dbInputConfig);
 
-		//在任务数据抽取之前做一些初始化处理，例如：通过删表来做初始化操作
 
-		//在任务数据抽取之前做一些初始化处理，例如：通过删表来做初始化操作
-
-		importBuilder.setImportStartAction(new ImportStartAction() {
-			/**
-			 * 初始化之前执行的处理操作，比如后续初始化操作、数据处理过程中依赖的资源初始化
-			 * @param importContext
-			 */
-			@Override
-			public void startAction(ImportContext importContext) {
-
-
-				importContext.addResourceStart(new ResourceStart() {
-					@Override
-					public ResourceStartResult startResource() {
-						Map<String,Object> configs = new LinkedHashMap<>();
-						configs.put("http.poolNames","datatran");
-						configs.put("datatran.http.health","/health");
-						configs.put("datatran.http.hosts","192.168.137.1:808");
-						configs.put("datatran.http.timeoutConnection","5000");
-						configs.put("datatran.http.timeoutSocket","50000");
-						configs.put("datatran.http.connectionRequestTimeout","50000");
-						configs.put("datatran.http.maxTotal","200");
-						configs.put("datatran.http.defaultMaxPerRoute","100");
-						configs.put("datatran.http.failAllContinue","true");
-
-						return HttpRequestProxy.startHttpPools(configs);
-					}
-				});
-
-				importContext.addResourceStart(new ResourceStart() {
-					@Override
-					public ResourceStartResult startResource() {
-						DBConf tempConf = new DBConf();
-						tempConf.setPoolname("testStatus");
-						tempConf.setDriver("com.mysql.cj.jdbc.Driver");
-						tempConf.setJdbcurl("jdbc:mysql://192.168.137.1:3306/bboss?useUnicode=true&characterEncoding=utf-8&useSSL=false&rewriteBatchedStatements=true");
-
-						tempConf.setUsername("root");
-						tempConf.setPassword("123456");
-						tempConf.setValidationQuery("select 1");
-
-						tempConf.setInitialConnections(5);
-						tempConf.setMinimumSize(10);
-						tempConf.setMaximumSize(10);
-						tempConf.setUsepool(true);
-						tempConf.setShowsql(true);
-						tempConf.setJndiName("testStatus-jndi");
-
-						//# 控制map中的列名采用小写，默认为大写
-						tempConf.setColumnLableUpperCase(false);
-						//启动数据源
-						boolean result = SQLManager.startPool(tempConf);
-						ResourceStartResult resourceStartResult = null;
-						//记录启动的数据源信息，用户作业停止时释放数据源
-						if(result){
-							resourceStartResult = new DBStartResult();
-							resourceStartResult.addResourceStartResult("testStatus");
-						}
-						return resourceStartResult;
-					}
-				});
-
-			}
-
-			/**
-			 * 所有初始化操作完成后，导出数据之前执行的操作
-			 * @param importContext
-			 */
-			@Override
-			public void afterStartAction(ImportContext importContext) {
-				if(dropIndice) {
-					try {
-						//清除测试表,导入的时候回重建表，测试的时候加上为了看测试效果，实际线上环境不要删表
-						ElasticSearchHelper.getRestClientUtil().dropIndice("dbdemo");
-					} catch (Exception e) {
-						logger.error("Drop indice dbdemo failed:",e);
-					}
-				}
-			}
-		});
-
-		//任务结束后销毁初始化阶段自定义的http数据源
-		importBuilder.setImportEndAction(new ImportEndAction() {
-			@Override
-			public void endAction(ImportContext importContext, Exception e) {
-				//销毁初始化阶段自定义的数据源
-				importContext.destroyResources(new ResourceEnd() {
-					@Override
-					public void endResource(ResourceStartResult resourceStartResult) {
-						if(resourceStartResult instanceof HttpResourceStartResult) {//作业停止时，释放http服务数据源
-							HttpRequestProxy.stopHttpClients(resourceStartResult);
-						}
-						else if(resourceStartResult instanceof DBStartResult) { //作业停止时，释放db数据源
-							DataTranPluginImpl.stopDatasources((DBStartResult) resourceStartResult);
-						}
-					}
-				});
-			}
-		});
 
 
 //		importBuilder.addFieldMapping("LOG_CONTENT","message");
@@ -342,7 +234,7 @@ public class Db2EleasticsearchOnceScheduleDateDemo {
 				IpInfo ipInfo = context.getIpInfoByIp("219.133.80.136");
 				if(ipInfo != null)
 					context.addFieldValue("ipInfo", SimpleStringUtil.object2json(ipInfo));
-				HttpRequestProxy.sendJsonBody("datatran",ipInfo,"/httpservice/sendData.api");
+//				HttpRequestProxy.sendJsonBody("datatran",ipInfo,"/httpservice/sendData.api");
 
 				TranMeta tranMeta = context.getMetaData();
 				logger.info("tranMeta {}",tranMeta);

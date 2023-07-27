@@ -118,17 +118,17 @@ public class Db2EleasticsearchScheduleEndDateDemo {
 //		importBuilder.setSql("select * from td_sm_log ");
 		ElasticsearchOutputConfig elasticsearchOutputConfig = new ElasticsearchOutputConfig();
 		elasticsearchOutputConfig
-				.addTargetElasticsearch("elasticsearch.serverNames","default")
-				.addElasticsearchProperty("default.elasticsearch.rest.hostNames","192.168.137.1:9200")
-				.addElasticsearchProperty("default.elasticsearch.showTemplate","true")
-				.addElasticsearchProperty("default.elasticUser","elastic")
-				.addElasticsearchProperty("default.elasticPassword","changeme")
-				.addElasticsearchProperty("default.elasticsearch.failAllContinue","true")
-				.addElasticsearchProperty("default.http.timeoutSocket","60000")
-				.addElasticsearchProperty("default.http.timeoutConnection","40000")
-				.addElasticsearchProperty("default.http.connectionRequestTimeout","70000")
-				.addElasticsearchProperty("default.http.maxTotal","200")
-				.addElasticsearchProperty("default.http.defaultMaxPerRoute","100")
+				.addTargetElasticsearch("elasticsearch.serverNames","test")
+				.addElasticsearchProperty("test.elasticsearch.rest.hostNames","192.168.137.1:9200")
+				.addElasticsearchProperty("test.elasticsearch.showTemplate","true")
+				.addElasticsearchProperty("test.elasticUser","elastic")
+				.addElasticsearchProperty("test.elasticPassword","changeme")
+				.addElasticsearchProperty("test.elasticsearch.failAllContinue","true")
+				.addElasticsearchProperty("test.http.timeoutSocket","60000")
+				.addElasticsearchProperty("test.http.timeoutConnection","40000")
+				.addElasticsearchProperty("test.http.connectionRequestTimeout","70000")
+				.addElasticsearchProperty("test.http.maxTotal","200")
+				.addElasticsearchProperty("test.http.defaultMaxPerRoute","100")
 				.setIndex("dbdemo")
 				.setEsIdField("log_id")//设置文档主键，不设置，则自动产生文档id
 				.setDebugResponse(false)//设置是否将每次处理的reponse打印到日志文件中，默认false
@@ -157,9 +157,9 @@ public class Db2EleasticsearchScheduleEndDateDemo {
 		/**
 		 * 设置IP地址信息库
 		 */
-		importBuilder.setGeoipDatabase("E:/workspace/hnai/terminal/geolite2/GeoLite2-City.mmdb");
-		importBuilder.setGeoipAsnDatabase("E:/workspace/hnai/terminal/geolite2/GeoLite2-ASN.mmdb");
-		importBuilder.setGeoip2regionDatabase("E:/workspace/hnai/terminal/geolite2/ip2region.db");
+		importBuilder.setGeoipDatabase("d:/geolite2/GeoLite2-City.mmdb");
+		importBuilder.setGeoipAsnDatabase("d:/geolite2/GeoLite2-ASN.mmdb");
+		importBuilder.setGeoip2regionDatabase("d:/geolite2/ip2region.db");
 
 		importBuilder
 //
