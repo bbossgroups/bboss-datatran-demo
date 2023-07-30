@@ -202,7 +202,7 @@ public class Db2EleasticsearchDemo {
 
              @Override
              public Object genId(Context context) throws Exception {
-                 return context.getValue("log_id")+"-" + context.getValue("log_id");
+                 return context.getValue("log_id")+"-" + context.getValue("other_field");
              }
 		 });
 
