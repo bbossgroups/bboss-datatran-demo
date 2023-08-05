@@ -17,6 +17,7 @@ package org.frameworkset.elasticsearch.imp.metrics;
 
 import org.frameworkset.elasticsearch.ElasticSearchHelper;
 import org.frameworkset.elasticsearch.bulk.*;
+import org.frameworkset.elasticsearch.entity.ObjectHolder;
 import org.frameworkset.elasticsearch.serial.SerialUtil;
 import org.frameworkset.tran.*;
 import org.frameworkset.tran.config.ImportBuilder;
@@ -65,11 +66,13 @@ public class FileLog2ESWithMetricsDemo {
 			//清除测试表,导入的时候回重建表，测试的时候加上为了看测试效果，实际线上环境不要删表
 //			String repsonse = ElasticSearchHelper.getRestClientUtil().dropIndice("errorlog");
 			String repsonse = ElasticSearchHelper.getRestClientUtil().dropIndice("metrics-report");
+             repsonse = ElasticSearchHelper.getRestClientUtil().dropIndice("vops-loginmodulemetrics");
+             repsonse = ElasticSearchHelper.getRestClientUtil().dropIndice("vops-loginusermetrics");
 			logger.info(repsonse);
 		} catch (Exception e) {
 		}
 		ImportBuilder importBuilder = new ImportBuilder();
-		importBuilder.setBatchSize(40)//设置批量入库的记录数
+		importBuilder.setBatchSize(100)//设置批量入库的记录数
 				.setFetchSize(1000);//设置按批读取文件行数
 		//设置强制刷新检测空闲时间间隔，单位：毫秒，在空闲flushInterval后，还没有数据到来，强制将已经入列的数据进行存储操作，默认8秒,为0时关闭本机制
 		importBuilder.setFlushInterval(10000l);
@@ -90,66 +93,35 @@ public class FileLog2ESWithMetricsDemo {
 //				return splitDatas;
 //			}
 //		});
-		FileInputConfig config = new FileInputConfig();
-		config.setCharsetEncode("GB2312");
-		//.*.txt.[0-9]+$
-		//[17:21:32:388]
-//		config.addConfig(new FileConfig("D:\\ecslog",//指定目录
-//				"error-2021-03-27-1.log",//指定文件名称，可以是正则表达式
-//				"^\\[[0-9]{2}:[0-9]{2}:[0-9]{2}:[0-9]{3}\\]")//指定多行记录的开头识别标记，正则表达式
-//				.setCloseEOF(false)//已经结束的文件内容采集完毕后关闭文件对应的采集通道，后续不再监听对应文件的内容变化
-//				.setMaxBytes(1048576)//控制每条日志的最大长度，超过长度将被截取掉
-//				//.setStartPointer(1000l)//设置采集的起始位置，日志内容偏移量
-//				.addField("tag","error") //添加字段tag到记录中
-//				.setExcludeLines(new String[]{"\\[DEBUG\\]"}));//不采集debug日志
-
-//		config.addConfig(new FileConfig("D:\\workspace\\bbossesdemo\\filelog-elasticsearch\\",//指定目录
-//				"es.log",//指定文件名称，可以是正则表达式
-//				"^\\[[0-9]{2}:[0-9]{2}:[0-9]{2}:[0-9]{3}\\]")//指定多行记录的开头识别标记，正则表达式
-//				.setCloseEOF(false)//已经结束的文件内容采集完毕后关闭文件对应的采集通道，后续不再监听对应文件的内容变化
-//				.addField("tag","elasticsearch")//添加字段tag到记录中
-//				.setEnableInode(false)
-////				.setIncludeLines(new String[]{".*ERROR.*"})//采集包含ERROR的日志
-//				//.setExcludeLines(new String[]{".*endpoint.*"}))//采集不包含endpoint的日志
-//		);
-//		config.addConfig(new FileConfig("D:\\workspace\\bbossesdemo\\filelog-elasticsearch\\",//指定目录
-//						new FileFilter() {
-//							@Override
-//							public boolean accept(File dir, String name, FileConfig fileConfig) {
-//								//判断是否采集文件数据，返回true标识采集，false 不采集
-//								return name.equals("es.log");
-//							}
-//						},//指定文件过滤器
-//						"^\\[[0-9]{2}:[0-9]{2}:[0-9]{2}:[0-9]{3}\\]")//指定多行记录的开头识别标记，正则表达式
-//						.setCloseEOF(false)//已经结束的文件内容采集完毕后关闭文件对应的采集通道，后续不再监听对应文件的内容变化
-//						.addField("tag","elasticsearch")//添加字段tag到记录中
-//						.setEnableInode(false)
-////				.setIncludeLines(new String[]{".*ERROR.*"})//采集包含ERROR的日志
-//				//.setExcludeLines(new String[]{".*endpoint.*"}))//采集不包含endpoint的日志
-//		);
+		FileInputConfig fileInputConfig = new FileInputConfig();
+		fileInputConfig.setCharsetEncode("GB2312");
+        fileInputConfig.setMaxFilesThreshold(10);
         FileConfig fileConfig = new FileConfig();
-        fileConfig.setFieldSplit(";");//指定日志记录字段分割符
-        //指定字段映射配置
-        fileConfig.addCellMapping(0, "logOperTime");
+//        fileConfig.setFieldSplit(";");//指定日志记录字段分割符
+//        //指定字段映射配置
+//        fileConfig.addCellMapping(0, "logOperTime");
+//
+//        fileConfig.addCellMapping(1, "operModule");
+//        fileConfig.addCellMapping(2, "logOperuser");
 
-        fileConfig.addCellMapping(1, "operModule");
-        fileConfig.addCellMapping(2, "logOperuser");
-
-
-		config.addConfig(fileConfig.setSourcePath("D:\\logs")//指定目录
+		fileInputConfig.addConfig(fileConfig.setSourcePath("D:/logs/metrics-report")//指定目录
 										.setFileHeadLineRegular("^\\[[0-9]{4}-[0-9]{2}-[0-9]{2} [0-9]{2}:[0-9]{2}:[0-9]{2}:[0-9]{3}\\]")//指定多行记录的开头识别标记，正则表达式
 										.setFileFilter(new FileFilter() {
 											@Override
 											public boolean accept(FilterFileInfo fileInfo, FileConfig fileConfig) {
 												//判断是否采集文件数据，返回true标识采集，false 不采集
-												return fileInfo.getFileName().equals("metrics-report.log");
+												return fileInfo.getFileName().startsWith("metrics-report");
 											}
 										})//指定文件过滤器
 										.addField("tag","elasticsearch")//添加字段tag到记录中
-										.setEnableInode(false)
+										.setEnableInode(false).setCloseOlderTime(10*1000L)
 				//				.setIncludeLines(new String[]{".*ERROR.*"})//采集包含ERROR的日志
 								//.setExcludeLines(new String[]{".*endpoint.*"}))//采集不包含endpoint的日志
 						);
+        fileInputConfig.setCleanCompleteFiles(true);//删除已完成文件
+        fileInputConfig.setFileLiveTime(30 * 1000L);//已采集完成文件存活时间，超过这个时间的文件就会根据CleanCompleteFiles标记，进行清理操作，单位：毫秒
+        fileInputConfig.setRegistLiveTime(60 * 1000L);//已完成文件状态记录有效期，单位：毫秒
+        fileInputConfig.setScanOldRegistRecordInterval(30 * 1000L);//扫描过期已完成文件状态记录时间间隔，默认为1天，单位：毫秒
 
 //		config.addConfig("E:\\ELK\\data\\data3",".*.txt","^[0-9]{4}-[0-9]{2}-[0-9]{2}");
 		/**
@@ -187,9 +159,9 @@ public class FileLog2ESWithMetricsDemo {
 		 *
 		 * true 开启 false 关闭
 		 */
-		config.setEnableMeta(true);
+		fileInputConfig.setEnableMeta(true);
 
-		importBuilder.setInputConfig(config);
+		importBuilder.setInputConfig(fileInputConfig);
 		//指定elasticsearch数据源名称，在application.properties文件中配置，default为默认的es数据源名称
 		ElasticsearchOutputConfig elasticsearchOutputConfig = new ElasticsearchOutputConfig();
 		elasticsearchOutputConfig.setTargetElasticsearch("default");
@@ -204,46 +176,73 @@ public class FileLog2ESWithMetricsDemo {
         /**
          * 构建一个指标数据写入Elasticsearch批处理器
          */
-        BulkProcessorBuilder bulkProcessorBuilder = new BulkProcessorBuilder();
-        bulkProcessorBuilder.setBlockedWaitTimeout(-1)//指定bulk工作线程缓冲队列已满时后续添加的bulk处理排队等待时间，如果超过指定的时候bulk将被拒绝处理，单位：毫秒，默认为0，不拒绝并一直等待成功为止
-
-                .setBulkSizes(200)//按批处理数据记录数
-                .setFlushInterval(5000)//强制bulk操作时间，单位毫秒，如果自上次bulk操作flushInterval毫秒后，数据量没有满足BulkSizes对应的记录数，但是有记录，那么强制进行bulk处理
-
-                .setWarnMultsRejects(1000)//由于没有空闲批量处理工作线程，导致bulk处理操作出于阻塞等待排队中，BulkProcessor会对阻塞等待排队次数进行计数统计，bulk处理操作被每被阻塞排队WarnMultsRejects次（1000次），在日志文件中输出拒绝告警信息
-                .setWorkThreads(10)//bulk处理工作线程数
-                .setWorkThreadQueue(50)//bulk处理工作线程池缓冲队列大小
-                .setBulkProcessorName("detail_bulkprocessor")//工作线程名称，实际名称为BulkProcessorName-+线程编号
-                .setBulkRejectMessage("detail bulkprocessor")//bulk处理操作被每被拒绝WarnMultsRejects次（1000次），在日志文件中输出拒绝告警信息提示前缀
-                .setElasticsearch("default")//指定明细Elasticsearch集群数据源名称，bboss可以支持多数据源
-                .setFilterPath(BulkConfig.ERROR_FILTER_PATH)
-                .addBulkInterceptor(new BulkInterceptor() {
-                    public void beforeBulk(BulkCommand bulkCommand) {
-
-                    }
-
-                    public void afterBulk(BulkCommand bulkCommand, String result) {
-                        if(logger.isDebugEnabled()){
-                            logger.debug(result);
-                        }
-                    }
-
-                    public void exceptionBulk(BulkCommand bulkCommand, Throwable exception) {
-                        if(logger.isErrorEnabled()){
-                            logger.error("exceptionBulk",exception);
-                        }
-                    }
-                    public void errorBulk(BulkCommand bulkCommand, String result) {
-                        if(logger.isWarnEnabled()){
-                            logger.warn(result);
-                        }
-                    }
-                })//添加批量处理执行拦截器，可以通过addBulkInterceptor方法添加多个拦截器
-        ;
         /**
          * 构建BulkProcessor批处理组件，一般作为单实例使用，单实例多线程安全，可放心使用
          */
-        BulkProcessor bulkProcessor = bulkProcessorBuilder.build();//构建批处理作业组件
+        ObjectHolder<BulkProcessor> objectHolder = new ObjectHolder<BulkProcessor>();
+        importBuilder.setImportStartAction(new ImportStartAction() {
+            @Override
+            public void startAction(ImportContext importContext) {
+
+            }
+
+            @Override
+            public void afterStartAction(ImportContext importContext) {
+                /**
+                 * 构建一个指标数据写入Elasticsearch批处理器
+                 */
+                BulkProcessorBuilder bulkProcessorBuilder = new BulkProcessorBuilder();
+                bulkProcessorBuilder.setBlockedWaitTimeout(-1)//指定bulk工作线程缓冲队列已满时后续添加的bulk处理排队等待时间，如果超过指定的时候bulk将被拒绝处理，单位：毫秒，默认为0，不拒绝并一直等待成功为止
+
+                        .setBulkSizes(200)//按批处理数据记录数
+                        .setFlushInterval(5000)//强制bulk操作时间，单位毫秒，如果自上次bulk操作flushInterval毫秒后，数据量没有满足BulkSizes对应的记录数，但是有记录，那么强制进行bulk处理
+
+                        .setWarnMultsRejects(1000)//由于没有空闲批量处理工作线程，导致bulk处理操作出于阻塞等待排队中，BulkProcessor会对阻塞等待排队次数进行计数统计，bulk处理操作被每被阻塞排队WarnMultsRejects次（1000次），在日志文件中输出拒绝告警信息
+                        .setWorkThreads(10)//bulk处理工作线程数
+                        .setWorkThreadQueue(50)//bulk处理工作线程池缓冲队列大小
+                        .setBulkProcessorName("detail_bulkprocessor")//工作线程名称，实际名称为BulkProcessorName-+线程编号
+                        .setBulkRejectMessage("detail bulkprocessor")//bulk处理操作被每被拒绝WarnMultsRejects次（1000次），在日志文件中输出拒绝告警信息提示前缀
+                        .setElasticsearch("default")//指定明细Elasticsearch集群数据源名称，bboss可以支持多数据源
+                        .setFilterPath(BulkConfig.ERROR_FILTER_PATH)
+                        .addBulkInterceptor(new BulkInterceptor() {
+                            public void beforeBulk(BulkCommand bulkCommand) {
+
+                            }
+
+                            public void afterBulk(BulkCommand bulkCommand, String result) {
+                                if(logger.isDebugEnabled()){
+                                    logger.debug(result);
+                                }
+                            }
+
+                            public void exceptionBulk(BulkCommand bulkCommand, Throwable exception) {
+                                if(logger.isErrorEnabled()){
+                                    logger.error("exceptionBulk",exception);
+                                }
+                            }
+                            public void errorBulk(BulkCommand bulkCommand, String result) {
+                                if(logger.isWarnEnabled()){
+                                    logger.warn(result);
+                                }
+                            }
+                        })//添加批量处理执行拦截器，可以通过addBulkInterceptor方法添加多个拦截器
+                ;
+                /**
+                 * 构建BulkProcessor批处理组件，一般作为单实例使用，单实例多线程安全，可放心使用
+                 */
+                BulkProcessor bulkProcessor = bulkProcessorBuilder.build();//构建批处理作业组件
+                objectHolder.setObject(bulkProcessor);
+            }
+        });
+        //作业结束后销毁初始化阶段自定义的http数据源
+        importBuilder.setImportEndAction(new ImportEndAction() {
+            @Override
+            public void endAction(ImportContext importContext, Exception e) {
+
+                objectHolder.getObject().shutDown();//作业结束时关闭批处理器
+
+            }
+        });
         ETLMetrics keyMetrics = new ETLMetrics(Metrics.MetricsType_KeyTimeMetircs){
                 @Override
                 public void map(MapData mapData) {
@@ -295,7 +294,7 @@ public class FileLog2ESWithMetricsDemo {
                         esData.put("metric", testKeyMetric.getMetric());
                         esData.put("operModule", testKeyMetric.getOperModule());
                         esData.put("count", testKeyMetric.getCount());
-                        bulkProcessor.insertData("vops-loginmodulemetrics", esData);//将指标计算结果异步批量写入Elasticsearch表vops-loginmodulemetrics
+                        objectHolder.getObject().insertData("vops-loginmodulemetrics", esData);//将指标计算结果异步批量写入Elasticsearch表vops-loginmodulemetrics
                     }
                     else if(keyMetric instanceof LoginUserMetric) {
                         LoginUserMetric testKeyMetric = (LoginUserMetric) keyMetric;
@@ -307,22 +306,14 @@ public class FileLog2ESWithMetricsDemo {
                         esData.put("metric", testKeyMetric.getMetric());
                         esData.put("logUser", testKeyMetric.getLogUser());
                         esData.put("count", testKeyMetric.getCount());
-                        bulkProcessor.insertData("vops-loginusermetrics", esData);//将指标计算结果异步批量写入Elasticsearch表vops-loginusermetrics
+                        objectHolder.getObject().insertData("vops-loginusermetrics", esData);//将指标计算结果异步批量写入Elasticsearch表vops-loginusermetrics
                     }
 
                 });
 
             }
         };
-        //作业结束后销毁初始化阶段自定义的http数据源
-        importBuilder.setImportEndAction(new ImportEndAction() {
-            @Override
-            public void endAction(ImportContext importContext, Exception e) {
 
-                bulkProcessor.shutDown();//作业结束时关闭批处理器
-
-            }
-        });
 
         importBuilder.setDataTimeField("logOpertime");//设置指标统计时间维度字段
         importBuilder.addMetrics(keyMetrics);
@@ -331,7 +322,7 @@ public class FileLog2ESWithMetricsDemo {
 		//增量配置开始
 		importBuilder.setFromFirst(false);//setFromfirst(false)，如果作业停了，作业重启后从上次截止位置开始采集数据，
 		//setFromfirst(true) 如果作业停了，作业重启后，重新开始采集数据
-		importBuilder.setLastValueStorePath("fileloges_import");//记录上次采集的增量字段值的文件路径，作为下次增量（或者重启后）采集数据的起点，不同的任务这个路径要不一样
+		importBuilder.setLastValueStorePath("filelogesoldregistrecord_import");//记录上次采集的增量字段值的文件路径，作为下次增量（或者重启后）采集数据的起点，不同的任务这个路径要不一样
 		//增量配置结束
 
 		//映射和转换配置开始
@@ -373,7 +364,9 @@ public class FileLog2ESWithMetricsDemo {
 //					return;
 //				}
 //				System.out.println(data);
-
+                context.addFieldValue("logOperTime",new Date());
+                context.addFieldValue("operModule","系统管理");
+                context.addFieldValue("logOperuser","admin" );
 //				context.addFieldValue("author","duoduo");//将会覆盖全局设置的author变量
 				context.addFieldValue("title","解放");
 				context.addFieldValue("subtitle","小康");
@@ -461,7 +454,7 @@ public class FileLog2ESWithMetricsDemo {
 		 */
 		importBuilder.setParallel(true);//设置为多线程并行批量导入,false串行
 		importBuilder.setQueue(10);//设置批量导入线程池等待队列长度
-		importBuilder.setThreadCount(50);//设置批量导入线程池工作线程数量
+		importBuilder.setThreadCount(10);//设置批量导入线程池工作线程数量
 		importBuilder.setContinueOnError(true);//任务出现异常，是否继续执行作业：true（默认值）继续执行 false 中断作业执行
 		importBuilder.setPrintTaskLog(true);
 
