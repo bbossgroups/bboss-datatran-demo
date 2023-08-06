@@ -29,11 +29,14 @@ import org.frameworkset.tran.input.file.FileTaskContext;
 import org.frameworkset.tran.input.file.FilterFileInfo;
 import org.frameworkset.tran.metrics.entity.KeyMetric;
 import org.frameworkset.tran.metrics.entity.MapData;
+import org.frameworkset.tran.metrics.job.BuildMapDataContext;
 import org.frameworkset.tran.metrics.job.KeyMetricBuilder;
 import org.frameworkset.tran.metrics.job.Metrics;
 import org.frameworkset.tran.plugin.es.output.ElasticsearchOutputConfig;
 import org.frameworkset.tran.plugin.file.input.FileInputConfig;
+import org.frameworkset.tran.plugin.metrics.output.BuildMapData;
 import org.frameworkset.tran.plugin.metrics.output.ETLMetrics;
+import org.frameworkset.tran.plugin.metrics.output.MetricsData;
 import org.frameworkset.tran.schedule.CallInterceptor;
 import org.frameworkset.tran.schedule.TaskContext;
 import org.frameworkset.tran.task.TaskCommand;
@@ -54,8 +57,8 @@ import java.util.Map;
  * @author biaoping.yin
  * @version 1.0
  */
-public class FileLog2ESWithMetricsDemo {
-	private static Logger logger = LoggerFactory.getLogger(FileLog2ESWithMetricsDemo.class);
+public class FileLog2ESWithMetricsCustomDateTimeDemo {
+	private static Logger logger = LoggerFactory.getLogger(FileLog2ESWithMetricsCustomDateTimeDemo.class);
 	public static void main(String[] args){
 
 //		Pattern pattern = Pattern.compile("(?!.*(endpoint)).*");
@@ -255,7 +258,7 @@ public class FileLog2ESWithMetricsDemo {
                     if(operModule == null || operModule.equals("")){
                         operModule = "未知模块";
                     }
-                    String metricKey = operModule;
+                    String metricKey = "LoginModuleMetric:"+operModule;
                     metric(metricKey, mapData, new KeyMetricBuilder() {
                         @Override
                         public KeyMetric build() {
@@ -266,7 +269,7 @@ public class FileLog2ESWithMetricsDemo {
 
                     //指标2 按照用户统计操作次数
                     String logUser = (String) data.getData("logOperuser");
-                    metricKey = logUser;
+                    metricKey = "LoginUserMetric:"+logUser;
                     metric(metricKey, mapData, new KeyMetricBuilder() {
                         @Override
                         public KeyMetric build() {
@@ -315,6 +318,42 @@ public class FileLog2ESWithMetricsDemo {
             }
         };
 
+        /**
+         * 自定义创建不同指标的MapData,设置BuildMapData接口即可
+         */
+        keyMetrics.setBuildMapData(new BuildMapData() {
+            @Override
+            public MapData buildMapData(MetricsData metricsData) {
+                BuildMapDataContext buildMapDataContext = metricsData.getBuildMapDataContext();
+                CommonRecord record = metricsData.getCommonRecord();
+                MapData mapData = new MapData(){
+                    /**
+                     * 根据指标标识，获取指标的时间统计维度字段，默认返回dataTime字段logOpertime值，不同的指标需要指定不同的时间维度统计字段
+                     * 分析处理作业可以覆盖本方法，自定义获取时间维度字段值
+                     * @param metricsKey
+                     * @return
+                     */
+                    public Date metricsDataTime(String metricsKey) {
+                        if(metricsKey.startsWith("LoginUserMetric:") ) {//根据不同的key获取对应的指标时间字段,LoginUserMetric指标使用collectime时间字段作为时间维度
+                           Date time = (Date)record.getData("collectime");
+                           return time;
+                        }
+                        else {
+                            return (Date) record.getData("logOpertime");//其他指标使用全局logOpertime字段作为时间维度
+                        }
+                    }
+
+                };
+                mapData.setData(record);
+                mapData.setDayFormat(buildMapDataContext.getDayFormat());
+                mapData.setHourFormat(buildMapDataContext.getHourFormat());
+                mapData.setMinuteFormat(buildMapDataContext.getMinuteFormat());
+                mapData.setYearFormat(buildMapDataContext.getYearFormat());
+                mapData.setMonthFormat(buildMapDataContext.getMonthFormat());
+                mapData.setWeekFormat(buildMapDataContext.getWeekFormat());
+                return mapData;
+            }
+        });
 
 
         importBuilder.setDataTimeField("logOpertime");//设置默认指标统计时间维度字段
@@ -355,7 +394,6 @@ public class FileLog2ESWithMetricsDemo {
 
 				//直接获取文件元信息
 				Map fileMata = (Map)context.getValue("@filemeta");
-                Date timestamp = (Date)context.getValue("@timestamp");
 				/**
 				 * 文件插件支持的元信息字段如下：
 				 * hostIp：主机ip
