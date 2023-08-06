@@ -1,0 +1,77 @@
+<?xml version="1.0" encoding='UTF-8'?>
+<properties>
+    <description>
+        <![CDATA[
+            配置数据导入的dsl和sql
+         ]]>
+    </description>
+    <property name="vops-loginmodulemetrics-dsl">
+        <![CDATA[{
+                "settings": {
+                    "number_of_shards": 1,
+                    "number_of_replicas": 1,
+                    "index.refresh_interval": "5s"
+                },
+                "mappings": {
+                    "properties": {
+                      "count": {
+                        "type": "long"
+                      },
+                      "dataTime": {
+                        "type": "date"
+                      },
+                      "day": {
+                        "type": "keyword"
+                      },
+                      "hour": {
+                        "type": "keyword"
+                      },
+                      "metric": {
+                        "type": "keyword"
+                      },
+                      "minute": {
+                        "type": "keyword"
+                      },
+                      "operModule": {
+                        "type": "keyword"
+                      }
+                    }
+                  }
+            }]]>
+    </property>
+
+    <property name="vops-loginusermetrics-dsl">
+        <![CDATA[{
+                "settings": {
+                    "number_of_shards": 1,
+                    "number_of_replicas": 1,
+                    "index.refresh_interval": "5s"
+                },
+                "mappings": {
+                    "properties": {
+                      "count": {
+                        "type": "long"
+                      },
+                      "dataTime": {
+                        "type": "date"
+                      },
+                      "day": {
+                        "type": "keyword"
+                      },
+                      "hour": {
+                        "type": "keyword"
+                      },
+                      "logUser": {
+                        "type": "keyword"
+                      },
+                      "metric": {
+                        "type": "keyword"
+                      },
+                      "minute": {
+                        "type": "keyword"
+                      }
+                    }
+                }
+            }]]>
+    </property>
+</properties>

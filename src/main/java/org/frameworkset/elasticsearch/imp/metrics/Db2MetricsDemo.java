@@ -21,6 +21,7 @@ import org.frameworkset.elasticsearch.ElasticSearchHelper;
 import org.frameworkset.elasticsearch.boot.ElasticSearchBoot;
 import org.frameworkset.elasticsearch.boot.ElasticsearchBootResult;
 import org.frameworkset.elasticsearch.bulk.*;
+import org.frameworkset.elasticsearch.client.ClientInterface;
 import org.frameworkset.elasticsearch.entity.ObjectHolder;
 import org.frameworkset.spi.assemble.PropertiesUtil;
 import org.frameworkset.spi.geoip.IpInfo;
@@ -80,6 +81,7 @@ public class Db2MetricsDemo {
 		ImportBuilder importBuilder = new ImportBuilder() ;
 
 
+        //1.输入插件定义-数据库插件
 		DBInputConfig dbInputConfig = new DBInputConfig();
 		//指定导入数据的sql语句，必填项，可以设置自己的提取逻辑，
 		// 设置增量变量log_id，增量变量名称#[log_id]可以多次出现在sql语句的不同位置中，例如：
@@ -91,18 +93,21 @@ public class Db2MetricsDemo {
 		dbInputConfig.setSql("select * from td_sm_log where log_id > #[log_id]")
 				.setDbName("test")
 				.setDbDriver("com.mysql.cj.jdbc.Driver") //数据库驱动程序，必须导入相关数据库的驱动jar包
-				.setDbUrl("jdbc:mysql://192.168.137.1:3306/bboss?useUnicode=true&characterEncoding=utf-8&useSSL=false&rewriteBatchedStatements=true") //通过useCursorFetch=true启用mysql的游标fetch机制，否则会有严重的性能隐患，useCursorFetch必须和jdbcFetchSize参数配合使用，否则不会生效
+				.setDbUrl("jdbc:mysql://192.168.137.1:3306/bboss?useUnicode=true&characterEncoding=utf-8&useSSL=false&rewriteBatchedStatements=true")
 				.setDbUser("root")
 				.setDbPassword("123456")
 				.setValidateSQL("select 1")
-				.setUsePool(true)
+				.setUsePool(false)
 				.setDbInitSize(5)
 				.setDbMinIdleSize(5)
 				.setDbMaxSize(10)
 				.setShowSql(true);//是否使用连接池;
 		importBuilder.setInputConfig(dbInputConfig);
+
+        //2.指标输出插件定义准备工作
 /**
- * 在任务数据抽取之前做一些初始化处理，例如：通过删表来做初始化操作
+ * 在任务数据抽取之前做一些初始化处理，例如：通过删表来做初始化操作、创建表、初始化指标存储需要的Elasticsearch数据源、构建持久化指标数据的BulkProcessor批处理组件、
+ * 在作业关闭时做一些释放资源的处理，例如：关闭数据源和BulkProcessor批处理组件
  * 在作业初始化时，构建持久化指标数据的BulkProcessor批处理组件，一般作为单实例使用，单实例多线程安全，可放心使用
  * 将构建好的BulkProcessor实例放入ObjectHolder，以便后续持久化指标数据时使用
  *
@@ -143,18 +148,22 @@ public class Db2MetricsDemo {
 
             @Override
             public void afterStartAction(ImportContext importContext) {
+                ClientInterface clientInterface =  ElasticSearchHelper.getConfigRestClientUtil("metricsElasticsearch","indice.xml");
                 try {
                     //清除测试表,导入的时候回重建表，测试的时候加上为了看测试效果，实际线上环境不要删表
-                    ElasticSearchHelper.getRestClientUtil("metricsElasticsearch").dropIndice("vops-loginmodulemetrics");
+                    clientInterface.dropIndice("vops-loginmodulemetrics");
                 } catch (Exception e) {
                     logger.error("Drop indice  vops-loginmodulemetrics failed:",e);
                 }
                 try {
                     //清除测试表,导入的时候回重建表，测试的时候加上为了看测试效果，实际线上环境不要删表
-                    ElasticSearchHelper.getRestClientUtil("metricsElasticsearch").dropIndice("vops-loginusermetrics");
+                    clientInterface.dropIndice("vops-loginusermetrics");
                 } catch (Exception e) {
                     logger.error("Drop indice  vops-loginusermetrics failed:",e);
                 }
+                //创建Elasticsearch指标表
+                clientInterface.createIndiceMapping("vops-loginmodulemetrics","vops-loginmodulemetrics-dsl");
+                clientInterface.createIndiceMapping("vops-loginusermetrics","vops-loginusermetrics-dsl");
                 /**
                  * 构建一个指标数据写入Elasticsearch批处理器
                  */
@@ -226,7 +235,7 @@ public class Db2MetricsDemo {
         });
 
 
-
+        //3.指标定义
 
 		ETLMetrics keyMetrics = new ETLMetrics(Metrics.MetricsType_KeyTimeMetircs){
 			@Override
@@ -276,8 +285,8 @@ public class Db2MetricsDemo {
 				});
 				// key metrics中包含两个segment(S0,S1)
 				setSegmentBoundSize(5000000);
-				setTimeWindows(60 );//统计时间窗口
-                this.setTimeWindowType(MetricsConfig.TIME_WINDOW_TYPE_MINUTE);
+                setTimeWindowType(MetricsConfig.TIME_WINDOW_TYPE_MINUTE);
+                setTimeWindows(10);
 			}
 
             /**
@@ -319,19 +328,19 @@ public class Db2MetricsDemo {
 			}
 		};
 
+        //4.指标输出插件定义
         MetricsOutputConfig metricsOutputConfig = new MetricsOutputConfig();
 
-        metricsOutputConfig.setDataTimeField("logOpertime");
+        metricsOutputConfig.setDataTimeField("collecttime");
         metricsOutputConfig.addMetrics(keyMetrics);
 
 		importBuilder.setOutputConfig(metricsOutputConfig);
 
-
+        //5.作业基本配置
 		importBuilder
-//
-				.setUseJavaName(true) //可选项,将数据库字段名称转换为java驼峰规范的名称，true转换，false不转换，默认false，例如:doc_id -> docId
+                .setUseJavaName(true)
 				.setPrintTaskLog(true) //可选项，true 打印任务执行日志（耗时，处理记录数） false 不打印，默认值false
-				.setBatchSize(10);  //可选项,批量导入es的记录数，默认为-1，逐条处理，> 0时批量处理
+				.setBatchSize(100);  //可选项,批量导入记录数，默认为-1，逐条处理，> 0时批量处理
 
 		//定时任务配置，
 		importBuilder.setFixedRate(false)//参考jdk timer task文档对fixedRate的说明
@@ -377,17 +386,17 @@ public class Db2MetricsDemo {
 		importBuilder.addCallInterceptor(new CallInterceptor() {
 			@Override
 			public void preCall(TaskContext taskContext) {
-				System.out.println("preCall");
+                logger.info("preCall");
 			}
 
 			@Override
 			public void afterCall(TaskContext taskContext) {
-				System.out.println("afterCall");
+                logger.info("afterCall");
 			}
 
 			@Override
 			public void throwException(TaskContext taskContext, Throwable e) {
-				System.out.println("throwException");
+                logger.info("throwException");
 			}
 		});
         //		//设置任务执行拦截器结束，可以添加多个

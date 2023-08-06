@@ -15,8 +15,12 @@ package org.frameworkset.elasticsearch.imp.metrics;
  * limitations under the License.
  */
 
+import com.frameworkset.util.BaseSimpleStringUtil;
 import org.frameworkset.elasticsearch.ElasticSearchHelper;
+import org.frameworkset.elasticsearch.boot.ElasticSearchBoot;
+import org.frameworkset.elasticsearch.boot.ElasticsearchBootResult;
 import org.frameworkset.elasticsearch.bulk.*;
+import org.frameworkset.elasticsearch.client.ClientInterface;
 import org.frameworkset.elasticsearch.entity.ObjectHolder;
 import org.frameworkset.elasticsearch.serial.SerialUtil;
 import org.frameworkset.tran.*;
@@ -37,6 +41,9 @@ import org.frameworkset.tran.plugin.metrics.output.ETLMetrics;
 import org.frameworkset.tran.schedule.CallInterceptor;
 import org.frameworkset.tran.schedule.TaskContext;
 import org.frameworkset.tran.task.TaskCommand;
+import org.frameworkset.util.ResourceEnd;
+import org.frameworkset.util.ResourceStart;
+import org.frameworkset.util.ResourceStartResult;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
@@ -179,15 +186,58 @@ public class FileLog2ESWithMetricsDemo {
          * 将构建好的BulkProcessor实例放入ObjectHolder，以便后续持久化指标数据时使用
          *
          */
-        ObjectHolder<BulkProcessor> objectHolder = new ObjectHolder<BulkProcessor>();
+        ObjectHolder<BulkProcessor> bulkProcessorHolder = new ObjectHolder<BulkProcessor>();
         importBuilder.setImportStartAction(new ImportStartAction() {
             @Override
             public void startAction(ImportContext importContext) {
+                importContext.addResourceStart(new ResourceStart() {
+                    @Override
+                    public ResourceStartResult startResource() {
+                        //bulkprocessor Elasticsearch数据源，进行数据源初始化定义
+                        Map properties = new HashMap();
 
+                        //metricsElasticsearch为Elasitcsearch数据源名称,在指标数据的BulkProcessor批处理组件使用
+                        properties.put("elasticsearch.serverNames","metricsElasticsearch");
+
+                        /**
+                         * metricsElasticsearch数据源配置，每个配置项可以加metricsElasticsearch.前缀
+                         */
+
+
+                        properties.put("metricsElasticsearch.elasticsearch.rest.hostNames","192.168.137.1:9200");
+                        properties.put("metricsElasticsearch.elasticsearch.showTemplate","true");
+                        properties.put("metricsElasticsearch.elasticUser","elastic");
+                        properties.put("metricsElasticsearch.elasticPassword","changeme");
+                        properties.put("metricsElasticsearch.elasticsearch.failAllContinue","true");
+                        properties.put("metricsElasticsearch.http.timeoutSocket","60000");
+                        properties.put("metricsElasticsearch.http.timeoutConnection","40000");
+                        properties.put("metricsElasticsearch.http.connectionRequestTimeout","70000");
+                        properties.put("metricsElasticsearch.http.maxTotal","200");
+                        properties.put("metricsElasticsearch.http.defaultMaxPerRoute","100");
+                        return ElasticSearchBoot.boot(properties);
+
+                    }
+                });
             }
 
             @Override
             public void afterStartAction(ImportContext importContext) {
+                ClientInterface clientInterface =  ElasticSearchHelper.getConfigRestClientUtil("metricsElasticsearch","indice.xml");
+                try {
+                    //清除测试表,导入的时候回重建表，测试的时候加上为了看测试效果，实际线上环境不要删表
+                    clientInterface.dropIndice("vops-loginmodulemetrics");
+                } catch (Exception e) {
+                    logger.error("Drop indice  vops-loginmodulemetrics failed:",e);
+                }
+                try {
+                    //清除测试表,导入的时候回重建表，测试的时候加上为了看测试效果，实际线上环境不要删表
+                    clientInterface.dropIndice("vops-loginusermetrics");
+                } catch (Exception e) {
+                    logger.error("Drop indice  vops-loginusermetrics failed:",e);
+                }
+                //创建Elasticsearch指标表
+                clientInterface.createIndiceMapping("vops-loginmodulemetrics","vops-loginmodulemetrics-dsl");
+                clientInterface.createIndiceMapping("vops-loginusermetrics","vops-loginusermetrics-dsl");
                 /**
                  * 构建一个指标数据写入Elasticsearch批处理器
                  */
@@ -202,7 +252,7 @@ public class FileLog2ESWithMetricsDemo {
                         .setWorkThreadQueue(50)//bulk处理工作线程池缓冲队列大小
                         .setBulkProcessorName("detail_bulkprocessor")//工作线程名称，实际名称为BulkProcessorName-+线程编号
                         .setBulkRejectMessage("detail bulkprocessor")//bulk处理操作被每被拒绝WarnMultsRejects次（1000次），在日志文件中输出拒绝告警信息提示前缀
-                        .setElasticsearch("default")//指定明细Elasticsearch集群数据源名称，bboss可以支持多数据源
+                        .setElasticsearch("metricsElasticsearch")//指定明细Elasticsearch集群数据源名称，bboss可以支持多数据源
                         .setFilterPath(BulkConfig.ERROR_FILTER_PATH)
                         .addBulkInterceptor(new BulkInterceptor() {
                             public void beforeBulk(BulkCommand bulkCommand) {
@@ -231,7 +281,7 @@ public class FileLog2ESWithMetricsDemo {
                  * 构建BulkProcessor批处理组件，一般作为单实例使用，单实例多线程安全，可放心使用
                  */
                 BulkProcessor bulkProcessor = bulkProcessorBuilder.build();//构建批处理作业组件
-                objectHolder.setObject(bulkProcessor);
+                bulkProcessorHolder.setObject(bulkProcessor);
             }
         });
         //作业结束后，销毁初始化阶段创建的BulkProcessor，释放资源
@@ -239,7 +289,21 @@ public class FileLog2ESWithMetricsDemo {
             @Override
             public void endAction(ImportContext importContext, Exception e) {
 
-                objectHolder.getObject().shutDown();//作业结束时关闭批处理器
+                bulkProcessorHolder.getObject().shutDown();//作业结束时关闭批处理器
+
+                importContext.destroyResources(new ResourceEnd() {//关闭初始化阶段创建的Elasticsearch数据源，释放资源
+                    @Override
+                    public void endResource(ResourceStartResult resourceStartResult) {
+
+                        if (resourceStartResult instanceof ElasticsearchBootResult) {
+                            ElasticsearchBootResult elasticsearchBootResult = (ElasticsearchBootResult) resourceStartResult;
+                            Map<String, Object> initedElasticsearch = elasticsearchBootResult.getResourceStartResult();
+                            if (BaseSimpleStringUtil.isNotEmpty(initedElasticsearch)) {
+                                ElasticSearchHelper.stopElasticsearchs(initedElasticsearch);
+                            }
+                        }
+                    }
+                });
 
             }
         });
@@ -295,7 +359,7 @@ public class FileLog2ESWithMetricsDemo {
                         esData.put("metric", testKeyMetric.getMetric());
                         esData.put("operModule", testKeyMetric.getOperModule());
                         esData.put("count", testKeyMetric.getCount());
-                        objectHolder.getObject().insertData("vops-loginmodulemetrics", esData);//将指标计算结果异步批量写入Elasticsearch表vops-loginmodulemetrics
+                        bulkProcessorHolder.getObject().insertData("vops-loginmodulemetrics", esData);//将指标计算结果异步批量写入Elasticsearch表vops-loginmodulemetrics
                     }
                     else if(keyMetric instanceof LoginUserMetric) {
                         LoginUserMetric testKeyMetric = (LoginUserMetric) keyMetric;
@@ -307,7 +371,7 @@ public class FileLog2ESWithMetricsDemo {
                         esData.put("metric", testKeyMetric.getMetric());
                         esData.put("logUser", testKeyMetric.getLogUser());
                         esData.put("count", testKeyMetric.getCount());
-                        objectHolder.getObject().insertData("vops-loginusermetrics", esData);//将指标计算结果异步批量写入Elasticsearch表vops-loginusermetrics
+                        bulkProcessorHolder.getObject().insertData("vops-loginusermetrics", esData);//将指标计算结果异步批量写入Elasticsearch表vops-loginusermetrics
                     }
 
                 });
@@ -366,50 +430,13 @@ public class FileLog2ESWithMetricsDemo {
 				 * fileId：linux文件号，windows系统对应文件路径
 				 */
 				String filePath = (String)context.getMetaValue("filePath");
-				//可以根据文件路径信息设置不同的索引
-//				if(filePath.endsWith("metrics-report.log")) {
-//					context.setIndex("metrics-report");
-//				}
-//				else if(filePath.endsWith("es.log")){
-//					 context.setIndex("eslog");
-//				}
 
 
-//				context.addIgnoreFieldMapping("title");
-				//上述三个属性已经放置到docInfo中，如果无需再放置到索引文档中，可以忽略掉这些属性
-//				context.addIgnoreFieldMapping("author");
-
-//				//修改字段名称title为新名称newTitle，并且修改字段的值
-//				context.newName2ndData("title","newTitle",(String)context.getValue("title")+" append new Value");
-				/**
-				 * 获取ip对应的运营商和区域信息
-				 */
-				/**
-				IpInfo ipInfo = (IpInfo) context.getIpInfo(fvs[2]);
-				if(ipInfo != null)
-					context.addFieldValue("ipinfo", ipInfo);
-				else{
-					context.addFieldValue("ipinfo", "");
-				}*/
 				DateFormat dateFormat = SerialUtil.getDateFormateMeta().toDateFormat();
 //				Date optime = context.getDateValue("LOG_OPERTIME",dateFormat);
 				context.addFieldValue("logOpertime",new Date());
 				context.addFieldValue("collecttime",new Date());
 
-				/**
-				 //关联查询数据,单值查询
-				 Map headdata = SQLExecutor.queryObjectWithDBName(Map.class,context.getEsjdbc().getDbConfig().getDbName(),
-				 "select * from head where billid = ? and othercondition= ?",
-				 context.getIntegerValue("billid"),"otherconditionvalue");//多个条件用逗号分隔追加
-				 //将headdata中的数据,调用addFieldValue方法将数据加入当前es文档，具体如何构建文档数据结构根据需求定
-				 context.addFieldValue("headdata",headdata);
-				 //关联查询数据,多值查询
-				 List<Map> facedatas = SQLExecutor.queryListWithDBName(Map.class,context.getEsjdbc().getDbConfig().getDbName(),
-				 "select * from facedata where billid = ?",
-				 context.getIntegerValue("billid"));
-				 //将facedatas中的数据,调用addFieldValue方法将数据加入当前es文档，具体如何构建文档数据结构根据需求定
-				 context.addFieldValue("facedatas",facedatas);
-				 */
 			}
 		});
 		//映射和转换配置结束

@@ -15,8 +15,12 @@ package org.frameworkset.elasticsearch.imp.metrics;
  * limitations under the License.
  */
 
+import com.frameworkset.util.BaseSimpleStringUtil;
 import org.frameworkset.elasticsearch.ElasticSearchHelper;
+import org.frameworkset.elasticsearch.boot.ElasticSearchBoot;
+import org.frameworkset.elasticsearch.boot.ElasticsearchBootResult;
 import org.frameworkset.elasticsearch.bulk.*;
+import org.frameworkset.elasticsearch.client.ClientInterface;
 import org.frameworkset.elasticsearch.entity.ObjectHolder;
 import org.frameworkset.elasticsearch.serial.SerialUtil;
 import org.frameworkset.tran.*;
@@ -40,6 +44,9 @@ import org.frameworkset.tran.plugin.metrics.output.MetricsData;
 import org.frameworkset.tran.schedule.CallInterceptor;
 import org.frameworkset.tran.schedule.TaskContext;
 import org.frameworkset.tran.task.TaskCommand;
+import org.frameworkset.util.ResourceEnd;
+import org.frameworkset.util.ResourceStart;
+import org.frameworkset.util.ResourceStartResult;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
@@ -61,118 +68,13 @@ public class FileLog2ESWithMetricsCustomDateTimeDemo {
 	private static Logger logger = LoggerFactory.getLogger(FileLog2ESWithMetricsCustomDateTimeDemo.class);
 	public static void main(String[] args){
 
-//		Pattern pattern = Pattern.compile("(?!.*(endpoint)).*");
-//		logger.info(""+pattern.matcher("xxxxsssssssss").find());
-//		logger.info(""+pattern.matcher("xxxxsssendpointssssss").find());
-		try {
-//			ElasticSearchHelper.getRestClientUtil().getDocumentByField("xxxx-*","requestId","xxxx");
-			//清除测试表,导入的时候回重建表，测试的时候加上为了看测试效果，实际线上环境不要删表
-//			String repsonse = ElasticSearchHelper.getRestClientUtil().dropIndice("errorlog");
-			String repsonse = ElasticSearchHelper.getRestClientUtil().dropIndice("metrics-report");
-             repsonse = ElasticSearchHelper.getRestClientUtil().dropIndice("vops-loginmodulemetrics");
-             repsonse = ElasticSearchHelper.getRestClientUtil().dropIndice("vops-loginusermetrics");
-			logger.info(repsonse);
-		} catch (Exception e) {
-		}
+
 		ImportBuilder importBuilder = new ImportBuilder();
 		importBuilder.setBatchSize(100)//设置批量入库的记录数
 				.setFetchSize(1000);//设置按批读取文件行数
 		//设置强制刷新检测空闲时间间隔，单位：毫秒，在空闲flushInterval后，还没有数据到来，强制将已经入列的数据进行存储操作，默认8秒,为0时关闭本机制
 		importBuilder.setFlushInterval(10000l);
-//		importBuilder.setSplitFieldName("@message");
-//		importBuilder.setSplitHandler(new SplitHandler() {
-//			@Override
-//			public List<KeyMap<String, Object>> splitField(TaskContext taskContext,
-//														   Record record, Object splitValue) {
-//				Map<String,Object > data = (Map<String, Object>) record.getData();
-//				List<KeyMap<String, Object>> splitDatas = new ArrayList<>();
-//				//模拟将数据切割为10条记录
-//				for(int i = 0 ; i < 10; i ++){
-//					KeyMap<String, Object> d = new KeyMap<String, Object>();
-//					d.put("message",i+"-"+(String)data.get("@message"));
-////					d.setKey(SimpleStringUtil.getUUID());//如果是往kafka推送数据，可以设置推送的key
-//					splitDatas.add(d);
-//				}
-//				return splitDatas;
-//			}
-//		});
-		FileInputConfig fileInputConfig = new FileInputConfig();
-		fileInputConfig.setCharsetEncode("GB2312");
-        fileInputConfig.setMaxFilesThreshold(10);
-        FileConfig fileConfig = new FileConfig();
-//        fileConfig.setFieldSplit(";");//指定日志记录字段分割符
-//        //指定字段映射配置
-//        fileConfig.addCellMapping(0, "logOperTime");
-//
-//        fileConfig.addCellMapping(1, "operModule");
-//        fileConfig.addCellMapping(2, "logOperuser");
 
-		fileInputConfig.addConfig(fileConfig.setSourcePath("D:/logs/metrics-report")//指定目录
-										.setFileHeadLineRegular("^\\[[0-9]{4}-[0-9]{2}-[0-9]{2} [0-9]{2}:[0-9]{2}:[0-9]{2}:[0-9]{3}\\]")//指定多行记录的开头识别标记，正则表达式
-										.setFileFilter(new FileFilter() {
-											@Override
-											public boolean accept(FilterFileInfo fileInfo, FileConfig fileConfig) {
-												//判断是否采集文件数据，返回true标识采集，false 不采集
-												return fileInfo.getFileName().startsWith("metrics-report");
-											}
-										})//指定文件过滤器
-										.addField("tag","elasticsearch")//添加字段tag到记录中
-										.setEnableInode(false).setCloseOlderTime(10*1000L)
-				//				.setIncludeLines(new String[]{".*ERROR.*"})//采集包含ERROR的日志
-								//.setExcludeLines(new String[]{".*endpoint.*"}))//采集不包含endpoint的日志
-						);
-        fileInputConfig.setCleanCompleteFiles(true);//删除已完成文件
-        fileInputConfig.setFileLiveTime(30 * 1000L);//已采集完成文件存活时间，超过这个时间的文件就会根据CleanCompleteFiles标记，进行清理操作，单位：毫秒
-        fileInputConfig.setRegistLiveTime(60 * 1000L);//已完成文件状态记录有效期，单位：毫秒
-        fileInputConfig.setScanOldRegistRecordInterval(30 * 1000L);//扫描过期已完成文件状态记录时间间隔，默认为1天，单位：毫秒
-
-//		config.addConfig("E:\\ELK\\data\\data3",".*.txt","^[0-9]{4}-[0-9]{2}-[0-9]{2}");
-		/**
-		 * 启用元数据信息到记录中，元数据信息以map结构方式作为@filemeta字段值添加到记录中，文件插件支持的元信息字段如下：
-		 * hostIp：主机ip
-		 * hostName：主机名称
-		 * filePath： 文件路径
-		 * timestamp：采集的时间戳
-		 * pointer：记录对应的截止文件指针,long类型
-		 * fileId：linux文件号，windows系统对应文件路径
-		 * 例如：
-		 * {
-		 *   "_index": "filelog",
-		 *   "_type": "_doc",
-		 *   "_id": "HKErgXgBivowv_nD0Jhn",
-		 *   "_version": 1,
-		 *   "_score": null,
-		 *   "_source": {
-		 *     "title": "解放",
-		 *     "subtitle": "小康",
-		 *     "ipinfo": "",
-		 *     "newcollecttime": "2021-03-30T03:27:04.546Z",
-		 *     "author": "张无忌",
-		 *     "@filemeta": {
-		 *       "path": "D:\\ecslog\\error-2021-03-27-1.log",
-		 *       "hostname": "",
-		 *       "pointer": 3342583,
-		 *       "hostip": "",
-		 *       "timestamp": 1617074824542,
-		 *       "fileId": "D:/ecslog/error-2021-03-27-1.log"
-		 *     },
-		 *     "message": "[18:04:40:161] [INFO] - org.frameworkset.tran.schedule.ScheduleService.externalTimeSchedule(ScheduleService.java:192) - Execute schedule job Take 3 ms"
-		 *   }
-		 * }
-		 *
-		 * true 开启 false 关闭
-		 */
-		fileInputConfig.setEnableMeta(true);
-
-		importBuilder.setInputConfig(fileInputConfig);
-		//指定elasticsearch数据源名称，在application.properties文件中配置，default为默认的es数据源名称
-		ElasticsearchOutputConfig elasticsearchOutputConfig = new ElasticsearchOutputConfig();
-		elasticsearchOutputConfig.setTargetElasticsearch("default");
-		//指定索引名称，这里采用的是elasticsearch 7以上的版本进行测试，不需要指定type
-		elasticsearchOutputConfig.setIndex("metrics-report");
-		//指定索引类型，这里采用的是elasticsearch 7以上的版本进行测试，不需要指定type
-		//elasticsearchOutputConfig.setIndexType("idxtype");
-		importBuilder.setOutputConfig(elasticsearchOutputConfig);
 
 
         //流处理配置开始
@@ -182,15 +84,58 @@ public class FileLog2ESWithMetricsCustomDateTimeDemo {
          * 将构建好的BulkProcessor实例放入ObjectHolder，以便后续持久化指标数据时使用
          *
          */
-        ObjectHolder<BulkProcessor> objectHolder = new ObjectHolder<BulkProcessor>();
+        ObjectHolder<BulkProcessor> bulkProcessorHolder = new ObjectHolder<BulkProcessor>();
         importBuilder.setImportStartAction(new ImportStartAction() {
             @Override
             public void startAction(ImportContext importContext) {
+                importContext.addResourceStart(new ResourceStart() {
+                    @Override
+                    public ResourceStartResult startResource() {
+                        //bulkprocessor Elasticsearch数据源，进行数据源初始化定义
+                        Map properties = new HashMap();
 
+                        //metricsElasticsearch为Elasitcsearch数据源名称,在指标数据的BulkProcessor批处理组件使用
+                        properties.put("elasticsearch.serverNames","metricsElasticsearch");
+
+                        /**
+                         * metricsElasticsearch数据源配置，每个配置项可以加metricsElasticsearch.前缀
+                         */
+
+
+                        properties.put("metricsElasticsearch.elasticsearch.rest.hostNames","192.168.137.1:9200");
+                        properties.put("metricsElasticsearch.elasticsearch.showTemplate","true");
+                        properties.put("metricsElasticsearch.elasticUser","elastic");
+                        properties.put("metricsElasticsearch.elasticPassword","changeme");
+                        properties.put("metricsElasticsearch.elasticsearch.failAllContinue","true");
+                        properties.put("metricsElasticsearch.http.timeoutSocket","60000");
+                        properties.put("metricsElasticsearch.http.timeoutConnection","40000");
+                        properties.put("metricsElasticsearch.http.connectionRequestTimeout","70000");
+                        properties.put("metricsElasticsearch.http.maxTotal","200");
+                        properties.put("metricsElasticsearch.http.defaultMaxPerRoute","100");
+                        return ElasticSearchBoot.boot(properties);
+
+                    }
+                });
             }
 
             @Override
             public void afterStartAction(ImportContext importContext) {
+                ClientInterface clientInterface =  ElasticSearchHelper.getConfigRestClientUtil("metricsElasticsearch","indice.xml");
+                try {
+                    //清除测试表,导入的时候回重建表，测试的时候加上为了看测试效果，实际线上环境不要删表
+                    clientInterface.dropIndice("vops-loginmodulemetrics");
+                } catch (Exception e) {
+                    logger.error("Drop indice  vops-loginmodulemetrics failed:",e);
+                }
+                try {
+                    //清除测试表,导入的时候回重建表，测试的时候加上为了看测试效果，实际线上环境不要删表
+                    clientInterface.dropIndice("vops-loginusermetrics");
+                } catch (Exception e) {
+                    logger.error("Drop indice  vops-loginusermetrics failed:",e);
+                }
+                //创建Elasticsearch指标表
+                clientInterface.createIndiceMapping("vops-loginmodulemetrics","vops-loginmodulemetrics-dsl");
+                clientInterface.createIndiceMapping("vops-loginusermetrics","vops-loginusermetrics-dsl");
                 /**
                  * 构建一个指标数据写入Elasticsearch批处理器
                  */
@@ -205,7 +150,7 @@ public class FileLog2ESWithMetricsCustomDateTimeDemo {
                         .setWorkThreadQueue(50)//bulk处理工作线程池缓冲队列大小
                         .setBulkProcessorName("detail_bulkprocessor")//工作线程名称，实际名称为BulkProcessorName-+线程编号
                         .setBulkRejectMessage("detail bulkprocessor")//bulk处理操作被每被拒绝WarnMultsRejects次（1000次），在日志文件中输出拒绝告警信息提示前缀
-                        .setElasticsearch("default")//指定明细Elasticsearch集群数据源名称，bboss可以支持多数据源
+                        .setElasticsearch("metricsElasticsearch")//指定明细Elasticsearch集群数据源名称，bboss可以支持多数据源
                         .setFilterPath(BulkConfig.ERROR_FILTER_PATH)
                         .addBulkInterceptor(new BulkInterceptor() {
                             public void beforeBulk(BulkCommand bulkCommand) {
@@ -234,7 +179,7 @@ public class FileLog2ESWithMetricsCustomDateTimeDemo {
                  * 构建BulkProcessor批处理组件，一般作为单实例使用，单实例多线程安全，可放心使用
                  */
                 BulkProcessor bulkProcessor = bulkProcessorBuilder.build();//构建批处理作业组件
-                objectHolder.setObject(bulkProcessor);
+                bulkProcessorHolder.setObject(bulkProcessor);
             }
         });
         //作业结束后，销毁初始化阶段创建的BulkProcessor，释放资源
@@ -242,7 +187,21 @@ public class FileLog2ESWithMetricsCustomDateTimeDemo {
             @Override
             public void endAction(ImportContext importContext, Exception e) {
 
-                objectHolder.getObject().shutDown();//作业结束时关闭批处理器
+                bulkProcessorHolder.getObject().shutDown();//作业结束时关闭批处理器
+
+                importContext.destroyResources(new ResourceEnd() {//关闭初始化阶段创建的Elasticsearch数据源，释放资源
+                    @Override
+                    public void endResource(ResourceStartResult resourceStartResult) {
+
+                        if (resourceStartResult instanceof ElasticsearchBootResult) {
+                            ElasticsearchBootResult elasticsearchBootResult = (ElasticsearchBootResult) resourceStartResult;
+                            Map<String, Object> initedElasticsearch = elasticsearchBootResult.getResourceStartResult();
+                            if (BaseSimpleStringUtil.isNotEmpty(initedElasticsearch)) {
+                                ElasticSearchHelper.stopElasticsearchs(initedElasticsearch);
+                            }
+                        }
+                    }
+                });
 
             }
         });
@@ -298,7 +257,7 @@ public class FileLog2ESWithMetricsCustomDateTimeDemo {
                         esData.put("metric", testKeyMetric.getMetric());
                         esData.put("operModule", testKeyMetric.getOperModule());
                         esData.put("count", testKeyMetric.getCount());
-                        objectHolder.getObject().insertData("vops-loginmodulemetrics", esData);//将指标计算结果异步批量写入Elasticsearch表vops-loginmodulemetrics
+                        bulkProcessorHolder.getObject().insertData("vops-loginmodulemetrics", esData);//将指标计算结果异步批量写入Elasticsearch表vops-loginmodulemetrics
                     }
                     else if(keyMetric instanceof LoginUserMetric) {
                         LoginUserMetric testKeyMetric = (LoginUserMetric) keyMetric;
@@ -310,7 +269,7 @@ public class FileLog2ESWithMetricsCustomDateTimeDemo {
                         esData.put("metric", testKeyMetric.getMetric());
                         esData.put("logUser", testKeyMetric.getLogUser());
                         esData.put("count", testKeyMetric.getCount());
-                        objectHolder.getObject().insertData("vops-loginusermetrics", esData);//将指标计算结果异步批量写入Elasticsearch表vops-loginusermetrics
+                        bulkProcessorHolder.getObject().insertData("vops-loginusermetrics", esData);//将指标计算结果异步批量写入Elasticsearch表vops-loginusermetrics
                     }
 
                 });
@@ -358,6 +317,49 @@ public class FileLog2ESWithMetricsCustomDateTimeDemo {
 
         importBuilder.setDataTimeField("logOpertime");//设置默认指标统计时间维度字段
         importBuilder.addMetrics(keyMetrics);
+
+        //数据输入配置
+        FileInputConfig fileInputConfig = new FileInputConfig();
+        fileInputConfig.setCharsetEncode("GB2312");
+        fileInputConfig.setMaxFilesThreshold(10);
+        FileConfig fileConfig = new FileConfig();
+//        fileConfig.setFieldSplit(";");//指定日志记录字段分割符
+//        //指定字段映射配置
+//        fileConfig.addCellMapping(0, "logOperTime");
+//
+//        fileConfig.addCellMapping(1, "operModule");
+//        fileConfig.addCellMapping(2, "logOperuser");
+
+        fileInputConfig.addConfig(fileConfig.setSourcePath("D:/logs/metrics-report")//指定目录
+                        .setFileHeadLineRegular("^\\[[0-9]{4}-[0-9]{2}-[0-9]{2} [0-9]{2}:[0-9]{2}:[0-9]{2}:[0-9]{3}\\]")//指定多行记录的开头识别标记，正则表达式
+                        .setFileFilter(new FileFilter() {
+                            @Override
+                            public boolean accept(FilterFileInfo fileInfo, FileConfig fileConfig) {
+                                //判断是否采集文件数据，返回true标识采集，false 不采集
+                                return fileInfo.getFileName().startsWith("metrics-report");
+                            }
+                        })//指定文件过滤器
+                        .addField("tag","elasticsearch")//添加字段tag到记录中
+                        .setEnableInode(false).setCloseOlderTime(10*1000L)
+                //				.setIncludeLines(new String[]{".*ERROR.*"})//采集包含ERROR的日志
+                //.setExcludeLines(new String[]{".*endpoint.*"}))//采集不包含endpoint的日志
+        );
+        fileInputConfig.setCleanCompleteFiles(true);//删除已完成文件
+        fileInputConfig.setFileLiveTime(30 * 1000L);//已采集完成文件存活时间，超过这个时间的文件就会根据CleanCompleteFiles标记，进行清理操作，单位：毫秒
+        fileInputConfig.setRegistLiveTime(60 * 1000L);//已完成文件状态记录有效期，单位：毫秒
+        fileInputConfig.setScanOldRegistRecordInterval(30 * 1000L);//扫描过期已完成文件状态记录时间间隔，默认为1天，单位：毫秒
+
+        fileInputConfig.setEnableMeta(true);
+
+        importBuilder.setInputConfig(fileInputConfig);
+        //数据输出配置，指定elasticsearch数据源名称
+        ElasticsearchOutputConfig elasticsearchOutputConfig = new ElasticsearchOutputConfig();
+        elasticsearchOutputConfig.setTargetElasticsearch("metricsElasticsearch");
+        //指定索引名称，这里采用的是elasticsearch 7以上的版本进行测试，不需要指定type
+        elasticsearchOutputConfig.setIndex("metrics-report");
+        //指定索引类型，这里采用的是elasticsearch 7以上的版本进行测试，不需要指定type
+        //elasticsearchOutputConfig.setIndexType("idxtype");
+        importBuilder.setOutputConfig(elasticsearchOutputConfig);
         //流处理配置结束
 
 		//增量配置开始
