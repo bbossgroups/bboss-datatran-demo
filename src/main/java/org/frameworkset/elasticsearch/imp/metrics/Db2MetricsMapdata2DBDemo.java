@@ -19,8 +19,7 @@ import com.frameworkset.common.poolman.BatchHandler;
 import com.frameworkset.common.poolman.SQLExecutor;
 import com.frameworkset.util.SimpleStringUtil;
 import org.frameworkset.bulk.*;
-import org.frameworkset.elasticsearch.ElasticSearchHelper;
-import org.frameworkset.elasticsearch.boot.ElasticSearchBoot;
+import org.frameworkset.elasticsearch.entity.ObjectHolder;
 import org.frameworkset.spi.assemble.PropertiesUtil;
 import org.frameworkset.spi.geoip.IpInfo;
 import org.frameworkset.tran.*;
@@ -82,34 +81,164 @@ public class Db2MetricsMapdata2DBDemo {
 		//在任务数据抽取之前做一些初始化处理，例如：通过删表来做初始化操作
 
 
+/**
+ * 构建BulkProcessor批处理组件，一般作为单实例使用，单实例多线程安全，可放心使用
+ */
+        ObjectHolder<CommonBulkProcessor> objectHolder = new ObjectHolder<CommonBulkProcessor>();
         importBuilder.setImportStartAction(new ImportStartAction() {
-            /**
-             * 初始化之前执行的处理操作，比如后续初始化操作、数据处理过程中依赖的资源初始化
-             * @param importContext
-             */
             @Override
             public void startAction(ImportContext importContext) {
+
             }
 
-            /**
-             * 所有初始化操作完成后，导出数据之前执行的操作
-             * @param importContext
-             */
             @Override
             public void afterStartAction(ImportContext importContext) {
 
-                try {
-                    //清除测试表,导入的时候回重建表，测试的时候加上为了看测试效果，实际线上环境不要删表
-                    ElasticSearchHelper.getRestClientUtil().dropIndice("vops-loginmodulemetrics");
-                } catch (Exception e) {
-                    logger.error("Drop indice  vops-loginmodulemetrics failed:",e);
-                }
-                try {
-                    //清除测试表,导入的时候回重建表，测试的时候加上为了看测试效果，实际线上环境不要删表
-                    ElasticSearchHelper.getRestClientUtil().dropIndice("vops-loginusermetrics");
-                } catch (Exception e) {
-                    logger.error("Drop indice  vops-loginusermetrics failed:",e);
-                }
+
+
+                int bulkSize = 150;
+                int workThreads = 5;
+                int workThreadQueue = 100;
+                //定义BulkProcessor批处理组件构建器
+                CommonBulkProcessorBuilder bulkProcessorBuilder = new CommonBulkProcessorBuilder();
+                bulkProcessorBuilder.setBlockedWaitTimeout(-1)//指定bulk工作线程缓冲队列已满时后续添加的bulk处理排队等待时间，如果超过指定的时候bulk将被拒绝处理，单位：毫秒，默认为0，不拒绝并一直等待成功为止
+
+                        .setBulkSizes(bulkSize)//按批处理数据记录数
+                        .setFlushInterval(5000)//强制bulk操作时间，单位毫秒，如果自上次bulk操作flushInterval毫秒后，数据量没有满足BulkSizes对应的记录数，但是有记录，那么强制进行bulk处理
+
+                        .setWarnMultsRejects(1000)//由于没有空闲批量处理工作线程，导致bulk处理操作出于阻塞等待排队中，BulkProcessor会对阻塞等待排队次数进行计数统计，bulk处理操作被每被阻塞排队WarnMultsRejects次（1000次），在日志文件中输出拒绝告警信息
+                        .setWorkThreads(workThreads)//bulk处理工作线程数
+                        .setWorkThreadQueue(workThreadQueue)//bulk处理工作线程池缓冲队列大小
+                        .setBulkProcessorName("db_bulkprocessor")//工作线程名称，实际名称为BulkProcessorName-+线程编号
+                        .setBulkRejectMessage("db bulkprocessor ")//bulk处理操作被每被拒绝WarnMultsRejects次（1000次），在日志文件中输出拒绝告警信息提示前缀
+                        .addBulkInterceptor(new CommonBulkInterceptor() {// 添加异步处理结果回调函数
+                            /**
+                             * 执行前回调方法
+                             * @param bulkCommand
+                             */
+                            public void beforeBulk(CommonBulkCommand bulkCommand) {
+
+                            }
+
+                            /**
+                             * 执行成功回调方法
+                             * @param bulkCommand
+                             * @param result
+                             */
+                            public void afterBulk(CommonBulkCommand bulkCommand, BulkResult result) {
+                                if(logger.isDebugEnabled()){
+//                           logger.debug(result.getResult());
+                                }
+                            }
+
+                            /**
+                             * 执行异常回调方法
+                             * @param bulkCommand
+                             * @param exception
+                             */
+                            public void exceptionBulk(CommonBulkCommand bulkCommand, Throwable exception) {
+                                if(logger.isErrorEnabled()){
+                                    logger.error("exceptionBulk",exception);
+                                }
+                            }
+
+                            /**
+                             * 执行过程中部分数据有问题回调方法
+                             * @param bulkCommand
+                             * @param result
+                             */
+                            public void errorBulk(CommonBulkCommand bulkCommand, BulkResult result) {
+                                if(logger.isWarnEnabled()){
+//                            logger.warn(result);
+                                }
+                            }
+                        })//添加批量处理执行拦截器，可以通过addBulkInterceptor方法添加多个拦截器
+                        /**
+                         * 设置执行数据批处理接口，实现对数据的异步批处理功能逻辑
+                         */
+                        .setBulkAction(new BulkAction() {
+                            public BulkResult execute(CommonBulkCommand command) {
+                                List<CommonBulkData> bulkDataList = command.getBatchBulkDatas();//拿出要进行批处理操作的数据
+                                List<Map> logUserMetrics = new ArrayList<>();
+                                List<Map> logModuleMetrics = new ArrayList<>();
+                                for(int i = 0; i < bulkDataList.size(); i ++){
+                                    CommonBulkData commonBulkData = bulkDataList.get(i);
+                                    Map data = (Map)commonBulkData.getData();
+                                    if(data.get("operModule") != null){
+                                        logModuleMetrics.add(data);
+                                    }
+                                    else{
+                                        logUserMetrics.add(data);
+                                    }
+                                    /**
+                                     * 可以根据操作类型，对数据进行相应处理
+                                     */
+//                            if(commonBulkData.getType() == CommonBulkData.INSERT) 新增记录
+//                            if(commonBulkData.getType() == CommonBulkData.UPDATE) 修改记录
+//                            if(commonBulkData.getType() == CommonBulkData.DELETE) 删除记录
+
+                                }
+                                BulkResult bulkResult = new BulkResult();//构建批处理操作结果对象
+                                try {
+                                    //调用数据库dao executor，将数据批量写入数据库，对应的sql语句addPositionUrl在xml配置文件dbbulktest.xml中定义
+
+
+                                    if(logUserMetrics.size() > 0) {
+                                        //直接使用dbinput插件配置的数据源test，可以参考文档自定义数据库数据源
+                                        SQLExecutor.executeBatch("test","insert into logusermetrics(dataTime,hour,minute,day,metric,logUser,count) values(?,?,?,?,?,?,?)", logUserMetrics, 150, new BatchHandler<Map>() {
+                                            public void handler(PreparedStatement stmt, Map record, int i) throws SQLException {
+                                                stmt.setTimestamp(1, new java.sql.Timestamp(((Date)record.get("dataTime")).getTime()));
+                                                stmt.setString(2, (String)record.get("hour"));
+                                                stmt.setString(3, (String)record.get("minute"));
+                                                stmt.setString(4, (String)record.get("day"));
+                                                stmt.setString(5, (String)record.get("metric"));
+                                                stmt.setString(6, (String)record.get("logUser"));
+                                                stmt.setLong(6, (Long)record.get("count"));
+                                            }
+                                        });
+                                    }
+
+                                    if(logModuleMetrics.size() > 0) {
+                                        //直接使用dbinput插件配置的数据源test
+                                        SQLExecutor.executeBatch("test","insert into logmodulermetrics(dataTime,hour,minute,day,metric,operModule,count) values(?,?,?,?,?,?,?)", logModuleMetrics, 150, new BatchHandler<Map>() {
+                                            public void handler(PreparedStatement stmt, Map record, int i) throws SQLException {
+                                                stmt.setTimestamp(1, new java.sql.Timestamp(((Date)record.get("dataTime")).getTime()));
+                                                stmt.setString(2, (String)record.get("hour"));
+                                                stmt.setString(3, (String)record.get("minute"));
+                                                stmt.setString(4, (String)record.get("day"));
+                                                stmt.setString(5, (String)record.get("metric"));
+                                                stmt.setString(6, (String)record.get("operModule"));
+                                                stmt.setLong(6, (Long)record.get("count"));
+                                            }
+                                        });
+                                    }
+
+                                }
+                                catch (Exception e){
+                                    //如果执行出错，则将错误信息设置到结果中
+                                    logger.error("",e);
+                                    bulkResult.setError(true);
+                                    bulkResult.setErrorInfo(e.getMessage());
+                                }
+                                return bulkResult;
+                            }
+                        })
+                ;
+                /**
+                 * 构建BulkProcessor批处理组件，一般作为单实例使用，单实例多线程安全，可放心使用
+                 */
+                final CommonBulkProcessor bulkProcessor = bulkProcessorBuilder.build();//构建批处理作业组件
+                objectHolder.setObject(bulkProcessor);
+
+
+            }
+        });
+        //作业结束后销毁初始化阶段自定义的http数据源
+        importBuilder.setImportEndAction(new ImportEndAction() {
+            @Override
+            public void endAction(ImportContext importContext, Exception e) {
+
+                objectHolder.getObject().shutDown();//作业结束时关闭批处理器
 
             }
         });
@@ -137,171 +266,8 @@ public class Db2MetricsMapdata2DBDemo {
 		importBuilder.setInputConfig(dbInputConfig);
 
 
-        //bulkprocessor和Elasticsearch输出插件共用Elasticsearch数据源，因此额外进行数据源初始化定义
-        Map properties = new HashMap();
-
-//default为默认的Elasitcsearch数据源名称
-        properties.put("elasticsearch.serverNames","default");
-
-        /**
-         * 默认的default数据源配置，每个配置项可以加default.前缀，也可以不加
-         */
 
 
-        properties.put("default.elasticsearch.rest.hostNames","192.168.137.1:9200");
-        properties.put("default.elasticsearch.showTemplate","true");
-        properties.put("default.elasticUser","elastic");
-        properties.put("default.elasticPassword","changeme");
-        properties.put("default.elasticsearch.failAllContinue","true");
-        properties.put("default.http.timeoutSocket","60000");
-        properties.put("default.http.timeoutConnection","40000");
-        properties.put("default.http.connectionRequestTimeout","70000");
-        properties.put("default.http.maxTotal","200");
-        properties.put("default.http.defaultMaxPerRoute","100");
-        ElasticSearchBoot.boot(properties);
-
-        int bulkSize = 150;
-        int workThreads = 5;
-        int workThreadQueue = 100;
-        //定义BulkProcessor批处理组件构建器
-        CommonBulkProcessorBuilder bulkProcessorBuilder = new CommonBulkProcessorBuilder();
-        bulkProcessorBuilder.setBlockedWaitTimeout(-1)//指定bulk工作线程缓冲队列已满时后续添加的bulk处理排队等待时间，如果超过指定的时候bulk将被拒绝处理，单位：毫秒，默认为0，不拒绝并一直等待成功为止
-
-                .setBulkSizes(bulkSize)//按批处理数据记录数
-                .setFlushInterval(5000)//强制bulk操作时间，单位毫秒，如果自上次bulk操作flushInterval毫秒后，数据量没有满足BulkSizes对应的记录数，但是有记录，那么强制进行bulk处理
-
-                .setWarnMultsRejects(1000)//由于没有空闲批量处理工作线程，导致bulk处理操作出于阻塞等待排队中，BulkProcessor会对阻塞等待排队次数进行计数统计，bulk处理操作被每被阻塞排队WarnMultsRejects次（1000次），在日志文件中输出拒绝告警信息
-                .setWorkThreads(workThreads)//bulk处理工作线程数
-                .setWorkThreadQueue(workThreadQueue)//bulk处理工作线程池缓冲队列大小
-                .setBulkProcessorName("db_bulkprocessor")//工作线程名称，实际名称为BulkProcessorName-+线程编号
-                .setBulkRejectMessage("db bulkprocessor ")//bulk处理操作被每被拒绝WarnMultsRejects次（1000次），在日志文件中输出拒绝告警信息提示前缀
-                .addBulkInterceptor(new CommonBulkInterceptor() {// 添加异步处理结果回调函数
-                    /**
-                     * 执行前回调方法
-                     * @param bulkCommand
-                     */
-                    public void beforeBulk(CommonBulkCommand bulkCommand) {
-
-                    }
-
-                    /**
-                     * 执行成功回调方法
-                     * @param bulkCommand
-                     * @param result
-                     */
-                    public void afterBulk(CommonBulkCommand bulkCommand, BulkResult result) {
-                        if(logger.isDebugEnabled()){
-//                           logger.debug(result.getResult());
-                        }
-                    }
-
-                    /**
-                     * 执行异常回调方法
-                     * @param bulkCommand
-                     * @param exception
-                     */
-                    public void exceptionBulk(CommonBulkCommand bulkCommand, Throwable exception) {
-                        if(logger.isErrorEnabled()){
-                            logger.error("exceptionBulk",exception);
-                        }
-                    }
-
-                    /**
-                     * 执行过程中部分数据有问题回调方法
-                     * @param bulkCommand
-                     * @param result
-                     */
-                    public void errorBulk(CommonBulkCommand bulkCommand, BulkResult result) {
-                        if(logger.isWarnEnabled()){
-//                            logger.warn(result);
-                        }
-                    }
-                })//添加批量处理执行拦截器，可以通过addBulkInterceptor方法添加多个拦截器
-                /**
-                 * 设置执行数据批处理接口，实现对数据的异步批处理功能逻辑
-                 */
-                .setBulkAction(new BulkAction() {
-                    public BulkResult execute(CommonBulkCommand command) {
-                        List<CommonBulkData> bulkDataList = command.getBatchBulkDatas();//拿出要进行批处理操作的数据
-                        List<Map> logUserMetrics = new ArrayList<>();
-                        List<Map> logModuleMetrics = new ArrayList<>();
-                        for(int i = 0; i < bulkDataList.size(); i ++){
-                            CommonBulkData commonBulkData = bulkDataList.get(i);
-                            Map data = (Map)commonBulkData.getData();
-                            if(data.get("operModule") != null){
-                                logModuleMetrics.add(data);
-                            }
-                            else{
-                                logUserMetrics.add(data);
-                            }
-                            /**
-                             * 可以根据操作类型，对数据进行相应处理
-                             */
-//                            if(commonBulkData.getType() == CommonBulkData.INSERT) 新增记录
-//                            if(commonBulkData.getType() == CommonBulkData.UPDATE) 修改记录
-//                            if(commonBulkData.getType() == CommonBulkData.DELETE) 删除记录
-
-                        }
-                        BulkResult bulkResult = new BulkResult();//构建批处理操作结果对象
-                        try {
-                            //调用数据库dao executor，将数据批量写入数据库，对应的sql语句addPositionUrl在xml配置文件dbbulktest.xml中定义
-
-
-                            if(logUserMetrics.size() > 0) {
-                                //直接使用dbinput插件配置的数据源test，可以参考文档自定义数据库数据源
-                                SQLExecutor.executeBatch("test","insert into logusermetrics(dataTime,hour,minute,day,metric,logUser,count) values(?,?,?,?,?,?,?)", logUserMetrics, 150, new BatchHandler<Map>() {
-                                    public void handler(PreparedStatement stmt, Map record, int i) throws SQLException {
-                                        stmt.setTimestamp(1, new java.sql.Timestamp(((Date)record.get("dataTime")).getTime()));
-                                        stmt.setString(2, (String)record.get("hour"));
-                                        stmt.setString(3, (String)record.get("minute"));
-                                        stmt.setString(4, (String)record.get("day"));
-                                        stmt.setString(5, (String)record.get("metric"));
-                                        stmt.setString(6, (String)record.get("logUser"));
-                                        stmt.setLong(6, (Long)record.get("count"));
-                                    }
-                                });
-                            }
-
-                            if(logModuleMetrics.size() > 0) {
-                                //直接使用dbinput插件配置的数据源test
-                                SQLExecutor.executeBatch("test","insert into logmodulermetrics(dataTime,hour,minute,day,metric,operModule,count) values(?,?,?,?,?,?,?)", logModuleMetrics, 150, new BatchHandler<Map>() {
-                                    public void handler(PreparedStatement stmt, Map record, int i) throws SQLException {
-                                        stmt.setTimestamp(1, new java.sql.Timestamp(((Date)record.get("dataTime")).getTime()));
-                                        stmt.setString(2, (String)record.get("hour"));
-                                        stmt.setString(3, (String)record.get("minute"));
-                                        stmt.setString(4, (String)record.get("day"));
-                                        stmt.setString(5, (String)record.get("metric"));
-                                        stmt.setString(6, (String)record.get("operModule"));
-                                        stmt.setLong(6, (Long)record.get("count"));
-                                    }
-                                });
-                            }
-
-                        }
-                        catch (Exception e){
-                            //如果执行出错，则将错误信息设置到结果中
-                            logger.error("",e);
-                            bulkResult.setError(true);
-                            bulkResult.setErrorInfo(e.getMessage());
-                        }
-                        return bulkResult;
-                    }
-                })
-        ;
-        /**
-         * 构建BulkProcessor批处理组件，一般作为单实例使用，单实例多线程安全，可放心使用
-         */
-        final CommonBulkProcessor bulkProcessor = bulkProcessorBuilder.build();//构建批处理作业组件
-
-        //作业结束后销毁初始化阶段自定义的http数据源
-        importBuilder.setImportEndAction(new ImportEndAction() {
-            @Override
-            public void endAction(ImportContext importContext, Exception e) {
-
-                bulkProcessor.shutDown();
-
-            }
-        });
 
         // 直接实现map和persistent方法，定义一个ETLMetrics
         ETLMetrics keyMetrics = new ETLMetrics(Metrics.MetricsType_KeyTimeMetircs){
@@ -351,7 +317,7 @@ public class Db2MetricsMapdata2DBDemo {
                         esData.put("metric", testKeyMetric.getMetric());
                         esData.put("operModule", testKeyMetric.getOperModule());
                         esData.put("count", testKeyMetric.getCount());
-                        bulkProcessor.insertData( esData);
+                        objectHolder.getObject().insertData( esData);
                     }
                     else if(keyMetric instanceof LoginUserMetric) {
                         LoginUserMetric testKeyMetric = (LoginUserMetric) keyMetric;
@@ -363,7 +329,7 @@ public class Db2MetricsMapdata2DBDemo {
                         esData.put("metric", testKeyMetric.getMetric());
                         esData.put("logUser", testKeyMetric.getLogUser());
                         esData.put("count", testKeyMetric.getCount());
-                        bulkProcessor.insertData( esData);
+                        objectHolder.getObject().insertData( esData);
                     }
 
                 });

@@ -65,19 +65,6 @@ public class FileLog2ESWithMetricsDemo {
 	private static Logger logger = LoggerFactory.getLogger(FileLog2ESWithMetricsDemo.class);
 	public static void main(String[] args){
 
-//		Pattern pattern = Pattern.compile("(?!.*(endpoint)).*");
-//		logger.info(""+pattern.matcher("xxxxsssssssss").find());
-//		logger.info(""+pattern.matcher("xxxxsssendpointssssss").find());
-		try {
-//			ElasticSearchHelper.getRestClientUtil().getDocumentByField("xxxx-*","requestId","xxxx");
-			//清除测试表,导入的时候回重建表，测试的时候加上为了看测试效果，实际线上环境不要删表
-//			String repsonse = ElasticSearchHelper.getRestClientUtil().dropIndice("errorlog");
-			String repsonse = ElasticSearchHelper.getRestClientUtil().dropIndice("metrics-report");
-             repsonse = ElasticSearchHelper.getRestClientUtil().dropIndice("vops-loginmodulemetrics");
-             repsonse = ElasticSearchHelper.getRestClientUtil().dropIndice("vops-loginusermetrics");
-			logger.info(repsonse);
-		} catch (Exception e) {
-		}
 		ImportBuilder importBuilder = new ImportBuilder();
 		importBuilder.setBatchSize(100)//设置批量入库的记录数
 				.setFetchSize(1000);//设置按批读取文件行数

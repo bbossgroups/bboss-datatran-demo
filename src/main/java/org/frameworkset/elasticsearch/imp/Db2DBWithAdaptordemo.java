@@ -84,7 +84,9 @@ public class Db2DBWithAdaptordemo {
 				.setValidateSQL("select 1")
 				.setUsePool(true)//是否使用连接池
 				.setSqlFilepath("sql.xml")
-				.setSqlName("demoexport").setDbAdaptor("org.frameworkset.elasticsearch.imp.DruidAdaptor");
+				.setSqlName("demoexport")
+                .setDbAdaptor("org.frameworkset.elasticsearch.imp.DruidAdaptor")
+                .addConnectionProperty("aaaaa","bbbbbb");
 		importBuilder.setInputConfig(dbInputConfig);
 
 		DBOutputConfig dbOutputConfig = new DBOutputConfig();

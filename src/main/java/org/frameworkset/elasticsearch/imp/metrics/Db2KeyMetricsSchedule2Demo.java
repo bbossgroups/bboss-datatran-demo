@@ -15,9 +15,12 @@ package org.frameworkset.elasticsearch.imp.metrics;
  * limitations under the License.
  */
 
+import com.frameworkset.util.BaseSimpleStringUtil;
 import org.frameworkset.elasticsearch.ElasticSearchHelper;
 import org.frameworkset.elasticsearch.boot.ElasticSearchBoot;
+import org.frameworkset.elasticsearch.boot.ElasticsearchBootResult;
 import org.frameworkset.elasticsearch.bulk.*;
+import org.frameworkset.elasticsearch.entity.ObjectHolder;
 import org.frameworkset.spi.assemble.PropertiesUtil;
 import org.frameworkset.tran.*;
 import org.frameworkset.tran.config.ImportBuilder;
@@ -32,6 +35,9 @@ import org.frameworkset.tran.plugin.db.input.DBInputConfig;
 import org.frameworkset.tran.plugin.metrics.output.ETLMetrics;
 import org.frameworkset.tran.plugin.metrics.output.MetricsOutputConfig;
 import org.frameworkset.tran.task.TaskCommand;
+import org.frameworkset.util.ResourceEnd;
+import org.frameworkset.util.ResourceStart;
+import org.frameworkset.util.ResourceStartResult;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
@@ -72,34 +78,128 @@ public class Db2KeyMetricsSchedule2Demo {
 		//在任务数据抽取之前做一些初始化处理，例如：通过删表来做初始化操作
 
 
+/**
+ * 构建BulkProcessor批处理组件，一般作为单实例使用，单实例多线程安全，可放心使用
+ */
+        ObjectHolder<BulkProcessor> objectHolder = new ObjectHolder<BulkProcessor>();
         importBuilder.setImportStartAction(new ImportStartAction() {
-            /**
-             * 初始化之前执行的处理操作，比如后续初始化操作、数据处理过程中依赖的资源初始化
-             * @param importContext
-             */
             @Override
             public void startAction(ImportContext importContext) {
+                importContext.addResourceStart(new ResourceStart() {
+                    @Override
+                    public ResourceStartResult startResource() {
+                        //bulkprocessor和Elasticsearch输出插件共用Elasticsearch数据源，因此额外进行数据源初始化定义
+                        Map properties = new HashMap();
+
+//metricsES为的Elasitcsearch数据源名称
+                        properties.put("elasticsearch.serverNames","metricsES");
+
+                        /**
+                         * metricsES数据源配置，每个配置项可以加metricsES.前缀
+                         */
+
+
+                        properties.put("metricsES.elasticsearch.rest.hostNames","192.168.137.1:9200");
+                        properties.put("metricsES.elasticsearch.showTemplate","true");
+                        properties.put("metricsES.elasticUser","elastic");
+                        properties.put("metricsES.elasticPassword","changeme");
+                        properties.put("metricsES.elasticsearch.failAllContinue","true");
+                        properties.put("metricsES.http.timeoutSocket","60000");
+                        properties.put("metricsES.http.timeoutConnection","40000");
+                        properties.put("metricsES.http.connectionRequestTimeout","70000");
+                        properties.put("metricsES.http.maxTotal","200");
+                        properties.put("metricsES.http.defaultMaxPerRoute","100");
+                        ResourceStartResult resourceStartResult = ElasticSearchBoot.boot(properties);
+
+                        return resourceStartResult;
+                    }
+                });
             }
 
-            /**
-             * 所有初始化操作完成后，导出数据之前执行的操作
-             * @param importContext
-             */
             @Override
             public void afterStartAction(ImportContext importContext) {
+
                 try {
                     //清除测试表,导入的时候回重建表，测试的时候加上为了看测试效果，实际线上环境不要删表
-                    ElasticSearchHelper.getRestClientUtil().dropIndice("vops-loginmodulemetrics");
+                    ElasticSearchHelper.getRestClientUtil("metricsES").dropIndice("vops-loginmodulemetrics");
                 } catch (Exception e) {
                     logger.error("Drop indice  vops-loginmodulemetrics failed:",e);
                 }
                 try {
                     //清除测试表,导入的时候回重建表，测试的时候加上为了看测试效果，实际线上环境不要删表
-                    ElasticSearchHelper.getRestClientUtil().dropIndice("vops-loginusermetrics");
+                    ElasticSearchHelper.getRestClientUtil("metricsES").dropIndice("vops-loginusermetrics");
                 } catch (Exception e) {
                     logger.error("Drop indice  vops-loginusermetrics failed:",e);
                 }
+                /**
+                 * 构建一个指标数据写入Elasticsearch批处理器
+                 */
+                BulkProcessorBuilder bulkProcessorBuilder = new BulkProcessorBuilder();
+                bulkProcessorBuilder.setBlockedWaitTimeout(-1)//指定bulk工作线程缓冲队列已满时后续添加的bulk处理排队等待时间，如果超过指定的时候bulk将被拒绝处理，单位：毫秒，默认为0，不拒绝并一直等待成功为止
 
+                        .setBulkSizes(200)//按批处理数据记录数
+                        .setFlushInterval(5000)//强制bulk操作时间，单位毫秒，如果自上次bulk操作flushInterval毫秒后，数据量没有满足BulkSizes对应的记录数，但是有记录，那么强制进行bulk处理
+
+                        .setWarnMultsRejects(1000)//由于没有空闲批量处理工作线程，导致bulk处理操作出于阻塞等待排队中，BulkProcessor会对阻塞等待排队次数进行计数统计，bulk处理操作被每被阻塞排队WarnMultsRejects次（1000次），在日志文件中输出拒绝告警信息
+                        .setWorkThreads(10)//bulk处理工作线程数
+                        .setWorkThreadQueue(50)//bulk处理工作线程池缓冲队列大小
+                        .setBulkProcessorName("detail_bulkprocessor")//工作线程名称，实际名称为BulkProcessorName-+线程编号
+                        .setBulkRejectMessage("detail bulkprocessor")//bulk处理操作被每被拒绝WarnMultsRejects次（1000次），在日志文件中输出拒绝告警信息提示前缀
+                        .setElasticsearch("metricsES")//指定明细Elasticsearch集群数据源名称，bboss可以支持多数据源
+                        .setFilterPath(BulkConfig.ERROR_FILTER_PATH)
+                        .addBulkInterceptor(new BulkInterceptor() {
+                            public void beforeBulk(BulkCommand bulkCommand) {
+
+                            }
+
+                            public void afterBulk(BulkCommand bulkCommand, String result) {
+                                if(logger.isDebugEnabled()){
+                                    logger.debug(result);
+                                }
+                            }
+
+                            public void exceptionBulk(BulkCommand bulkCommand, Throwable exception) {
+                                if(logger.isErrorEnabled()){
+                                    logger.error("exceptionBulk",exception);
+                                }
+                            }
+                            public void errorBulk(BulkCommand bulkCommand, String result) {
+                                if(logger.isWarnEnabled()){
+                                    logger.warn(result);
+                                }
+                            }
+                        })//添加批量处理执行拦截器，可以通过addBulkInterceptor方法添加多个拦截器
+                ;
+                /**
+                 * 构建BulkProcessor批处理组件，一般作为单实例使用，单实例多线程安全，可放心使用
+                 */
+                BulkProcessor bulkProcessor = bulkProcessorBuilder.build();//构建批处理作业组件
+                objectHolder.setObject(bulkProcessor);
+
+
+            }
+        });
+        //作业结束后销毁初始化阶段自定义的http数据源
+        importBuilder.setImportEndAction(new ImportEndAction() {
+            @Override
+            public void endAction(ImportContext importContext, Exception e) {
+
+                objectHolder.getObject().shutDown();//作业结束时关闭批处理器
+//销毁初始化阶段自定义的数据源
+                importContext.destroyResources(new ResourceEnd() {
+                    @Override
+                    public void endResource(ResourceStartResult resourceStartResult) {
+
+
+                        if (resourceStartResult instanceof ElasticsearchBootResult) {
+                            ElasticsearchBootResult elasticsearchBootResult = (ElasticsearchBootResult) resourceStartResult;
+                            Map<String, Object> initedElasticsearch = elasticsearchBootResult.getResourceStartResult();
+                            if (BaseSimpleStringUtil.isNotEmpty(initedElasticsearch)) {
+                                ElasticSearchHelper.stopElasticsearchs(initedElasticsearch);
+                            }
+                        }
+                    }
+                });
             }
         });
 
@@ -126,69 +226,7 @@ public class Db2KeyMetricsSchedule2Demo {
 		importBuilder.setInputConfig(dbInputConfig);
 
 
-        //bulkprocessor和Elasticsearch输出插件共用Elasticsearch数据源，因此额外进行数据源初始化定义
-        Map properties = new HashMap();
 
-//default为默认的Elasitcsearch数据源名称
-        properties.put("elasticsearch.serverNames","default");
-
-        /**
-         * 默认的default数据源配置，每个配置项可以加default.前缀，也可以不加
-         */
-
-
-        properties.put("default.elasticsearch.rest.hostNames","192.168.137.1:9200");
-        properties.put("default.elasticsearch.showTemplate","true");
-        properties.put("default.elasticUser","elastic");
-        properties.put("default.elasticPassword","changeme");
-        properties.put("default.elasticsearch.failAllContinue","true");
-        properties.put("default.http.timeoutSocket","60000");
-        properties.put("default.http.timeoutConnection","40000");
-        properties.put("default.http.connectionRequestTimeout","70000");
-        properties.put("default.http.maxTotal","200");
-        properties.put("default.http.defaultMaxPerRoute","100");
-        ElasticSearchBoot.boot(properties);
-
-		BulkProcessorBuilder bulkProcessorBuilder = new BulkProcessorBuilder();
-		bulkProcessorBuilder.setBlockedWaitTimeout(-1)//指定bulk工作线程缓冲队列已满时后续添加的bulk处理排队等待时间，如果超过指定的时候bulk将被拒绝处理，单位：毫秒，默认为0，不拒绝并一直等待成功为止
-
-				.setBulkSizes(200)//按批处理数据记录数
-				.setFlushInterval(5000)//强制bulk操作时间，单位毫秒，如果自上次bulk操作flushInterval毫秒后，数据量没有满足BulkSizes对应的记录数，但是有记录，那么强制进行bulk处理
-
-				.setWarnMultsRejects(1000)//由于没有空闲批量处理工作线程，导致bulk处理操作出于阻塞等待排队中，BulkProcessor会对阻塞等待排队次数进行计数统计，bulk处理操作被每被阻塞排队WarnMultsRejects次（1000次），在日志文件中输出拒绝告警信息
-				.setWorkThreads(10)//bulk处理工作线程数
-				.setWorkThreadQueue(50)//bulk处理工作线程池缓冲队列大小
-				.setBulkProcessorName("detail_bulkprocessor")//工作线程名称，实际名称为BulkProcessorName-+线程编号
-				.setBulkRejectMessage("detail bulkprocessor")//bulk处理操作被每被拒绝WarnMultsRejects次（1000次），在日志文件中输出拒绝告警信息提示前缀
-				.setElasticsearch("default")//指定明细Elasticsearch集群数据源名称，bboss可以支持多数据源
-				.setFilterPath(BulkConfig.ERROR_FILTER_PATH)
-				.addBulkInterceptor(new BulkInterceptor() {
-					public void beforeBulk(BulkCommand bulkCommand) {
-
-					}
-
-					public void afterBulk(BulkCommand bulkCommand, String result) {
-						if(logger.isDebugEnabled()){
-							logger.debug(result);
-						}
-					}
-
-					public void exceptionBulk(BulkCommand bulkCommand, Throwable exception) {
-						if(logger.isErrorEnabled()){
-							logger.error("exceptionBulk",exception);
-						}
-					}
-					public void errorBulk(BulkCommand bulkCommand, String result) {
-						if(logger.isWarnEnabled()){
-							logger.warn(result);
-						}
-					}
-				})//添加批量处理执行拦截器，可以通过addBulkInterceptor方法添加多个拦截器
-		;
-		/**
-		 * 构建BulkProcessor批处理组件，一般作为单实例使用，单实例多线程安全，可放心使用
-		 */
-		BulkProcessor bulkProcessor = bulkProcessorBuilder.build();//构建批处理作业组件
 		ETLMetrics keyMetrics = new ETLMetrics(Metrics.MetricsType_KeyMetircs){
 			@Override
 			public void builderMetrics(){
@@ -254,7 +292,7 @@ public class Db2KeyMetricsSchedule2Demo {
 						esData.put("metric", testKeyMetric.getMetric());
 						esData.put("operModule", testKeyMetric.getOperModule());
 						esData.put("count", testKeyMetric.getCount());
-						bulkProcessor.insertData("vops-loginmodulekeymetrics", esData);
+                        objectHolder.getObject().insertData("vops-loginmodulekeymetrics", esData);
 					}
 					else if(keyMetric instanceof LoginUserMetric) {
                         LoginUserMetric testKeyMetric = (LoginUserMetric) keyMetric;
@@ -264,22 +302,14 @@ public class Db2KeyMetricsSchedule2Demo {
 						esData.put("metric", testKeyMetric.getMetric());
 						esData.put("logUser", testKeyMetric.getLogUser());
 						esData.put("count", testKeyMetric.getCount());
-						bulkProcessor.insertData("vops-loginuserkeymetrics", esData);
+                        objectHolder.getObject().insertData("vops-loginuserkeymetrics", esData);
 					}
 
 				});
 
 			}
 		};
-        //作业结束后销毁初始化阶段自定义的http数据源
-        importBuilder.setImportEndAction(new ImportEndAction() {
-            @Override
-            public void endAction(ImportContext importContext, Exception e) {
 
-                bulkProcessor.shutDown();
-
-            }
-        });
         MetricsOutputConfig metricsOutputConfig = new MetricsOutputConfig();
 
         metricsOutputConfig.setDataTimeField("logOpertime");
