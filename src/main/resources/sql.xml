@@ -25,4 +25,13 @@
 ]]>
     </property>
 
+    <!--
+   插入数据sql
+   -->
+    <property name="insertDorisSql">
+        <![CDATA[INSERT INTO logtable (LOG_ID, LOG_OPERUSER, OPER_MODULE, LOG_CONTENT) VALUES (#[LOG_ID], #[LOG_OPERUSER], #[OPER_MODULE], #[LOG_CONTENT]);
+
+]]>
+    </property>
+
 </properties>
