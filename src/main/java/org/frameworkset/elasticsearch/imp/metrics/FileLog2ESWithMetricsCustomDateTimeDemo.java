@@ -21,7 +21,7 @@ import org.frameworkset.elasticsearch.boot.ElasticSearchBoot;
 import org.frameworkset.elasticsearch.boot.ElasticsearchBootResult;
 import org.frameworkset.elasticsearch.bulk.*;
 import org.frameworkset.elasticsearch.client.ClientInterface;
-import org.frameworkset.elasticsearch.entity.ObjectHolder;
+import org.frameworkset.util.beans.ObjectHolder;
 import org.frameworkset.elasticsearch.serial.SerialUtil;
 import org.frameworkset.tran.*;
 import org.frameworkset.tran.config.ImportBuilder;

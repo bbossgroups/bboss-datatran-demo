@@ -24,7 +24,6 @@ import org.frameworkset.elasticsearch.ElasticSearchHelper;
 import org.frameworkset.elasticsearch.boot.ElasticSearchBoot;
 import org.frameworkset.elasticsearch.boot.ElasticsearchBootResult;
 import org.frameworkset.elasticsearch.bulk.*;
-import org.frameworkset.elasticsearch.entity.ObjectHolder;
 import org.frameworkset.spi.assemble.PropertiesUtil;
 import org.frameworkset.spi.geoip.IpInfo;
 import org.frameworkset.tran.*;
@@ -48,6 +47,7 @@ import org.frameworkset.tran.task.TaskCommand;
 import org.frameworkset.util.ResourceEnd;
 import org.frameworkset.util.ResourceStart;
 import org.frameworkset.util.ResourceStartResult;
+import org.frameworkset.util.beans.ObjectHolder;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 

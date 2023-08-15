@@ -21,7 +21,7 @@ import org.frameworkset.elasticsearch.ElasticSearchHelper;
 import org.frameworkset.elasticsearch.boot.ElasticSearchBoot;
 import org.frameworkset.elasticsearch.boot.ElasticsearchBootResult;
 import org.frameworkset.elasticsearch.bulk.*;
-import org.frameworkset.elasticsearch.entity.ObjectHolder;
+import org.frameworkset.util.beans.ObjectHolder;
 import org.frameworkset.spi.assemble.PropertiesUtil;
 import org.frameworkset.tran.*;
 import org.frameworkset.tran.config.ImportBuilder;

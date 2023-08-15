@@ -19,7 +19,7 @@ import com.frameworkset.common.poolman.BatchHandler;
 import com.frameworkset.common.poolman.SQLExecutor;
 import com.frameworkset.util.SimpleStringUtil;
 import org.frameworkset.bulk.*;
-import org.frameworkset.elasticsearch.entity.ObjectHolder;
+import org.frameworkset.util.beans.ObjectHolder;
 import org.frameworkset.spi.assemble.PropertiesUtil;
 import org.frameworkset.spi.geoip.IpInfo;
 import org.frameworkset.tran.*;

@@ -17,7 +17,6 @@ package org.frameworkset.elasticsearch.imp.metrics;
 
 import org.frameworkset.elasticsearch.ElasticSearchHelper;
 import org.frameworkset.elasticsearch.bulk.*;
-import org.frameworkset.elasticsearch.entity.ObjectHolder;
 import org.frameworkset.elasticsearch.serial.SerialUtil;
 import org.frameworkset.tran.*;
 import org.frameworkset.tran.config.ImportBuilder;
@@ -38,6 +37,7 @@ import org.frameworkset.tran.plugin.metrics.output.ETLMetrics;
 import org.frameworkset.tran.schedule.CallInterceptor;
 import org.frameworkset.tran.schedule.TaskContext;
 import org.frameworkset.tran.task.TaskCommand;
+import org.frameworkset.util.beans.ObjectHolder;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
