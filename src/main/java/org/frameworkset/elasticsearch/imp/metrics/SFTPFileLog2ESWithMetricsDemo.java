@@ -137,6 +137,9 @@ public class SFTPFileLog2ESWithMetricsDemo {
 
         fileConfig.addCellMapping(1, "operModule");
         fileConfig.addCellMapping(2, "logOperuser");
+//        fileConfig.addDateCellMapping(0, "logOperTime", CELL_STRING, "2022-08-09 12:30:50", "yyyy-MM-dd HH:mm:ss");//指定数据类型，默认值，日期格式
+//        fileConfig.addCellMappingWithType(1, "operModule", CELL_STRING );//指定数据类型
+//        fileConfig.addCellMappingWithType(2, "logOperuser", CELL_NUMBER_INTEGER, 20);//指定数据类型和默认值
 
         FtpConfig ftpConfig = new FtpConfig().setFtpIP("101.13.6.55").setFtpPort(233)
                 .setFtpUser("1q").setFtpPassword("123")
