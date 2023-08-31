@@ -26,6 +26,7 @@ import org.frameworkset.tran.context.Context;
 import org.frameworkset.tran.context.ImportContext;
 import org.frameworkset.tran.listener.AsynJobClosedListener;
 import org.frameworkset.tran.plugin.db.output.DBOutputConfig;
+import org.frameworkset.tran.plugin.db.output.DDLConf;
 import org.frameworkset.tran.plugin.db.output.DatabaseTableSqlConfResolver;
 import org.frameworkset.tran.plugin.db.output.SQLConf;
 import org.frameworkset.tran.plugin.mysqlbinlog.input.MySQLBinlogConfig;
@@ -48,7 +49,7 @@ public class MasterSlaveBinlog2TargetDBDBOutput {
     private static Logger logger = LoggerFactory.getLogger(MasterSlaveBinlog2TargetDBDBOutput.class);
     public static void main(String[] args){
         PropertiesContainer propertiesContainer = PropertiesUtil.getPropertiesContainer();
-        int batchSize = propertiesContainer.getIntSystemEnvProperty("batchSize",500);//同时指定了默认值
+        int batchSize = 1;//propertiesContainer.getIntSystemEnvProperty("batchSize",1);//同时指定了默认值
         ImportBuilder importBuilder = new ImportBuilder();
         importBuilder.setBatchSize(batchSize);//设置批量入库的记录数
 
@@ -65,9 +66,9 @@ public class MasterSlaveBinlog2TargetDBDBOutput {
                     @Override
                     public ResourceStartResult startResource() {
                         DBConf tempConf = new DBConf();
-                        tempConf.setPoolname("visualops");
+                        tempConf.setPoolname("bboss");
                         tempConf.setDriver("com.mysql.cj.jdbc.Driver");
-                        tempConf.setJdbcurl("jdbc:mysql://192.168.137.1:3306/visualops?useUnicode=true&characterEncoding=utf-8&useSSL=false&rewriteBatchedStatements=true");
+                        tempConf.setJdbcurl("jdbc:mysql://192.168.137.1:3306/bboss?useUnicode=true&characterEncoding=utf-8&useSSL=false&rewriteBatchedStatements=true");
 
                         tempConf.setUsername("root");
                         tempConf.setPassword("123456");
@@ -78,7 +79,7 @@ public class MasterSlaveBinlog2TargetDBDBOutput {
                         tempConf.setMaximumSize(10);
                         tempConf.setUsepool(true);
                         tempConf.setShowsql(true);
-                        tempConf.setJndiName("visualops-jndi");
+                        tempConf.setJndiName("bboss-jndi");
                         //# 控制map中的列名采用小写，默认为大写
                         tempConf.setColumnLableUpperCase(false);
                         //启动数据源
@@ -89,6 +90,32 @@ public class MasterSlaveBinlog2TargetDBDBOutput {
                             resourceStartResult = new DBStartResult();
                             resourceStartResult.addResourceStartResult("testStatus");
                         }
+                        tempConf = new DBConf();
+                        tempConf.setPoolname("ddlsyn");//用于验证ddl同步处理的数据源
+                        tempConf.setDriver("com.mysql.cj.jdbc.Driver");
+                        tempConf.setJdbcurl("jdbc:mysql://192.168.137.1:3306/pinpoint?useUnicode=true&characterEncoding=utf-8&useSSL=false&rewriteBatchedStatements=true");
+
+                        tempConf.setUsername("root");
+                        tempConf.setPassword("123456");
+                        tempConf.setValidationQuery("select 1");
+
+                        tempConf.setInitialConnections(5);
+                        tempConf.setMinimumSize(10);
+                        tempConf.setMaximumSize(10);
+                        tempConf.setUsepool(true);
+                        tempConf.setShowsql(true);
+                        tempConf.setJndiName("ddlsyn-jndi");
+                        //# 控制map中的列名采用小写，默认为大写
+                        tempConf.setColumnLableUpperCase(false);
+                        //启动数据源
+                        result = SQLManager.startPool(tempConf);
+                        //记录启动的数据源信息，用户作业停止时释放数据源
+                        if(result){
+                            if(resourceStartResult == null)
+                                resourceStartResult = new DBStartResult();
+                            resourceStartResult.addResourceStartResult("ddlsyn");
+                        }
+
                         return resourceStartResult;
                     }
                 });
@@ -125,7 +152,9 @@ public class MasterSlaveBinlog2TargetDBDBOutput {
         mySQLBinlogConfig.setPort(3306);
         mySQLBinlogConfig.setDbUser("root");
         mySQLBinlogConfig.setDbPassword("123456");
-        mySQLBinlogConfig.setServerId(100000L);
+        mySQLBinlogConfig.setServerId(100001L);
+        mySQLBinlogConfig.setDdlSyn(true);
+        mySQLBinlogConfig.setDdlSynDatabases("bboss,visualops");
         mySQLBinlogConfig.setTables("bboss.cityperson,visualops.batchtest");//指定要同步的表，多个用逗号分隔，表名前可以追加数据库名称,格式为:dbname.tablename
 //        mySQLBinlogConfig.setDatabase("bboss,visualops");指定需要同步的数据库清单，多个用逗号分隔
         mySQLBinlogConfig.setEnableIncrement(true);
@@ -166,9 +195,19 @@ public class MasterSlaveBinlog2TargetDBDBOutput {
         sqlConf.setInsertSqlName("insertbatchtest1SQL");//对应sql配置文件dsl2ndSqlFile.xml配置的sql语句insertbatchtestSQL
 //        sqlConf.setUpdateSqlName("batchtestUpdateSQL");//可选
 //        sqlConf.setDeleteSqlName("batchtestDeleteSQL");//可选
-        sqlConf.setTargetDbName("visualops");
+        sqlConf.setTargetDbName("bboss");
         dbOutputConfig.addSQLConf("visualops.batchtest",sqlConf);
+        //ddl同步配置，将bboss和visualops两个数据库的ddl操作在ddlsyn数据源上进行回放
+        dbOutputConfig.setIgnoreDDLSynError(true);//忽略ddl回放异常，如果ddl已经执行过，可能会报错，忽略sql执行异常
+        DDLConf ddlConf = new DDLConf();
+        ddlConf.setDatabase("visualops");
+        ddlConf.setTargetDbName("ddlsyn");
 
+        dbOutputConfig.addDDLConf(ddlConf);
+        ddlConf = new DDLConf();
+        ddlConf.setDatabase("bboss");
+        ddlConf.setTargetDbName("ddlsyn");
+        dbOutputConfig.addDDLConf(ddlConf);
         dbOutputConfig.setSqlConfResolver(new DatabaseTableSqlConfResolver());
 
         importBuilder.setOutputConfig(dbOutputConfig);
@@ -178,6 +217,20 @@ public class MasterSlaveBinlog2TargetDBDBOutput {
                 int action = (int)context.getMetaValue("action");
                 if(context.isUpdate() || context.isDelete())
                     context.setDrop(true); //丢弃修改和删除数据
+                String database = (String)context.getMetaValue("database");
+                if( context.isDDL()) {
+                    String ddl = context.getStringValue("ddl").trim().toLowerCase();
+                    logger.info(context.getStringValue("ddl"));
+                    logger.info(context.getStringValue("errorCode"));
+                    logger.info(context.getStringValue("executionTime"));
+                    boolean isddl = ddl.indexOf("create ") > 0 || ddl.indexOf("alter ") > 0 || ddl.indexOf("drop ") > 0;
+                    if(!isddl){
+                        context.setDrop(true);
+                    }
+
+
+                }
+                logger.info("database:{}",(String)context.getMetaValue("database"));
 //                int action1 = (int)context.getMetaValue("action1");
             }
         });
