@@ -171,9 +171,9 @@ public class MasterSlaveBinlog2TargetDBDBOutput {
         dbOutputConfig
                 .setDbName("test")
                 .setDbDriver("com.mysql.cj.jdbc.Driver") //数据库驱动程序，必须导入相关数据库的驱动jar包
-                .setDbUrl("jdbc:mysql://10.13.6.127:3306/visualops?useUnicode=true&characterEncoding=utf-8&useSSL=false&rewriteBatchedStatements=true") //通过useCursorFetch=true启用mysql的游标fetch机制，否则会有严重的性能隐患，useCursorFetch必须和jdbcFetchSize参数配合使用，否则不会生效
+                .setDbUrl("jdbc:mysql://192.168.137.1:3306/apm?useUnicode=true&characterEncoding=utf-8&useSSL=false&rewriteBatchedStatements=true") //通过useCursorFetch=true启用mysql的游标fetch机制，否则会有严重的性能隐患，useCursorFetch必须和jdbcFetchSize参数配合使用，否则不会生效
                 .setDbUser("root")
-                .setDbPassword("passwd")
+                .setDbPassword("123456")
                 .setValidateSQL("select 1")
                 .setUsePool(true)
                 .setDbInitSize(5)
@@ -187,7 +187,7 @@ public class MasterSlaveBinlog2TargetDBDBOutput {
         sqlConf.setInsertSqlName("insertcitypersonSQL");//对应sql配置文件dsl2ndSqlFile.xml配置的sql语句insertcitypersonSQL
 //        sqlConf.setUpdateSqlName("citypersonUpdateSQL");//可选
 //        sqlConf.setDeleteSqlName("citypersonDeleteSQL");//可选
-        sqlConf.setTargetDbName("test");//为不同的库表sql配置指定对应的目标数据源，如果不指定就采用dbOutputConfig.setDbName方法设置的数据源
+        sqlConf.setTargetDbName("test,ddlsyn");//为不同的库表sql配置指定对应的目标数据源，多个用逗号分隔，如果不指定就采用dbOutputConfig.setDbName方法设置的数据源
         dbOutputConfig.addSQLConf("bboss.cityperson",sqlConf);//数据库加表名称保存sql配置，对应的sql在sqlconf指定的数据源test上执行
 
 
@@ -195,18 +195,18 @@ public class MasterSlaveBinlog2TargetDBDBOutput {
         sqlConf.setInsertSqlName("insertbatchtest1SQL");//对应sql配置文件dsl2ndSqlFile.xml配置的sql语句insertbatchtestSQL
 //        sqlConf.setUpdateSqlName("batchtestUpdateSQL");//可选
 //        sqlConf.setDeleteSqlName("batchtestDeleteSQL");//可选
-        sqlConf.setTargetDbName("bboss");
+        sqlConf.setTargetDbName("test,ddlsyn");//多个用逗号分隔
         dbOutputConfig.addSQLConf("visualops.batchtest",sqlConf);
         //ddl同步配置，将bboss和visualops两个数据库的ddl操作在ddlsyn数据源上进行回放
         dbOutputConfig.setIgnoreDDLSynError(true);//忽略ddl回放异常，如果ddl已经执行过，可能会报错，忽略sql执行异常
         DDLConf ddlConf = new DDLConf();
         ddlConf.setDatabase("visualops");
-        ddlConf.setTargetDbName("ddlsyn");
+        ddlConf.setTargetDbName("ddlsyn,test");//database visualops的ddl同步目标数据源，多个用逗号分隔
 
         dbOutputConfig.addDDLConf(ddlConf);
         ddlConf = new DDLConf();
         ddlConf.setDatabase("bboss");
-        ddlConf.setTargetDbName("ddlsyn");
+        ddlConf.setTargetDbName("ddlsyn,test");//database bboss的ddl同步目标数据源，多个用逗号分隔
         dbOutputConfig.addDDLConf(ddlConf);
         dbOutputConfig.setSqlConfResolver(new DatabaseTableSqlConfResolver());
 
@@ -215,8 +215,8 @@ public class MasterSlaveBinlog2TargetDBDBOutput {
             @Override
             public void refactor(Context context) throws Exception {
                 int action = (int)context.getMetaValue("action");
-                if(context.isUpdate() || context.isDelete())
-                    context.setDrop(true); //丢弃修改和删除数据
+//                if(context.isUpdate() || context.isDelete())
+//                    context.setDrop(true); //丢弃修改和删除数据
                 String database = (String)context.getMetaValue("database");
                 if( context.isDDL()) {
                     String ddl = context.getStringValue("ddl").trim().toLowerCase();
