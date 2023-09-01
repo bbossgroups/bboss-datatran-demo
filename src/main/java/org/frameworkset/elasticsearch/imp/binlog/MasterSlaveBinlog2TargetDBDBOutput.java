@@ -65,32 +65,10 @@ public class MasterSlaveBinlog2TargetDBDBOutput {
                 importContext.addResourceStart(new ResourceStart() {
                     @Override
                     public ResourceStartResult startResource() {
-                        DBConf tempConf = new DBConf();
-                        tempConf.setPoolname("bboss");
-                        tempConf.setDriver("com.mysql.cj.jdbc.Driver");
-                        tempConf.setJdbcurl("jdbc:mysql://192.168.137.1:3306/bboss?useUnicode=true&characterEncoding=utf-8&useSSL=false&rewriteBatchedStatements=true");
 
-                        tempConf.setUsername("root");
-                        tempConf.setPassword("123456");
-                        tempConf.setValidationQuery("select 1");
-
-                        tempConf.setInitialConnections(5);
-                        tempConf.setMinimumSize(10);
-                        tempConf.setMaximumSize(10);
-                        tempConf.setUsepool(true);
-                        tempConf.setShowsql(true);
-                        tempConf.setJndiName("bboss-jndi");
-                        //# 控制map中的列名采用小写，默认为大写
-                        tempConf.setColumnLableUpperCase(false);
-                        //启动数据源
-                        boolean result = SQLManager.startPool(tempConf);
                         ResourceStartResult resourceStartResult = null;
-                        //记录启动的数据源信息，用户作业停止时释放数据源
-                        if(result){
-                            resourceStartResult = new DBStartResult();
-                            resourceStartResult.addResourceStartResult("testStatus");
-                        }
-                        tempConf = new DBConf();
+
+                        DBConf tempConf = new DBConf();
                         tempConf.setPoolname("ddlsyn");//用于验证ddl同步处理的数据源
                         tempConf.setDriver("com.mysql.cj.jdbc.Driver");
                         tempConf.setJdbcurl("jdbc:mysql://192.168.137.1:3306/pinpoint?useUnicode=true&characterEncoding=utf-8&useSSL=false&rewriteBatchedStatements=true");
@@ -108,7 +86,7 @@ public class MasterSlaveBinlog2TargetDBDBOutput {
                         //# 控制map中的列名采用小写，默认为大写
                         tempConf.setColumnLableUpperCase(false);
                         //启动数据源
-                        result = SQLManager.startPool(tempConf);
+                        boolean result = SQLManager.startPool(tempConf);
                         //记录启动的数据源信息，用户作业停止时释放数据源
                         if(result){
                             if(resourceStartResult == null)
