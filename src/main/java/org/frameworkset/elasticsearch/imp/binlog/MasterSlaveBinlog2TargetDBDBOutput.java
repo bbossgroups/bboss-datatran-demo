@@ -163,16 +163,15 @@ public class MasterSlaveBinlog2TargetDBDBOutput {
         //设置不同表对应的增删改sql语句
         SQLConf sqlConf = new SQLConf();
         sqlConf.setInsertSqlName("insertcitypersonSQL");//对应sql配置文件dsl2ndSqlFile.xml配置的sql语句insertcitypersonSQL
-//        sqlConf.setUpdateSqlName("citypersonUpdateSQL");//可选
-//        sqlConf.setDeleteSqlName("citypersonDeleteSQL");//可选
+        sqlConf.setUpdateSqlName("citypersonUpdateSQL");//可选
+        sqlConf.setDeleteSqlName("citypersonDeleteSQL");//可选
         sqlConf.setTargetDbName("test,ddlsyn");//为不同的库表sql配置指定对应的目标数据源，多个用逗号分隔，如果不指定就采用dbOutputConfig.setDbName方法设置的数据源
         dbOutputConfig.addSQLConf("bboss.cityperson",sqlConf);//数据库加表名称保存sql配置，对应的sql在sqlconf指定的数据源test上执行
 
-
         sqlConf = new SQLConf();
         sqlConf.setInsertSqlName("insertbatchtest1SQL");//对应sql配置文件dsl2ndSqlFile.xml配置的sql语句insertbatchtestSQL
-//        sqlConf.setUpdateSqlName("batchtestUpdateSQL");//可选
-//        sqlConf.setDeleteSqlName("batchtestDeleteSQL");//可选
+        sqlConf.setUpdateSqlName("batchtest1UpdateSQL");//可选
+        sqlConf.setDeleteSqlName("batchtest1DeleteSQL");//可选
         sqlConf.setTargetDbName("test,ddlsyn");//多个用逗号分隔
         dbOutputConfig.addSQLConf("visualops.batchtest",sqlConf);
         //ddl同步配置，将bboss和visualops两个数据库的ddl操作在ddlsyn数据源上进行回放
