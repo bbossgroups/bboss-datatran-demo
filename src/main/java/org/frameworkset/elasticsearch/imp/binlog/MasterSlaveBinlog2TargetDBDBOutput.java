@@ -53,6 +53,7 @@ public class MasterSlaveBinlog2TargetDBDBOutput {
         ImportBuilder importBuilder = new ImportBuilder();
         importBuilder.setBatchSize(batchSize);//设置批量入库的记录数
 
+        //通过作业初始化配置，对作业运行过程中依赖的数据源等资源进行初始化
         importBuilder.setImportStartAction(new ImportStartAction() {
             /**
              * 初始化之前执行的处理操作，比如后续初始化操作、数据处理过程中依赖的资源初始化
@@ -110,7 +111,7 @@ public class MasterSlaveBinlog2TargetDBDBOutput {
             }
         });
 
-        //任务结束后销毁初始化阶段自定义的http数据源
+        //任务结束后销毁初始化阶段初始化的数据源等资源
         importBuilder.setImportEndAction(new ImportEndAction() {
             @Override
             public void endAction(ImportContext importContext, Exception e) {
@@ -131,8 +132,10 @@ public class MasterSlaveBinlog2TargetDBDBOutput {
         mySQLBinlogConfig.setDbUser("root");
         mySQLBinlogConfig.setDbPassword("123456");
         mySQLBinlogConfig.setServerId(100001L);
+        //ddl同步配置，将bboss和visualops两个数据库的ddl操作在test和ddlsyn数据源上进行回放
         mySQLBinlogConfig.setDdlSyn(true);
         mySQLBinlogConfig.setDdlSynDatabases("bboss,visualops");
+
         mySQLBinlogConfig.setTables("bboss.cityperson,visualops.batchtest");//指定要同步的表，多个用逗号分隔，表名前可以追加数据库名称,格式为:dbname.tablename
 //        mySQLBinlogConfig.setDatabase("bboss,visualops");指定需要同步的数据库清单，多个用逗号分隔
         mySQLBinlogConfig.setEnableIncrement(true);
@@ -174,8 +177,9 @@ public class MasterSlaveBinlog2TargetDBDBOutput {
         sqlConf.setDeleteSqlName("batchtest1DeleteSQL");//可选
         sqlConf.setTargetDbName("test,ddlsyn");//多个用逗号分隔
         dbOutputConfig.addSQLConf("visualops.batchtest",sqlConf);
-        //ddl同步配置，将bboss和visualops两个数据库的ddl操作在ddlsyn数据源上进行回放
-        dbOutputConfig.setIgnoreDDLSynError(true);//忽略ddl回放异常，如果ddl已经执行过，可能会报错，忽略sql执行异常
+        dbOutputConfig.setSqlConfResolver(new DatabaseTableSqlConfResolver());
+
+
         DDLConf ddlConf = new DDLConf();
         ddlConf.setDatabase("visualops");
         ddlConf.setTargetDbName("ddlsyn,test");//database visualops的ddl同步目标数据源，多个用逗号分隔
@@ -185,7 +189,7 @@ public class MasterSlaveBinlog2TargetDBDBOutput {
         ddlConf.setDatabase("bboss");
         ddlConf.setTargetDbName("ddlsyn,test");//database bboss的ddl同步目标数据源，多个用逗号分隔
         dbOutputConfig.addDDLConf(ddlConf);
-        dbOutputConfig.setSqlConfResolver(new DatabaseTableSqlConfResolver());
+        dbOutputConfig.setIgnoreDDLSynError(true);//忽略ddl回放异常，如果ddl已经执行过，可能会报错，忽略sql执行异常
 
         importBuilder.setOutputConfig(dbOutputConfig);
         importBuilder.setDataRefactor(new DataRefactor() {
