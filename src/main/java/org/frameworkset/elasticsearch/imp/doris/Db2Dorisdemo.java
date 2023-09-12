@@ -91,7 +91,7 @@ public class Db2Dorisdemo {
 		DBOutputConfig dbOutputConfig = new DBOutputConfig();
 		dbOutputConfig.setDbName("target")
 				.setDbDriver("com.mysql.cj.jdbc.Driver") //数据库驱动程序，必须导入相关数据库的驱动jar包
-				.setDbUrl("jdbc:mysql://10.13.6.7:29030/testdb")
+				.setDbUrl("jdbc:mysql://10.13.6.7:29030/testdb") // doris query_port = 29030
 				.setDbUser("root")
 				.setDbPassword("")
 				.setValidateSQL("select 1")
