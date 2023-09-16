@@ -32,6 +32,8 @@ public class LoginModuleMetric extends TimeMetric {
     @Override
     public void init(MapData firstData) {
         CommonRecord data = (CommonRecord) firstData.getData();
+        //获取用于指标计算处理等的临时数据到记录，不会对临时数据进行持久化处理，
+        String name = (String)data.getTempData("name");
         operModule = (String) data.getData("operModule");
         if(operModule == null || operModule.equals("")){
             operModule = "未知模块";

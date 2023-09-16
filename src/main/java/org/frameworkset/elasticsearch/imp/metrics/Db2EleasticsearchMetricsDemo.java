@@ -292,6 +292,8 @@ public class Db2EleasticsearchMetricsDemo {
 					@Override
 					public String buildMetricKey(MapData mapData){
                         CommonRecord data = (CommonRecord) mapData.getData();
+						//获取用于指标计算处理等的临时数据到记录，不会对临时数据进行持久化处理，
+						String name = (String)data.getTempData("name");
                         String operModule = (String) data.getData("operModule");
                         if(operModule == null || operModule.equals("")){
                             operModule = "未知模块";
@@ -314,6 +316,8 @@ public class Db2EleasticsearchMetricsDemo {
 					@Override
 					public String buildMetricKey(MapData mapData){
                         CommonRecord data = (CommonRecord) mapData.getData();
+						//获取用于指标计算处理等的临时数据到记录，不会对临时数据进行持久化处理，
+						String name = (String)data.getTempData("name");
                         String logUser = (String) data.getData("logOperuser");//
                         if(logUser == null || logUser.equals("")){
                             logUser = "未知用户";
@@ -448,6 +452,9 @@ public class Db2EleasticsearchMetricsDemo {
 				IpInfo ipInfo = context.getIpInfoByIp("219.133.80.136");
 				if(ipInfo != null)
 					context.addFieldValue("ipInfo", SimpleStringUtil.object2json(ipInfo));
+				//添加用于指标计算处理等的临时数据到记录，不会对临时数据进行持久化处理，
+				context.addTempData("name","ddd");
+
 			}
 		});
 		//映射和转换配置结束

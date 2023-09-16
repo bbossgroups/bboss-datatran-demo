@@ -33,6 +33,8 @@ public class LoginUserMetric extends TimeMetric {
     public void init(MapData firstData) {
         CommonRecord data = (CommonRecord) firstData.getData();
         logUser = (String) data.getData("logOperuser");
+        //获取用于指标计算处理等的临时数据到记录，不会对临时数据进行持久化处理，
+        String name = (String)data.getTempData("name");
         if(logUser == null || logUser.equals("")){
             logUser = "未知用户";
         }
