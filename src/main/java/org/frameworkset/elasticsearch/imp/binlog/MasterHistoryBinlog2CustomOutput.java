@@ -42,8 +42,8 @@ import java.util.Map;
  * @author biaoping.yin
  * @version 1.0
  */
-public class MasterSlaveBinlog2CustomOutput {
-    private static Logger logger = LoggerFactory.getLogger(MasterSlaveBinlog2CustomOutput.class);
+public class MasterHistoryBinlog2CustomOutput {
+    private static Logger logger = LoggerFactory.getLogger(MasterHistoryBinlog2CustomOutput.class);
     public static void main(String[] args){
         PropertiesContainer propertiesContainer = PropertiesUtil.getPropertiesContainer();
         int batchSize = propertiesContainer.getIntSystemEnvProperty("batchSize",500);//同时指定了默认值
@@ -58,7 +58,8 @@ public class MasterSlaveBinlog2CustomOutput {
         mySQLBinlogConfig.setServerId(100000L);
         mySQLBinlogConfig.setTables("cityperson,batchtest");//
         mySQLBinlogConfig.setDatabase("bboss");
-        mySQLBinlogConfig.setEnableIncrement(true);
+        mySQLBinlogConfig.setCollectMasterHistoryBinlog(true);
+        mySQLBinlogConfig.setBinlogDir("C:\\ProgramData\\MySQL\\MySQL Server 8.0\\Data");
 //        mySQLBinlogConfig.setIncreamentFrom001(true);
 
         importBuilder.setInputConfig(mySQLBinlogConfig);
@@ -66,7 +67,7 @@ public class MasterSlaveBinlog2CustomOutput {
         importBuilder.setContinueOnError(false);
 
 //        importBuilder.setStatusDbname("testStatus");//指定增量状态数据源名称
-		importBuilder.setLastValueStorePath("binlog2custom_import");//记录上次采集的增量字段值的文件路径，作为下次增量（或者重启后）采集数据的起点，不同的任务这个路径要不一样
+		importBuilder.setLastValueStorePath("historybinlog2custom_import");//记录上次采集的增量字段值的文件路径，作为下次增量（或者重启后）采集数据的起点，不同的任务这个路径要不一样
         importBuilder.setLastValueStoreTableName("binlog");//记录上次采集的增量字段值的表，可以不指定，采用默认表名increament_tab
 
         //自己处理数据
