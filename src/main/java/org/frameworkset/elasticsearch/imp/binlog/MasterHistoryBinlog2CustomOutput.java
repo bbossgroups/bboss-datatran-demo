@@ -51,7 +51,7 @@ public class MasterHistoryBinlog2CustomOutput {
         importBuilder.setBatchSize(batchSize);//设置批量入库的记录数
 
         MySQLBinlogConfig mySQLBinlogConfig = new MySQLBinlogConfig();
-        mySQLBinlogConfig.setHost("192.168.137.1");
+        mySQLBinlogConfig.setHost("localhost");
         mySQLBinlogConfig.setPort(3306);
         mySQLBinlogConfig.setDbUser("root");
         mySQLBinlogConfig.setDbPassword("123456");
