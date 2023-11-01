@@ -81,6 +81,17 @@ public class Binlog2DBOutput {
         sqlConf.setInsertSqlName("insertbatchtestSQL");//对应sql配置文件dsl2ndSqlFile.xml配置的sql语句insertbatchtestSQL
 //        sqlConf.setUpdateSqlName("batchtestUpdateSQL");//可选
 //        sqlConf.setDeleteSqlName("batchtestDeleteSQL");//可选
+
+        sqlConf.setInsertSql("INSERT INTO batchtest ( name, author, content, title, optime, oper, subtitle, collecttime,ipinfo)\n" +
+                "                VALUES ( #[OPER_MODULE],  ## 来源dbdemo索引中的 operModule字段\n" +
+                        "                         #[author], ## 通过datarefactor增加的字段\n" +
+                        "                         #[LOG_CONTENT], ## 来源dbdemo索引中的 logContent字段\n" +
+                        "                         #[title], ## 通过datarefactor增加的字段\n" +
+                        "                         #[logOpertime], ## 来源dbdemo索引中的 logOpertime字段\n" +
+                        "                         #[LOG_OPERUSER],  ## 来源dbdemo索引中的 logOperuser字段\n" +
+                        "                         #[subtitle], ## 通过datarefactor增加的字段\n" +
+                        "                         #[collecttime], ## 通过datarefactor增加的字段\n" +
+                        "                         #[ipinfo]) ## 通过datarefactor增加的地理位置信息字段");
         dbOutputConfig.addSQLConf("batchtest",sqlConf);
         importBuilder.setOutputConfig(dbOutputConfig);
         importBuilder.setDataRefactor(new DataRefactor() {
