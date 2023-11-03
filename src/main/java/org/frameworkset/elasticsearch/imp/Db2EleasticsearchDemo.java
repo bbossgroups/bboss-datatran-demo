@@ -89,7 +89,7 @@ public class Db2EleasticsearchDemo {
 						DBConf tempConf = new DBConf();
 						tempConf.setPoolname("testStatus");
 						tempConf.setDriver("com.mysql.cj.jdbc.Driver");
-						tempConf.setJdbcurl("jdbc:mysql://192.168.137.1:3306/bboss?useUnicode=true&characterEncoding=utf-8&useSSL=false&rewriteBatchedStatements=true");
+						tempConf.setJdbcurl("jdbc:mysql://192.168.137.1:3306/bboss?useUnicode=true&allowPublicKeyRetrieval=true&characterEncoding=utf-8&useSSL=false&rewriteBatchedStatements=true");
 
 						tempConf.setUsername("root");
 						tempConf.setPassword("123456");
@@ -160,7 +160,7 @@ public class Db2EleasticsearchDemo {
 		dbInputConfig.setSql("select * from td_sm_log where log_id > #[log_id]")
 				.setDbName("test")
 				.setDbDriver("com.mysql.cj.jdbc.Driver") //数据库驱动程序，必须导入相关数据库的驱动jar包
-				.setDbUrl("jdbc:mysql://192.168.137.1:3306/bboss?useUnicode=true&characterEncoding=utf-8&useSSL=false&rewriteBatchedStatements=true") //通过useCursorFetch=true启用mysql的游标fetch机制，否则会有严重的性能隐患，useCursorFetch必须和jdbcFetchSize参数配合使用，否则不会生效
+				.setDbUrl("jdbc:mysql://192.168.137.1:3306/bboss?useUnicode=true&allowPublicKeyRetrieval=true&characterEncoding=utf-8&useSSL=false&rewriteBatchedStatements=true") //通过useCursorFetch=true启用mysql的游标fetch机制，否则会有严重的性能隐患，useCursorFetch必须和jdbcFetchSize参数配合使用，否则不会生效
 				.setDbUser("root")
 				.setDbPassword("123456")
 				.setValidateSQL("select 1")
@@ -195,16 +195,16 @@ public class Db2EleasticsearchDemo {
 				.setDebugResponse(false)//设置是否将每次处理的reponse打印到日志文件中，默认false
 				.setDiscardBulkResponse(false);//设置是否需要批量处理的响应报文，不需要设置为false，true为需要，默认false
 
-		 elasticsearchOutputConfig.setEsIdGenerator(new EsIdGenerator() {
-		 //如果指定EsIdGenerator，则根据下面的方法生成文档id，
-		 // 否则根据setEsIdField方法设置的字段值作为文档id，
-		 // 如果默认没有配置EsIdField和如果指定EsIdGenerator，则由es自动生成文档id
-
-             @Override
-             public Object genId(Context context) throws Exception {
-                 return context.getValue("log_id")+"-" + context.getValue("other_field");
-             }
-		 });
+//		 elasticsearchOutputConfig.setEsIdGenerator(new EsIdGenerator() {
+//		 //如果指定EsIdGenerator，则根据下面的方法生成文档id，
+//		 // 否则根据setEsIdField方法设置的字段值作为文档id，
+//		 // 如果默认没有配置EsIdField和如果指定EsIdGenerator，则由es自动生成文档id
+//
+//             @Override
+//             public Object genId(Context context) throws Exception {
+//                 return context.getValue("log_id")+"-" + context.getValue("other_field");
+//             }
+//		 });
 
 //				.setIndexType("dbdemo") ;//es 7以后的版本不需要设置indexType，es7以前的版本必需设置indexType;
 //				.setRefreshOption("refresh")//可选项，null表示不实时刷新，importBuilder.setRefreshOption("refresh");表示实时刷新
@@ -218,9 +218,9 @@ public class Db2EleasticsearchDemo {
 		/**
 		 * 设置IP地址信息库
 		 */
-		importBuilder.setGeoipDatabase("d:/geolite2/GeoLite2-City.mmdb");
-		importBuilder.setGeoipAsnDatabase("d:/geolite2/GeoLite2-ASN.mmdb");
-		importBuilder.setGeoip2regionDatabase("d:/geolite2/ip2region.db");
+		importBuilder.setGeoipDatabase("C:\\workspace\\hnai\\terminal\\geolite2/GeoLite2-City.mmdb");
+		importBuilder.setGeoipAsnDatabase("C:\\workspace\\hnai\\terminal\\geolite2/GeoLite2-ASN.mmdb");
+		importBuilder.setGeoip2regionDatabase("C:\\workspace\\hnai\\terminal\\geolite2/ip2region.db");
 
 		importBuilder
 //
@@ -272,7 +272,7 @@ public class Db2EleasticsearchDemo {
 		//增量配置开始
 //		importBuilder.setStatusDbname("test");//设置增量状态数据源名称
 		importBuilder.setLastValueColumn("log_id");//手动指定数字增量查询字段，默认采用上面设置的sql语句中的增量变量名称作为增量查询字段的名称，指定以后就用指定的字段
-		importBuilder.setFromFirst(false);//setFromfirst(false)，如果作业停了，作业重启后从上次截止位置开始采集数据，
+		importBuilder.setFromFirst(true);//setFromfirst(false)，如果作业停了，作业重启后从上次截止位置开始采集数据，
 //		setFromfirst(true) 如果作业停了，作业重启后，重新开始采集数据
 		importBuilder.setStatusDbname("testStatus");//指定增量状态数据源名称
 //		importBuilder.setLastValueStorePath("logtable_import");//记录上次采集的增量字段值的文件路径，作为下次增量（或者重启后）采集数据的起点，不同的任务这个路径要不一样

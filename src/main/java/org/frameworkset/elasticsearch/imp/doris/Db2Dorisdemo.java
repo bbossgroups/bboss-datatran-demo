@@ -79,7 +79,7 @@ public class Db2Dorisdemo {
 		DBInputConfig dbInputConfig = new DBInputConfig();
 		dbInputConfig.setDbName("source")
 				.setDbDriver("com.mysql.cj.jdbc.Driver") //数据库驱动程序，必须导入相关数据库的驱动jar包
-				.setDbUrl("jdbc:mysql://localhost:3306/bboss?useUnicode=true&characterEncoding=utf-8&useSSL=false")
+				.setDbUrl("jdbc:mysql://localhost:3306/bboss?allowPublicKeyRetrieval=true&useUnicode=true&characterEncoding=utf-8&useSSL=false")
 				.setDbUser("root")
 				.setDbPassword("123456")
 				.setValidateSQL("select 1")
@@ -91,7 +91,7 @@ public class Db2Dorisdemo {
 		DBOutputConfig dbOutputConfig = new DBOutputConfig();
 		dbOutputConfig.setDbName("target")
 				.setDbDriver("com.mysql.cj.jdbc.Driver") //数据库驱动程序，必须导入相关数据库的驱动jar包
-				.setDbUrl("jdbc:mysql://10.13.6.7:29030/testdb") // doris query_port = 29030
+				.setDbUrl("jdbc:mysql://10.13.6.7:29030/testdb?allowPublicKeyRetrieval=true&") // doris query_port = 29030
 				.setDbUser("root")
 				.setDbPassword("")
 				.setValidateSQL("select 1")

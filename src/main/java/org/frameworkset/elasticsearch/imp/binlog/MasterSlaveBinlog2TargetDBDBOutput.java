@@ -72,7 +72,7 @@ public class MasterSlaveBinlog2TargetDBDBOutput {
                         DBConf tempConf = new DBConf();
                         tempConf.setPoolname("ddlsyn");//用于验证ddl同步处理的数据源
                         tempConf.setDriver("com.mysql.cj.jdbc.Driver");
-                        tempConf.setJdbcurl("jdbc:mysql://192.168.137.1:3306/pinpoint?useUnicode=true&characterEncoding=utf-8&useSSL=false&rewriteBatchedStatements=true");
+                        tempConf.setJdbcurl("jdbc:mysql://192.168.137.1:3306/pinpoint?allowPublicKeyRetrieval=true&useUnicode=true&characterEncoding=utf-8&useSSL=false&rewriteBatchedStatements=true");
 
                         tempConf.setUsername("root");
                         tempConf.setPassword("123456");
@@ -152,7 +152,7 @@ public class MasterSlaveBinlog2TargetDBDBOutput {
         dbOutputConfig
                 .setDbName("test")
                 .setDbDriver("com.mysql.cj.jdbc.Driver") //数据库驱动程序，必须导入相关数据库的驱动jar包
-                .setDbUrl("jdbc:mysql://192.168.137.1:3306/apm?useUnicode=true&characterEncoding=utf-8&useSSL=false&rewriteBatchedStatements=true") //通过useCursorFetch=true启用mysql的游标fetch机制，否则会有严重的性能隐患，useCursorFetch必须和jdbcFetchSize参数配合使用，否则不会生效
+                .setDbUrl("jdbc:mysql://192.168.137.1:3306/apm?allowPublicKeyRetrieval=true&useUnicode=true&characterEncoding=utf-8&useSSL=false&rewriteBatchedStatements=true") //通过useCursorFetch=true启用mysql的游标fetch机制，否则会有严重的性能隐患，useCursorFetch必须和jdbcFetchSize参数配合使用，否则不会生效
                 .setDbUser("root")
                 .setDbPassword("123456")
                 .setValidateSQL("select 1")

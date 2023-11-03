@@ -93,7 +93,7 @@ public class Db2MetricsDemo {
 		dbInputConfig.setSql("select * from td_sm_log where log_id > #[log_id]")
 				.setDbName("test")
 				.setDbDriver("com.mysql.cj.jdbc.Driver") //数据库驱动程序，必须导入相关数据库的驱动jar包
-				.setDbUrl("jdbc:mysql://192.168.137.1:3306/bboss?useUnicode=true&characterEncoding=utf-8&useSSL=false&rewriteBatchedStatements=true")
+				.setDbUrl("jdbc:mysql://192.168.137.1:3306/bboss?allowPublicKeyRetrieval=true&useUnicode=true&characterEncoding=utf-8&useSSL=false&rewriteBatchedStatements=true")
 				.setDbUser("root")
 				.setDbPassword("123456")
 				.setValidateSQL("select 1")
