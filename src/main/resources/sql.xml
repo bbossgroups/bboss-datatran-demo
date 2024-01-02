@@ -43,4 +43,23 @@ PROPERTIES("replication_num" = "1");
 ]]>
     </property>
 
+
+    <!--
+   插入数据sql
+   CREATE TABLE logtable
+(
+    LOG_ID INT DEFAULT '10',
+    LOG_OPERUSER VARCHAR(100) DEFAULT '',
+    OPER_MODULE VARCHAR(100) DEFAULT '',
+    LOG_CONTENT VARCHAR(4000) DEFAULT ''
+)
+DISTRIBUTED BY HASH(LOG_OPERUSER) BUCKETS 10
+PROPERTIES("replication_num" = "1");
+   -->
+    <property name="insertClickhouseSql">
+        <![CDATA[INSERT INTO table_name8 (x) VALUES (#[LOG_ID]);
+
+]]>
+    </property>
+
 </properties>
