@@ -92,7 +92,7 @@ public class Db2Clickhousedemo {
 		DBOutputConfig dbOutputConfig = new DBOutputConfig();
 		dbOutputConfig.setDbName("target")
 				.setDbDriver("com.github.housepower.jdbc.ClickHouseDriver") //数据库驱动程序，必须导入相关数据库的驱动jar包
-				.setDbUrl("jdbc:clickhouse://10.13.6.4:29000,10.13.6.7:29000,10.13.6.6:29000/visualops") // doris query_port = 29030
+				.setDbUrl("jdbc:clickhouse://101.13.6.4:29000,101.13.6.7:29000,101.13.6.6:29000/visualops") // jdbc_port = 29000
 				.setDbUser("default")
 				.setDbPassword("")
 				.setValidateSQL("select 1")
