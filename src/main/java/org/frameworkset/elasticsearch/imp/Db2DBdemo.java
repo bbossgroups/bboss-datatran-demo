@@ -63,7 +63,14 @@ public class Db2DBdemo {
 	 */
 	public void scheduleImportData(){
 		ImportBuilder importBuilder = ImportBuilder.newInstance();
-
+        importBuilder.setJobId("Db2DBdemo");
+        /**
+         * 设置增量状态ID生成策略，在设置jobId的情况下起作用
+         * ImportIncreamentConfig.STATUSID_POLICY_JOBID 采用jobType+jobId作为增量状态id
+         * ImportIncreamentConfig.STATUSID_POLICY_JOBID_QUERYSTATEMENT 采用[jobType]+[jobId]+[作业查询语句/文件路径等信息的hashcode]，作为增量id作为增量状态id
+         * 默认值ImportIncreamentConfig.STATUSID_POLICY_JOBID_QUERYSTATEMENT
+         */
+        importBuilder.setStatusIdPolicy(ImportIncreamentConfig.STATUSID_POLICY_JOBID);
 
 
 		//指定导入数据的sql语句，必填项，可以设置自己的提取逻辑，

@@ -322,6 +322,10 @@ public class Db2EleasticsearchDemo {
 				IpInfo ipInfo = context.getIpInfoByIp("219.133.80.136");
 				if(ipInfo != null)
 					context.addFieldValue("ipInfo", SimpleStringUtil.object2json(ipInfo));
+//                context.addFieldValues(bean);
+//                context.addMapFieldValues(map);
+//                context.addFieldValues(bean,false);
+//                context.addMapFieldValues(map,false);
 			}
 		});
 		//映射和转换配置结束
