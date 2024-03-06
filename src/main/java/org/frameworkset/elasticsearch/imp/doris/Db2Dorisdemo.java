@@ -96,9 +96,14 @@ public class Db2Dorisdemo {
 				.setDbPassword("")
 				.setValidateSQL("select 1")
 				.setUsePool(true)//是否使用连接池
+                .setDbInitSize(100)
+                .setDbMaxSize(100)
+                .setDbMinIdleSize(100)
                 .setMaxWait(300000)
                 .setConnectionTimeout(200000)
+              
 				.setSqlFilepath("sql.xml")
+                
 				.setInsertSqlName("insertDorisSql");
 		importBuilder.setOutputConfig(dbOutputConfig);
 
