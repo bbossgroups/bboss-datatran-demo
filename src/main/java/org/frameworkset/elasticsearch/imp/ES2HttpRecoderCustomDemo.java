@@ -86,10 +86,10 @@ public class ES2HttpRecoderCustomDemo {
 				.setLineSeparator("|")
 				.setRecordGenerator(new RecordGenerator() {
 					@Override
-					public void buildRecord(Context taskContext, CommonRecord record, Writer builder) throws Exception {
+					public void buildRecord(TaskContext taskContext, CommonRecord record, Writer builder) throws Exception {
 						Map<String, Object> datas = record.getDatas();
 						try {
-							Map<String,String> chanMap = (Map<String,String>)taskContext.getTaskContext().getTaskData("chanMap");
+							Map<String,String> chanMap = (Map<String,String>)taskContext.getTaskData("chanMap");
 
 							String phoneNumber = (String) datas.get("phoneNumber");//手机号码
 							if(phoneNumber==null){
