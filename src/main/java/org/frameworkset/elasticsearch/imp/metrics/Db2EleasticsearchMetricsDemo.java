@@ -24,6 +24,7 @@ import org.frameworkset.elasticsearch.ElasticSearchHelper;
 import org.frameworkset.elasticsearch.boot.ElasticSearchBoot;
 import org.frameworkset.elasticsearch.boot.ElasticsearchBootResult;
 import org.frameworkset.elasticsearch.bulk.*;
+import org.frameworkset.elasticsearch.client.ClientInterface;
 import org.frameworkset.spi.assemble.PropertiesUtil;
 import org.frameworkset.spi.geoip.IpInfo;
 import org.frameworkset.tran.*;
@@ -205,9 +206,10 @@ public class Db2EleasticsearchMetricsDemo {
                 objectHolder.setObject(bulkProcessor);
 
                 if(dropIndice) {
+                    ClientInterface clientInterface =  ElasticSearchHelper.getConfigRestClientUtil("testES","indice.xml");
                     try {
                         //清除测试表,导入的时候回重建表，测试的时候加上为了看测试效果，实际线上环境不要删表
-                        ElasticSearchHelper.getRestClientUtil("testES").dropIndice("dbdemo");
+                        clientInterface.dropIndice("dbdemo");
                         //指定集群数据源名称
 //                        ElasticSearchHelper.getRestClientUtil("default").dropIndice("dbdemo");
                     } catch (Exception e) {
@@ -216,16 +218,19 @@ public class Db2EleasticsearchMetricsDemo {
 
                     try {
                         //清除测试表,导入的时候回重建表，测试的时候加上为了看测试效果，实际线上环境不要删表
-                        ElasticSearchHelper.getRestClientUtil("testES").dropIndice("vops-loginmodulemetrics");
+                        clientInterface.dropIndice("vops-loginmodulemetrics");
                     } catch (Exception e) {
                         logger.error("Drop indice  vops-loginmodulemetrics failed:",e);
                     }
                     try {
                         //清除测试表,导入的时候回重建表，测试的时候加上为了看测试效果，实际线上环境不要删表
-                        ElasticSearchHelper.getRestClientUtil("testES").dropIndice("vops-loginusermetrics");
+                        clientInterface.dropIndice("vops-loginusermetrics");
                     } catch (Exception e) {
                         logger.error("Drop indice  vops-loginusermetrics failed:",e);
                     }
+                    //创建Elasticsearch指标表
+                    clientInterface.createIndiceMapping("vops-loginmodulemetrics","vops-loginmodulemetrics-dsl");
+                    clientInterface.createIndiceMapping("vops-loginusermetrics","vops-loginusermetrics-dsl");
                 }
             }
         });
@@ -396,9 +401,9 @@ public class Db2EleasticsearchMetricsDemo {
 		/**
 		 * 设置IP地址信息库
 		 */
-		importBuilder.setGeoipDatabase("d:/geolite2/GeoLite2-City.mmdb");
-		importBuilder.setGeoipAsnDatabase("d:/geolite2/GeoLite2-ASN.mmdb");
-		importBuilder.setGeoip2regionDatabase("d:/geolite2/ip2region.db");
+		importBuilder.setGeoipDatabase("C:/workdir/geolite2/GeoLite2-City.mmdb");
+		importBuilder.setGeoipAsnDatabase("C:/workdir/geolite2/GeoLite2-ASN.mmdb");
+		importBuilder.setGeoip2regionDatabase("C:/workdir/geolite2/ip2region.db");
 
 		importBuilder
 //
@@ -436,8 +441,8 @@ public class Db2EleasticsearchMetricsDemo {
 		importBuilder.setLastValueColumn("log_id");//手动指定数字增量查询字段，默认采用上面设置的sql语句中的增量变量名称作为增量查询字段的名称，指定以后就用指定的字段
 		importBuilder.setFromFirst(false);//setFromfirst(false)，如果作业停了，作业重启后从上次截止位置开始采集数据，
 //		setFromfirst(true) 如果作业停了，作业重启后，重新开始采集数据
-		importBuilder.setStatusDbname("testStatus");//指定增量状态数据源名称
-//		importBuilder.setLastValueStorePath("logtable_import");//记录上次采集的增量字段值的文件路径，作为下次增量（或者重启后）采集数据的起点，不同的任务这个路径要不一样
+//		importBuilder.setStatusDbname("testStatus");//指定增量状态数据源名称
+		importBuilder.setLastValueStorePath("dbesmetrics_import");//记录上次采集的增量字段值的文件路径，作为下次增量（或者重启后）采集数据的起点，不同的任务这个路径要不一样
 		importBuilder.setLastValueStoreTableName("logstable");//记录上次采集的增量字段值的表，可以不指定，采用默认表名increament_tab
 		importBuilder.setLastValueType(ImportIncreamentConfig.NUMBER_TYPE);//如果没有指定增量查询字段名称，则需要指定字段类型：ImportIncreamentConfig.NUMBER_TYPE 数字类型
 
@@ -467,23 +472,23 @@ public class Db2EleasticsearchMetricsDemo {
 		importBuilder.setThreadCount(50);//设置批量导入线程池工作线程数量
 		importBuilder.setContinueOnError(true);//任务出现异常，是否继续执行作业：true（默认值）继续执行 false 中断作业执行
 
-		importBuilder.setExportResultHandler(new ExportResultHandler<String,String>() {
+		importBuilder.setExportResultHandler(new ExportResultHandler<String>() {
 			@Override
-			public void success(TaskCommand<String,String> taskCommand, String result) {
+			public void success(TaskCommand<String> taskCommand, String result) {
 				TaskMetrics taskMetrics = taskCommand.getTaskMetrics();
 				logger.info(taskMetrics.toString());
 				logger.debug(result);
 			}
 
 			@Override
-			public void error(TaskCommand<String,String> taskCommand, String result) {
+			public void error(TaskCommand<String> taskCommand, String result) {
 				TaskMetrics taskMetrics = taskCommand.getTaskMetrics();
 				logger.info(taskMetrics.toString());
 				logger.debug(result);
 			}
 
 			@Override
-			public void exception(TaskCommand<String,String> taskCommand, Throwable exception) {
+			public void exception(TaskCommand<String> taskCommand, Throwable exception) {
 				TaskMetrics taskMetrics = taskCommand.getTaskMetrics();
 				logger.debug(taskMetrics.toString());
 			}

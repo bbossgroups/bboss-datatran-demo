@@ -86,11 +86,11 @@ public class LocalLog2FullfeatureHttpDslDemo {
 		 * true 备份
 		 * false 不备份
 		 */
-		config.setBackupSuccessFiles(true);
+		config.setBackupSuccessFiles(false);
 		/**
 		 * 备份文件目录
 		 */
-		config.setBackupSuccessFileDir("d:/ftpbackup");
+		config.setBackupSuccessFileDir("c:/ftpbackup");
 		/**
 		 * 备份文件清理线程执行时间间隔，单位：毫秒
 		 * 默认每隔10秒执行一次
@@ -151,26 +151,27 @@ public class LocalLog2FullfeatureHttpDslDemo {
 											@Override
 											public boolean accept(FilterFileInfo fileInfo, //Ftp文件名称
 																  FileConfig fileConfig) {
-												String name = fileInfo.getFileName();
-												//判断是否采集文件数据，返回true标识采集，false 不采集
-												boolean nameMatch = name.startsWith("731_tmrt_user_login_day_");
-												if(nameMatch){
-													String day = name.substring("731_tmrt_user_login_day_".length());
-													SimpleDateFormat format = new SimpleDateFormat("yyyyMMdd");
-													try {
-														Date fileDate = format.parse(day);
-														if(fileDate.after(startDate))//下载和采集2020年12月11日以后的数据文件
-															return true;
-													} catch (ParseException e) {
-														logger.error("",e);
-													}
-
-
-												}
-												return false;
+//												String name = fileInfo.getFileName();
+//												//判断是否采集文件数据，返回true标识采集，false 不采集
+//												boolean nameMatch = name.startsWith("731_tmrt_user_login_day_");
+//												if(nameMatch){
+//													String day = name.substring("731_tmrt_user_login_day_".length());
+//													SimpleDateFormat format = new SimpleDateFormat("yyyyMMdd");
+//													try {
+//														Date fileDate = format.parse(day);
+//														if(fileDate.after(startDate))//下载和采集2020年12月11日以后的数据文件
+//															return true;
+//													} catch (ParseException e) {
+//														logger.error("",e);
+//													}
+//
+//
+//												}
+//												return false;
+                                                return true;
 											}
 										})
-										.setSourcePath("D:\\data\\local")//指定目录
+										.setSourcePath("C:\\workdir\\error")//指定目录
 										.addField("tag","elasticsearch")//添加字段tag到记录中
 						);
 
@@ -205,7 +206,7 @@ public class LocalLog2FullfeatureHttpDslDemo {
 				.setTargetHttpPool("datatran")
 				.addHttpOutputConfig("http.poolNames","datatran,jwtservice")
 //				.addHttpOutputConfig("datatran.http.health","/health")//服务监控检查地址
-				.addHttpOutputConfig("datatran.http.hosts","192.168.137.1:808")//服务地址清单，多个用逗号分隔
+				.addHttpOutputConfig("datatran.http.hosts","192.168.137.1:28080")//服务地址清单，多个用逗号分隔
 				.addHttpOutputConfig("datatran.http.timeoutConnection","5000")
 				.addHttpOutputConfig("datatran.http.timeoutSocket","50000")
 				.addHttpOutputConfig("datatran.http.connectionRequestTimeout","50000")
@@ -214,7 +215,7 @@ public class LocalLog2FullfeatureHttpDslDemo {
 				.addHttpOutputConfig("datatran.http.failAllContinue","true")
 				//设置token申请和更新服务配置jwtservice，在TokenManager中使用jwtservice申请和更新token
 //				.addHttpOutputConfig("jwtservice.http.health","/health") //服务监控检查地址
-				.addHttpOutputConfig("jwtservice.http.hosts","192.168.137.1:808") //服务地址清单，多个用逗号分隔，192.168.0.100:9501
+				.addHttpOutputConfig("jwtservice.http.hosts","192.168.137.1:28080") //服务地址清单，多个用逗号分隔，192.168.0.100:9501
 				.addHttpOutputConfig("jwtservice.http.timeoutConnection","5000")
 				.addHttpOutputConfig("jwtservice.http.timeoutSocket","50000")
 				.addHttpOutputConfig("jwtservice.http.connectionRequestTimeout","50000")
@@ -237,7 +238,7 @@ public class LocalLog2FullfeatureHttpDslDemo {
 					 });
 		importBuilder.setOutputConfig(httpOutputConfig);
 		//增量配置开始
-		importBuilder.setFromFirst(false);//setFromfirst(false)，如果作业停了，作业重启后从上次截止位置开始采集数据，
+		importBuilder.setFromFirst(true);//setFromfirst(false)，如果作业停了，作业重启后从上次截止位置开始采集数据，
 		//setFromfirst(true) 如果作业停了，作业重启后，重新开始采集数据
 		importBuilder.setLastValueStorePath("locallogeshttpdsl_import");//记录上次采集的增量字段值的文件路径，作为下次增量（或者重启后）采集数据的起点，不同的任务这个路径要不一样
 		//增量配置结束
@@ -356,19 +357,19 @@ public class LocalLog2FullfeatureHttpDslDemo {
 			}
 		});
 		//映射和转换配置结束
-		importBuilder.setExportResultHandler(new ExportResultHandler<String,String>() {
+		importBuilder.setExportResultHandler(new ExportResultHandler<String>() {
 			@Override
-			public void success(TaskCommand<String,String> taskCommand, String o) {
+			public void success(TaskCommand<String> taskCommand, String o) {
 				logger.info("result:"+o);
 			}
 
 			@Override
-			public void error(TaskCommand<String,String> taskCommand, String o) {
+			public void error(TaskCommand<String> taskCommand, String o) {
 				logger.warn("error:"+o);
 			}
 
 			@Override
-			public void exception(TaskCommand<String,String> taskCommand, Throwable exception) {
+			public void exception(TaskCommand<String> taskCommand, Throwable exception) {
 				logger.warn("error:",exception);
 			}
 

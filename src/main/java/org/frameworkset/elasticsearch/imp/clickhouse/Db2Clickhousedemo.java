@@ -257,21 +257,21 @@ public class Db2Clickhousedemo {
 
 		importBuilder
 				.setPrintTaskLog(true); //可选项，true 打印任务执行日志（耗时，处理记录数） false 不打印，默认值false
-		importBuilder.setExportResultHandler(new ExportResultHandler<String,String>() {
+		importBuilder.setExportResultHandler(new ExportResultHandler<String>() {
 			@Override
-			public void success(TaskCommand<String,String> taskCommand, String result) {
+			public void success(TaskCommand<String> taskCommand, String result) {
 				TaskMetrics taskMetrics = taskCommand.getTaskMetrics();
 				logger.info(taskMetrics.toString());
 			}
 
 			@Override
-			public void error(TaskCommand<String,String> taskCommand, String result) {
+			public void error(TaskCommand<String> taskCommand, String result) {
 				TaskMetrics taskMetrics = taskCommand.getTaskMetrics();
 				logger.info(taskMetrics.toString());
 			}
 
 			@Override
-			public void exception(TaskCommand<String,String> taskCommand, Throwable exception) {
+			public void exception(TaskCommand<String> taskCommand, Throwable exception) {
 				TaskMetrics taskMetrics = taskCommand.getTaskMetrics();
 				logger.info(taskMetrics.toString());
 			}

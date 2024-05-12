@@ -60,7 +60,7 @@ public class ES2CustomDemo {
 
 //					 .setSliceQuery(true)
 //				     .setSliceSize(5)
-				.setQueryUrl("demo/_search")
+				.setQueryUrl("dbdemo/_search")
 				.addSourceElasticsearch("elasticsearch.serverNames","default")
 				.addElasticsearchProperty("default.elasticsearch.rest.hostNames","192.168.137.1:9200")
 				.addElasticsearchProperty("default.elasticsearch.showTemplate","true")
@@ -88,7 +88,7 @@ public class ES2CustomDemo {
                 //You can do any thing here for datas
                 for(CommonRecord record:datas){
                     Map<String,Object> data = record.getDatas();
-
+                    logger.info(SimpleStringUtil.object2json(data));
                     logger.info(SimpleStringUtil.object2json(record.getMetaDatas()));
 
                 }
@@ -130,13 +130,13 @@ public class ES2CustomDemo {
 //		//设置任务执行拦截器结束，可以添加多个
 		//增量配置开始
 //		importBuilder.setStatusDbname("test");//设置增量状态数据源名称
-		importBuilder.setLastValueColumn("localDateTime");//手动指定数字增量查询字段，默认采用上面设置的sql语句中的增量变量名称作为增量查询字段的名称，指定以后就用指定的字段
+		importBuilder.setLastValueColumn("collecttime");//手动指定数字增量查询字段，默认采用上面设置的sql语句中的增量变量名称作为增量查询字段的名称，指定以后就用指定的字段
 		importBuilder.setFromFirst(false);//setFromfirst(false)，如果作业停了，作业重启后从上次截止位置开始采集数据，
 //		setFromfirst(true) 如果作业停了，作业重启后，重新开始采集数据
 		importBuilder.setStatusDbname("es2custom");
 		importBuilder.setLastValueStorePath("es2custom_import");//记录上次采集的增量字段值的文件路径，作为下次增量（或者重启后）采集数据的起点，不同的任务这个路径要不一样
 		importBuilder.setLastValueStoreTableName("es2custom");//记录上次采集的增量字段值的表，可以不指定，采用默认表名increament_tab
-		importBuilder.setLastValueType(ImportIncreamentConfig.LOCALDATETIME_TYPE);//NUMBER_TYPE TIMESTAMP_TYPE LOCALDATETIME_TYPE如果没有指定增量查询字段名称，则需要指定字段类型：ImportIncreamentConfig.NUMBER_TYPE 数字类型
+		importBuilder.setLastValueType(ImportIncreamentConfig.TIMESTAMP_TYPE);//NUMBER_TYPE TIMESTAMP_TYPE LOCALDATETIME_TYPE如果没有指定增量查询字段名称，则需要指定字段类型：ImportIncreamentConfig.NUMBER_TYPE 数字类型
 //        importBuilder.setLastValueDateformat("yyyy-MM-ddTHH:mm:ss.SSSZ");//默认
 
 		importBuilder.setIncreamentEndOffset(60*1);//单位：秒
@@ -182,23 +182,23 @@ public class ES2CustomDemo {
 		importBuilder.setThreadCount(50);//设置批量导入线程池工作线程数量
 		importBuilder.setContinueOnError(true);//任务出现异常，是否继续执行作业：true（默认值）继续执行 false 中断作业执行
 
-		importBuilder.setExportResultHandler(new ExportResultHandler<String,String>() {
+		importBuilder.setExportResultHandler(new ExportResultHandler<String>() {
 			@Override
-			public void success(TaskCommand<String,String> taskCommand, String result) {
+			public void success(TaskCommand<String> taskCommand, String result) {
 				TaskMetrics taskMetrics = taskCommand.getTaskMetrics();
 				logger.info(taskMetrics.toString());
 				logger.debug(result);
 			}
 
 			@Override
-			public void error(TaskCommand<String,String> taskCommand, String result) {
+			public void error(TaskCommand<String> taskCommand, String result) {
 				TaskMetrics taskMetrics = taskCommand.getTaskMetrics();
 				logger.info(taskMetrics.toString());
 				logger.debug(result);
 			}
 
 			@Override
-			public void exception(TaskCommand<String,String> taskCommand, Throwable exception) {
+			public void exception(TaskCommand<String> taskCommand, Throwable exception) {
 				TaskMetrics taskMetrics = taskCommand.getTaskMetrics();
 				logger.debug(taskMetrics.toString());
 			}
