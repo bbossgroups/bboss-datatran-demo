@@ -97,7 +97,7 @@ public class Http2ESFullQueryDslDemo {
 				})
 				.addSourceHttpPoolName("http.poolNames","datatran")
 				.addHttpInputConfig("datatran.http.health","/health")
-				.addHttpInputConfig("datatran.http.hosts","192.168.137.1:808")
+				.addHttpInputConfig("datatran.http.hosts","192.168.137.1:28080")
 				.addHttpInputConfig("datatran.http.timeoutConnection","5000")
 				.addHttpInputConfig("datatran.http.timeoutSocket","50000")
 				.addHttpInputConfig("datatran.http.connectionRequestTimeout","50000")
@@ -266,7 +266,7 @@ public class Http2ESFullQueryDslDemo {
 				context.addFieldValue("oldLogTimeEndTime",new Date(oldLogTimeEndTime));
 //				Date date = context.getDateValue("LOG_OPERTIME");
 
-				HttpRecord record = (HttpRecord) context.getCurrentRecord();
+				HttpRecord record = (HttpRecord) context.getCurrentRecord().getRecord();
 				HttpResponse response = record.getResponse();//可以从httpresponse中获取head之类的信息
 				context.addFieldValue("collecttime",new Date());//添加采集时间
 

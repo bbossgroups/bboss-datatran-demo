@@ -43,17 +43,17 @@ import java.util.Date;
 
 /**
  * <p>Description: 基于数字类型db-es增量同步案例，同步处理程序，如需调试同步功能，直接运行main方法即可
- * 串行行datarefactor模式：增量字段信息（sql和增量设置），从resultset中获取数据，所以大小写不敏感
+ * 并行datarefactor模式：增量字段信息（sql和增量设置），必须使用sql中返回的字段名称
  * <p></p>
  * <p>Copyright (c) 2018</p>
  * @Date 2018/9/27 20:38
  * @author biaoping.yin
  * @version 1.0
  */
-public class Db2EleasticsearchDemo {
-	private static Logger logger = LoggerFactory.getLogger(Db2EleasticsearchDemo.class);
+public class Db2EleasticsearchParrelDemo {
+	private static Logger logger = LoggerFactory.getLogger(Db2EleasticsearchParrelDemo.class);
 	public static void main(String args[]){
-		Db2EleasticsearchDemo db2EleasticsearchDemo = new Db2EleasticsearchDemo();
+		Db2EleasticsearchParrelDemo db2EleasticsearchDemo = new Db2EleasticsearchParrelDemo();
 		//从配置文件application.properties中获取参数值
 		boolean dropIndice = PropertiesUtil.getPropertiesContainer("application.properties").getBooleanSystemEnvProperty("dropIndice",true);
 //		dbdemo.fullImportData(  dropIndice);
@@ -158,7 +158,7 @@ public class Db2EleasticsearchDemo {
 		// 通过setLastValueType方法告诉工具增量字段的类型，默认是数字类型
 
 //		importBuilder.setSql("select * from td_sm_log where LOG_OPERTIME > #[LOG_OPERTIME]");
-		dbInputConfig.setSql("select * from td_sm_log where log_id > #[log_id]")
+		dbInputConfig.setSql("select * from td_sm_log where log_id > #[LOG_ID]")
 				.setDbName("test")
 				.setDbDriver("com.mysql.cj.jdbc.Driver") //数据库驱动程序，必须导入相关数据库的驱动jar包
 				.setDbUrl("jdbc:mysql://192.168.137.1:3306/bboss?useUnicode=true&allowPublicKeyRetrieval=true&characterEncoding=utf-8&useSSL=false&rewriteBatchedStatements=true") //通过useCursorFetch=true启用mysql的游标fetch机制，否则会有严重的性能隐患，useCursorFetch必须和jdbcFetchSize参数配合使用，否则不会生效
@@ -170,6 +170,7 @@ public class Db2EleasticsearchDemo {
 				.setDbMinIdleSize(5)
 				.setDbMaxSize(10)
 				.setShowSql(true);//是否使用连接池;
+        dbInputConfig.setParallelDatarefactor(true);
 		importBuilder.setInputConfig(dbInputConfig);
 
 
@@ -192,7 +193,7 @@ public class Db2EleasticsearchDemo {
 				.addElasticsearchProperty("default.http.maxTotal","200")
 				.addElasticsearchProperty("default.http.defaultMaxPerRoute","100")
 				.setIndex("dbdemo")
-				.setEsIdField("log_id")//设置文档主键，不设置，则自动产生文档id
+				.setEsIdField("LOG_ID")//设置文档主键，不设置，则自动产生文档id
 				.setDebugResponse(false)//设置是否将每次处理的reponse打印到日志文件中，默认false
 				.setDiscardBulkResponse(false);//设置是否需要批量处理的响应报文，不需要设置为false，true为需要，默认false
 
@@ -272,7 +273,7 @@ public class Db2EleasticsearchDemo {
 //		//设置任务执行拦截器结束，可以添加多个
 		//增量配置开始
 //		importBuilder.setStatusDbname("test");//设置增量状态数据源名称
-		importBuilder.setLastValueColumn("log_id");//手动指定数字增量查询字段，默认采用上面设置的sql语句中的增量变量名称作为增量查询字段的名称，指定以后就用指定的字段
+		importBuilder.setLastValueColumn("LOG_ID");//手动指定数字增量查询字段，默认采用上面设置的sql语句中的增量变量名称作为增量查询字段的名称，指定以后就用指定的字段
 		importBuilder.setFromFirst(true);//setFromfirst(false)，如果作业停了，作业重启后从上次截止位置开始采集数据，
 //		setFromfirst(true) 如果作业停了，作业重启后，重新开始采集数据
 		importBuilder.setStatusDbname("testStatus");//指定增量状态数据源名称
