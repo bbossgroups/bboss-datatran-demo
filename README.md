@@ -41,7 +41,7 @@ https://gitee.com/bboss/bboss-datatran-demo
 
 从上面的地址下载源码工程，然后导入idea或者eclipse，根据自己的需求，修改导入程序逻辑
 
-org.frameworkset.elasticsearch.imp.Db2EleasticsearchDemo
+org.frameworkset.datatran.imp.Db2EleasticsearchDemo
 
 如果需要测试和调试导入功能，运行Db2EleasticsearchDemo的main方法即可即可：
 
@@ -62,7 +62,7 @@ public class Db2EleasticsearchDemo {
 
 测试调试通过后
 修改application.properties中的mainclass配置。
-mainclass=org.frameworkset.elasticsearch.imp.Db2EleasticsearchDemo
+mainclass=org.frameworkset.datatran.imp.Db2EleasticsearchDemo
 
 构建发布可运行的版本：进入命令行模式，在源码工程根目录bboss-datatran-demo下运行以下gradle指令打包发布版本
 release.bat
@@ -90,13 +90,13 @@ windows: restart.bat
 
 现在我们在工程中添加另外一张表td_cms_document的同步到索引cms_document/cms_document的作业步骤：
 
-1.首先，新建一个带main方法的类org.frameworkset.elasticsearch.imp.CMSDocumentImport,实现同步的逻辑
+1.首先，新建一个带main方法的类org.frameworkset.datatran.imp.CMSDocumentImport,实现同步的逻辑
 
 如果需要测试调试，编写 src\main\java\org\frameworkset\elasticsearch\imp\CMSDocumentImportTest.java测试类,然后debug即可
 
 2.然后，在runfiles目录下新建CMSDocumentImport作业主程序和作业进程配置文件：runfiles/config-cmsdocmenttable.properties，内容如下：
 
-mainclass=org.frameworkset.elasticsearch.imp.CMSDocumentImport
+mainclass=org.frameworkset.datatran.imp.CMSDocumentImport
 
 pidfile=CMSDocumentImport.pid  
 
@@ -148,7 +148,7 @@ db2es工具管理提取数据的sql语句有两种方法：代码中直接编写
 
 ```ini
 #工具主程序
-mainclass=org.frameworkset.elasticsearch.imp.Dbdemo
+mainclass=org.frameworkset.datatran.imp.Dbdemo
 
 # 参数配置
 # 在代码中获取方法：PropertiesUtil.getPropertiesContainer().getBooleanAttribute("dropIndice",false);//同时指定了默认值false
