@@ -230,7 +230,7 @@ public class Db2EleasticsearchSimpleDemo {
 		importBuilder.setParallel(true);//设置为多线程并行批量导入,false串行
 		importBuilder.setQueue(10);//设置批量导入线程池等待队列长度
 		importBuilder.setThreadCount(50);//设置批量导入线程池工作线程数量
-		importBuilder.setContinueOnError(false);//任务出现异常，是否继续执行作业：true（默认值）继续执行 false 中断作业执行
+		importBuilder.setContinueOnError(true);//任务出现异常，是否继续执行作业：true（默认值）继续执行 false 中断作业执行
 
 		importBuilder.setExportResultHandler(new ExportResultHandler<String>() {
 			@Override
