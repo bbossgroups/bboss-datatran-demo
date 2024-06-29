@@ -92,7 +92,7 @@ public class Db2DBdemo {
 				.setValidateSQL("select 1")
 				.setUsePool(true)//是否使用连接池
 				.setSqlFilepath("sql.xml")
-				.setSqlName("demoexport");
+				.setSqlName("demoexport").setParallelDatarefactor(true);
 		importBuilder.setInputConfig(dbInputConfig);
 
 		DBOutputConfig dbOutputConfig = new DBOutputConfig();
