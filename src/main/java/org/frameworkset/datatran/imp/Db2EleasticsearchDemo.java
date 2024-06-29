@@ -253,21 +253,6 @@ public class Db2EleasticsearchDemo {
 			public void throwException(TaskContext taskContext, Throwable e) {
 				System.out.println("throwException");
 			}
-		}).addCallInterceptor(new CallInterceptor() {
-			@Override
-			public void preCall(TaskContext taskContext) {
-				System.out.println("preCall 1");
-			}
-
-			@Override
-			public void afterCall(TaskContext taskContext) {
-				System.out.println("afterCall 1");
-			}
-
-			@Override
-			public void throwException(TaskContext taskContext, Throwable e) {
-				System.out.println("throwException 1");
-			}
 		});
 //		//设置任务执行拦截器结束，可以添加多个
 		//增量配置开始

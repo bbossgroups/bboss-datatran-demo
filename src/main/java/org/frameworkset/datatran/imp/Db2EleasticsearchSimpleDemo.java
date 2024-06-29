@@ -91,9 +91,7 @@ public class Db2EleasticsearchSimpleDemo {
 
 
 
-//		importBuilder.addFieldMapping("LOG_CONTENT","message");
-//		importBuilder.addIgnoreFieldMapping("remark1");
-//		importBuilder.setSql("select * from td_sm_log ");
+
 		ElasticsearchOutputConfig elasticsearchOutputConfig = new ElasticsearchOutputConfig();
 		elasticsearchOutputConfig
 				.addTargetElasticsearch("elasticsearch.serverNames","default")
@@ -109,8 +107,7 @@ public class Db2EleasticsearchSimpleDemo {
 				.addElasticsearchProperty("default.http.defaultMaxPerRoute","100")
 				.setIndex("dbdemo")
 				.setEsIdField("log_id")//设置文档主键，不设置，则自动产生文档id
-				.setDebugResponse(false)//设置是否将每次处理的reponse打印到日志文件中，默认false
-				.setDiscardBulkResponse(false);//设置是否需要批量处理的响应报文，不需要设置为false，true为需要，默认false
+			;//设置是否需要批量处理的响应报文，不需要设置为false，true为需要，默认false
 		/**
 		 elasticsearchOutputConfig.setEsIdGenerator(new EsIdGenerator() {
 		 //如果指定EsIdGenerator，则根据下面的方法生成文档id，
@@ -135,9 +132,9 @@ public class Db2EleasticsearchSimpleDemo {
 		/**
 		 * 设置IP地址信息库
 		 */
-		importBuilder.setGeoipDatabase("d:/geolite2/GeoLite2-City.mmdb");
-		importBuilder.setGeoipAsnDatabase("d:/geolite2/GeoLite2-ASN.mmdb");
-		importBuilder.setGeoip2regionDatabase("d:/geolite2/ip2region.db");
+		importBuilder.setGeoipDatabase("c:/data/geolite2/GeoLite2-City.mmdb");
+		importBuilder.setGeoipAsnDatabase("c:/data/geolite2/GeoLite2-ASN.mmdb");
+		importBuilder.setGeoip2regionDatabase("c:/data/geolite2/ip2region.db");
 
 		importBuilder
 //
@@ -155,17 +152,17 @@ public class Db2EleasticsearchSimpleDemo {
 		importBuilder.addCallInterceptor(new CallInterceptor() {
 			@Override
 			public void preCall(TaskContext taskContext) {
-				System.out.println("preCall");
+				logger.info("preCall");
 			}
 
 			@Override
 			public void afterCall(TaskContext taskContext) {
-				System.out.println("afterCall");
+                logger.info("afterCall");
 			}
 
 			@Override
 			public void throwException(TaskContext taskContext, Throwable e) {
-				System.out.println("throwException");
+                logger.info("throwException");
 			}
 		});
 //		//设置任务执行拦截器结束，可以添加多个
@@ -175,7 +172,7 @@ public class Db2EleasticsearchSimpleDemo {
 		importBuilder.setFromFirst(true);//setFromfirst(false)，如果作业停了，作业重启后从上次截止位置开始采集数据，
 //		setFromfirst(true) 如果作业停了，作业重启后，重新开始采集数据
 		importBuilder.setStatusDbname("testStatus");//指定增量状态数据源名称
-//		importBuilder.setLastValueStorePath("logtable_import");//记录上次采集的增量字段值的文件路径，作为下次增量（或者重启后）采集数据的起点，不同的任务这个路径要不一样
+		importBuilder.setLastValueStorePath("logtable_import");//记录上次采集的增量字段值的文件路径，作为下次增量（或者重启后）采集数据的起点，不同的任务这个路径要不一样
 		importBuilder.setLastValueStoreTableName("logstable");//记录上次采集的增量字段值的表，可以不指定，采用默认表名increament_tab
 		importBuilder.setLastValueType(ImportIncreamentConfig.NUMBER_TYPE);//如果没有指定增量查询字段名称，则需要指定字段类型：ImportIncreamentConfig.NUMBER_TYPE 数字类型
 //		SimpleDateFormat format = new SimpleDateFormat("yyyy-MM-dd");
@@ -239,21 +236,22 @@ public class Db2EleasticsearchSimpleDemo {
 			@Override
 			public void success(TaskCommand<String> taskCommand, String result) {
 				TaskMetrics taskMetrics = taskCommand.getTaskMetrics();
-				logger.info(taskMetrics.toString());
+//				logger.info(taskMetrics.toString());
 				logger.debug(result);
 			}
 
 			@Override
 			public void error(TaskCommand<String> taskCommand, String result) {
 				TaskMetrics taskMetrics = taskCommand.getTaskMetrics();
-				logger.info(taskMetrics.toString());
-				logger.debug(result);
+//				logger.info(taskMetrics.toString());
+				logger.error(result);
 			}
 
 			@Override
 			public void exception(TaskCommand<String> taskCommand, Throwable exception) {
 				TaskMetrics taskMetrics = taskCommand.getTaskMetrics();
-				logger.debug(taskMetrics.toString());
+//				logger.debug(taskMetrics.toString());
+                logger.error("",exception);
 			}
 
 
