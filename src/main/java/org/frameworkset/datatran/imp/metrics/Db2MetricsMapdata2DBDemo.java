@@ -19,6 +19,7 @@ import com.frameworkset.common.poolman.BatchHandler;
 import com.frameworkset.common.poolman.SQLExecutor;
 import com.frameworkset.util.SimpleStringUtil;
 import org.frameworkset.bulk.*;
+import org.frameworkset.tran.plugin.metrics.output.*;
 import org.frameworkset.util.beans.ObjectHolder;
 import org.frameworkset.spi.assemble.PropertiesUtil;
 import org.frameworkset.spi.geoip.IpInfo;
@@ -33,10 +34,6 @@ import org.frameworkset.tran.metrics.job.BuildMapDataContext;
 import org.frameworkset.tran.metrics.job.KeyMetricBuilder;
 import org.frameworkset.tran.metrics.job.Metrics;
 import org.frameworkset.tran.plugin.db.input.DBInputConfig;
-import org.frameworkset.tran.plugin.metrics.output.BuildMapData;
-import org.frameworkset.tran.plugin.metrics.output.ETLMetrics;
-import org.frameworkset.tran.plugin.metrics.output.MetricsData;
-import org.frameworkset.tran.plugin.metrics.output.MetricsOutputConfig;
 import org.frameworkset.tran.schedule.CallInterceptor;
 import org.frameworkset.tran.schedule.ImportIncreamentConfig;
 import org.frameworkset.tran.schedule.TaskContext;
@@ -339,9 +336,9 @@ public class Db2MetricsMapdata2DBDemo {
         //如果要自定义创建MapData,设置BuildMapData即可
         keyMetrics.setBuildMapData(new BuildMapData() {
             @Override
-            public MapData buildMapData(MetricsData metricsData) {
+            public ETLMapData buildMapData(MetricsData metricsData) {
                 BuildMapDataContext buildMapDataContext = metricsData.getBuildMapDataContext();
-                MapData mapData = new MapData(){
+                ETLMapData mapData = new ETLMapData(){
                     /**
                      * 根据指标标识，获取指标的时间统计维度字段，默认返回dataTime字段值，不同的指标需要指定不同的时间维度统计字段
                      * 分析处理作业可以覆盖本方法，自定义获取时间维度字段值

@@ -21,6 +21,7 @@ import org.frameworkset.elasticsearch.ElasticSearchHelper;
 import org.frameworkset.elasticsearch.boot.ElasticSearchBoot;
 import org.frameworkset.elasticsearch.boot.ElasticsearchBootResult;
 import org.frameworkset.elasticsearch.bulk.*;
+import org.frameworkset.tran.plugin.metrics.output.*;
 import org.frameworkset.util.beans.ObjectHolder;
 import org.frameworkset.spi.assemble.PropertiesUtil;
 import org.frameworkset.spi.geoip.IpInfo;
@@ -37,10 +38,6 @@ import org.frameworkset.tran.metrics.job.Metrics;
 import org.frameworkset.tran.metrics.job.MetricsConfig;
 import org.frameworkset.tran.metrics.job.builder.MetricBuilder;
 import org.frameworkset.tran.plugin.db.input.DBInputConfig;
-import org.frameworkset.tran.plugin.metrics.output.BuildMapData;
-import org.frameworkset.tran.plugin.metrics.output.ETLMetrics;
-import org.frameworkset.tran.plugin.metrics.output.MetricsData;
-import org.frameworkset.tran.plugin.metrics.output.MetricsOutputConfig;
 import org.frameworkset.tran.schedule.CallInterceptor;
 import org.frameworkset.tran.schedule.ImportIncreamentConfig;
 import org.frameworkset.tran.schedule.TaskContext;
@@ -243,9 +240,9 @@ public class Db2MetricsMapdataDemo {
                 //自定义MapData，只能设置一个BuildMapData
                 setBuildMapData(new BuildMapData() {
                     @Override
-                    public MapData buildMapData(MetricsData metricsData) {
+                    public ETLMapData buildMapData(MetricsData metricsData) {
                         BuildMapDataContext buildMapDataContext = metricsData.getBuildMapDataContext();
-                        MapData mapData = new MapData(){
+                        ETLMapData mapData = new ETLMapData(){
                             /**
                              * 根据指标标识，获取指标的时间统计维度字段，默认返回dataTime字段值，不同的指标需要指定不同的时间维度统计字段
                              * 分析处理作业可以覆盖本方法，自定义获取时间维度字段值
@@ -429,9 +426,9 @@ public class Db2MetricsMapdataDemo {
         //如果要自定义创建MapData,设置BuildMapData即可
         keyMetrics1.setBuildMapData(new BuildMapData() {
             @Override
-            public MapData buildMapData(MetricsData metricsData) {
+            public ETLMapData buildMapData(MetricsData metricsData) {
                 BuildMapDataContext buildMapDataContext = metricsData.getBuildMapDataContext();
-                MapData mapData = new MapData(){
+                ETLMapData mapData = new ETLMapData(){
                     /**
                      * 根据指标标识，获取指标的时间统计维度字段，默认返回dataTime字段值，不同的指标需要指定不同的时间维度统计字段
                      * 分析处理作业可以覆盖本方法，自定义获取时间维度字段值

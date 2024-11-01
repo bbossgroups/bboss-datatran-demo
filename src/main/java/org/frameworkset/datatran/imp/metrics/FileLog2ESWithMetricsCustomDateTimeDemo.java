@@ -21,6 +21,7 @@ import org.frameworkset.elasticsearch.boot.ElasticSearchBoot;
 import org.frameworkset.elasticsearch.boot.ElasticsearchBootResult;
 import org.frameworkset.elasticsearch.bulk.*;
 import org.frameworkset.elasticsearch.client.ClientInterface;
+import org.frameworkset.tran.plugin.metrics.output.ETLMapData;
 import org.frameworkset.util.beans.ObjectHolder;
 import org.frameworkset.elasticsearch.serial.SerialUtil;
 import org.frameworkset.tran.*;
@@ -282,10 +283,10 @@ public class FileLog2ESWithMetricsCustomDateTimeDemo {
          */
         keyMetrics.setBuildMapData(new BuildMapData() {
             @Override
-            public MapData buildMapData(MetricsData metricsData) {
+            public ETLMapData buildMapData(MetricsData metricsData) {
                 BuildMapDataContext buildMapDataContext = metricsData.getBuildMapDataContext();
                 CommonRecord record = metricsData.getCommonRecord();
-                MapData mapData = new MapData(){
+                ETLMapData mapData = new ETLMapData(){
                     /**
                      * 根据指标标识，获取指标的时间统计维度字段，默认返回dataTime字段logOpertime值，不同的指标需要指定不同的时间维度统计字段
                      * 分析处理作业可以覆盖本方法，自定义获取时间维度字段值
