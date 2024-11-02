@@ -21,10 +21,7 @@ import io.milvus.v2.common.IndexParam;
 import io.milvus.v2.service.collection.request.AddFieldReq;
 import io.milvus.v2.service.collection.request.CreateCollectionReq;
 import io.milvus.v2.service.collection.request.HasCollectionReq;
-import org.frameworkset.nosql.milvus.Milvus;
-import org.frameworkset.nosql.milvus.MilvusConfig;
-import org.frameworkset.nosql.milvus.MilvusHelper;
-import org.frameworkset.nosql.milvus.MilvusStartResult;
+import org.frameworkset.nosql.milvus.*;
 import org.frameworkset.spi.remote.http.HttpRequestProxy;
 import org.frameworkset.spi.remote.http.HttpResourceStartResult;
 import org.frameworkset.tran.*;
@@ -96,11 +93,8 @@ public class Db2Milvusdemo {
 
                         //embedding_model为的向量模型服务数据源名称
                         properties.put("http.poolNames","embedding_model");
-                        /**
-                         * metricsES数据源配置，每个配置项可以加metricsES.前缀
-                         */
-                        properties.put("embedding_model.http.hosts","127.0.0.1:7861");//health监控检查地址必须配置，否则将不会启动健康检查机制
-
+                    
+                        properties.put("embedding_model.http.hosts","127.0.0.1:7861");//设置向量模型服务地址，这里调用的xinference发布的模型服务
               
                         properties.put("embedding_model.http.timeoutSocket","60000");
                         properties.put("embedding_model.http.timeoutConnection","40000");
@@ -119,49 +113,45 @@ public class Db2Milvusdemo {
                         milvusConfig.setDbName("ucr_chan_fqa");
                         milvusConfig.setUri("http://172.24.176.18:19530");
                         milvusConfig.setToken("");
-                        return MilvusHelper.init(milvusConfig);
+                        ResourceStartResult resourceStartResult =  MilvusHelper.init(milvusConfig);
+                        //如果向量表不存在，则创建向量表
+                        MilvusHelper.executeRequest("ucr_chan_fqa", new MilvusFunction<Void>() {
+                            @Override
+                            public Void execute(MilvusClientV2 milvusClientV2) {
+                                if(!milvusClientV2.hasCollection(HasCollectionReq.builder()
+                                        .collectionName(collectionName)
+                                        .build())) {
+                                    ;
+                                    // create a collection with schema, when indexParams is specified, it will create index as well
+                                    CreateCollectionReq.CollectionSchema collectionSchema = milvusClientV2.createSchema();
+                                    collectionSchema.addField(AddFieldReq.builder().fieldName("log_id").dataType(DataType.Int64).isPrimaryKey(Boolean.TRUE).autoID(Boolean.FALSE).build());
+                                    collectionSchema.addField(AddFieldReq.builder().fieldName("content").dataType(DataType.FloatVector).dimension(1024).build());
+                                    collectionSchema.addField(AddFieldReq.builder().fieldName("collecttime").dataType(DataType.Int64).build());
 
+                                    IndexParam indexParam = IndexParam.builder()
+                                            .fieldName("content")
+                                            .metricType(IndexParam.MetricType.COSINE)
+                                            .build();
+                                    CreateCollectionReq createCollectionReq = CreateCollectionReq.builder()
+                                            .collectionName(collectionName)
+                                            .collectionSchema(collectionSchema)
+                                            .indexParams(Collections.singletonList(indexParam))
+                                            .build();
+                                    milvusClientV2.createCollection(createCollectionReq);
+                                }
+                                return null;
+                            }
+                        });
+                        return resourceStartResult;
                     }
                 });
             }
 
             @Override
             public void afterStartAction(ImportContext importContext) {
-                Milvus milvus = MilvusHelper.getMilvus("ucr_chan_fqa");
-                MilvusClientV2 milvusClientV2 = null;
-                try {
-                    milvusClientV2 = milvus.getMilvusClientV2();
-                    if(!milvusClientV2.hasCollection(HasCollectionReq.builder()
-                            .collectionName(collectionName)
-                            .build())) {
-                        ;
-                        // create a collection with schema, when indexParams is specified, it will create index as well
-                        CreateCollectionReq.CollectionSchema collectionSchema = milvusClientV2.createSchema();
-                        collectionSchema.addField(AddFieldReq.builder().fieldName("log_id").dataType(DataType.Int64).isPrimaryKey(Boolean.TRUE).autoID(Boolean.FALSE).build());
-                        collectionSchema.addField(AddFieldReq.builder().fieldName("content").dataType(DataType.FloatVector).dimension(1024).build());
-                        collectionSchema.addField(AddFieldReq.builder().fieldName("collecttime").dataType(DataType.Int64).build());
-
-                        IndexParam indexParam = IndexParam.builder()
-                                .fieldName("content")
-                                .metricType(IndexParam.MetricType.COSINE)
-                                .build();
-                        CreateCollectionReq createCollectionReq = CreateCollectionReq.builder()
-                                .collectionName(collectionName)
-                                .collectionSchema(collectionSchema)
-                                .indexParams(Collections.singletonList(indexParam))
-                                .build();
-                        milvusClientV2.createCollection(createCollectionReq);
-                    }
-                }
-                finally {
-                    if(milvusClientV2 != null){
-                        milvus.release(milvusClientV2);
-                    }
-                }
-                
             }
         });
-        //作业结束后销毁初始化阶段自定义的http数据源
+        //作业结束后销毁初始化阶段自定义的向量模型服务数据源和向量数据库数据源
         importBuilder.setImportEndAction(new ImportEndAction() {
             @Override
             public void endAction(ImportContext importContext, Exception e) {
@@ -171,11 +161,12 @@ public class Db2Milvusdemo {
                     @Override
                     public void endResource(ResourceStartResult resourceStartResult) {
 
-
+                        //销毁初始化阶段自定义的向量模型服务数据源
                         if (resourceStartResult instanceof HttpResourceStartResult) {
                             HttpResourceStartResult httpResourceStartResult = (HttpResourceStartResult) resourceStartResult;
                             HttpRequestProxy.stopHttpClients(httpResourceStartResult);
                         }
+                        //销毁初始化阶段自定义的向量数据库数据源
                         else if(resourceStartResult instanceof MilvusStartResult){
                             MilvusHelper.shutdown((MilvusStartResult) resourceStartResult);
                         }
@@ -243,34 +234,28 @@ public class Db2Milvusdemo {
 		importBuilder.setGeoipAsnDatabase("c:/data/geolite2/GeoLite2-ASN.mmdb");
 		importBuilder.setGeoip2regionDatabase("c:/data/geolite2/ip2region.db");
 		/**
-		 * 重新设置数据结构
+		 * 加工和处理数据
 		 */
 		importBuilder.setDataRefactor(new DataRefactor() {
 			public void refactor(Context context) throws Exception  {
-				//可以根据条件定义是否丢弃当前记录
-				//context.setDrop(true);return;
-//				if(s.incrementAndGet() % 2 == 0) {
-//					context.setDrop(true);
-//					return;
-//				}
-                
+ 
                String content = context.getStringValue("LOG_CONTENT");
                if(content != null){
                    Map params = new HashMap();
                    params.put("text",content);
                    //调用向量服务，将LOG_CONTENT转换为向量数据
                    BaseResponse baseResponse = HttpRequestProxy.sendJsonBody("embedding_model",params,"/fqa-py-api/knowledge_base/kb_embedding_textv1",BaseResponse.class);
-//                   BaseResponse baseResponse = HttpRequestProxy.httpPostForObject("embedding_model","/fqa-py-api/knowledge_base/kb_embedding_text",params,BaseResponse.class);
                    if(baseResponse.getCode() == 200){
-                       context.addFieldValue("content",baseResponse.getData());
+                       context.addFieldValue("content",baseResponse.getData());//设置向量数据
                    }
                    else {
                        throw new DataImportException("change LOG_CONTENT to vector failed:"+baseResponse.getMsg());
                    }
                }
-               
+               //添加主键信息
                int log_id = context.getIntegerValue("LOG_ID");
                 context.addFieldValue("log_id",log_id);
+                //添加采集时间
 				context.addFieldValue("collecttime",new Date().getTime());
 
 			}
