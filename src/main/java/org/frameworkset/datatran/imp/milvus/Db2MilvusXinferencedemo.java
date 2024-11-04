@@ -119,10 +119,11 @@ public class Db2MilvusXinferencedemo {
                                     ;
                                     // create a collection with schema, when indexParams is specified, it will create index as well
                                     CreateCollectionReq.CollectionSchema collectionSchema = milvusClientV2.createSchema();
-                                    collectionSchema.addField(AddFieldReq.builder().fieldName("log_id").dataType(DataType.Int64).isPrimaryKey(Boolean.TRUE).autoID(Boolean.FALSE).build());
-                                    collectionSchema.addField(AddFieldReq.builder().fieldName("content").dataType(DataType.FloatVector).dimension(1024).build());
-                                    collectionSchema.addField(AddFieldReq.builder().fieldName("collecttime").dataType(DataType.Int64).build());
-
+                                    collectionSchema.addField(AddFieldReq.builder().fieldName("log_id").dataType(DataType.Int64).isPrimaryKey(Boolean.TRUE)
+                                            .autoID(Boolean.FALSE).build());//主键
+                                    collectionSchema.addField(AddFieldReq.builder().fieldName("content").dataType(DataType.FloatVector).dimension(1024).build());//日志内容对应的向量值
+                                    collectionSchema.addField(AddFieldReq.builder().fieldName("collecttime").dataType(DataType.Int64).build());//日志采集时间
+                                    collectionSchema.addField(AddFieldReq.builder().fieldName("log_content").dataType(DataType.VarChar).build());//日志内容原始值
                                     IndexParam indexParam = IndexParam.builder()
                                             .fieldName("content")
                                             .metricType(IndexParam.MetricType.COSINE)
@@ -203,7 +204,7 @@ public class Db2MilvusXinferencedemo {
 		importBuilder.setOutputConfig(milvusOutputConfig);
 
 	 
-		importBuilder.setBatchSize(50); //可选项,批量导入db的记录数，默认为-1，逐条处理，> 0时批量处理
+		importBuilder.setBatchSize(100); //可选项,批量导入db的记录数，默认为-1，逐条处理，> 0时批量处理
 		//定时任务配置，
 		importBuilder.setFixedRate(false)//参考jdk timer task文档对fixedRate的说明
 //					 .setScheduleDate(date) //指定任务开始执行时间：日期
@@ -229,13 +230,25 @@ public class Db2MilvusXinferencedemo {
 		importBuilder.setGeoipDatabase("c:/data/geolite2/GeoLite2-City.mmdb");
 		importBuilder.setGeoipAsnDatabase("c:/data/geolite2/GeoLite2-ASN.mmdb");
 		importBuilder.setGeoip2regionDatabase("c:/data/geolite2/ip2region.db");
+        //mysql 数据表中的字段名称为大小，输出的时候需要映射为小写名称
+        importBuilder.addFieldMapping("LOG_CONTENT","log_content");//将字段名称转换为小写输出
+        importBuilder.addFieldMapping("LOG_ID","log_id");//将字段名称转换为小写输出
 		/**
 		 * 加工和处理数据
 		 */
 		importBuilder.setDataRefactor(new DataRefactor() {
+            /**
+             * 加工和处理数据：向量化处理，在记录中添加向量表demo_vector对应的三个字段的值：
+             *    log_id  主键字段
+             *    collecttime 采集时间
+             *    content  日志内容对应的向量字段
+             *    log_content  日志内容
+             * @param context 包含需要加工数据记录的上下文对象
+             * @throws Exception
+             */
 			public void refactor(Context context) throws Exception  {
- 
-               String content = context.getStringValue("LOG_CONTENT");
+
+                String content = context.getStringValue("LOG_CONTENT");//需要通过表字段名称获取字段值，不能通过映射后的字段名称获取数据
                if(content != null){
                    Map params = new HashMap();
                    params.put("input",content);
@@ -260,9 +273,7 @@ public class Db2MilvusXinferencedemo {
                        throw new DataImportException("change LOG_CONTENT to vector failed:XinferenceResponse is null");
                    }
                }
-               //添加主键信息
-               int log_id = context.getIntegerValue("LOG_ID");
-                context.addFieldValue("log_id",log_id);
+            
                 //添加采集时间
 				context.addFieldValue("collecttime",new Date().getTime());
 
@@ -273,12 +284,11 @@ public class Db2MilvusXinferencedemo {
 		 * 内置线程池配置，实现多线程并行数据导入功能，作业完成退出时自动关闭该线程池
 		 */
 		importBuilder.setParallel(true);//设置为多线程并行批量导入,false串行
-		importBuilder.setQueue(10);//设置批量导入线程池等待队列长度
+		importBuilder.setQueue(5);//设置批量导入线程池等待队列长度
 		importBuilder.setThreadCount(50);//设置批量导入线程池工作线程数量
 		importBuilder.setContinueOnError(true);//任务出现异常，是否继续执行作业：true（默认值）继续执行 false 中断作业执行
 
-		importBuilder.setUseLowcase(false)  //可选项，true 列名称转小写，false列名称不转换小写，默认false，只要在UseJavaName为false的情况下，配置才起作用
-				.setPrintTaskLog(true); //可选项，true 打印任务执行日志（耗时，处理记录数） false 不打印，默认值false
+		importBuilder.setPrintTaskLog(true); //可选项，true 打印任务执行日志（耗时，处理记录数） false 不打印，默认值false
 		importBuilder.setExportResultHandler(new ExportResultHandler<Object> () {
 			@Override
 			public void success(TaskCommand<Object> taskCommand, Object result) {
