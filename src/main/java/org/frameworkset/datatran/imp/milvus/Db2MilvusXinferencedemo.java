@@ -21,7 +21,10 @@ import io.milvus.v2.common.IndexParam;
 import io.milvus.v2.service.collection.request.AddFieldReq;
 import io.milvus.v2.service.collection.request.CreateCollectionReq;
 import io.milvus.v2.service.collection.request.HasCollectionReq;
-import org.frameworkset.nosql.milvus.*;
+import org.frameworkset.nosql.milvus.MilvusConfig;
+import org.frameworkset.nosql.milvus.MilvusFunction;
+import org.frameworkset.nosql.milvus.MilvusHelper;
+import org.frameworkset.nosql.milvus.MilvusStartResult;
 import org.frameworkset.spi.remote.http.HttpRequestProxy;
 import org.frameworkset.spi.remote.http.HttpResourceStartResult;
 import org.frameworkset.tran.*;
@@ -30,11 +33,8 @@ import org.frameworkset.tran.context.Context;
 import org.frameworkset.tran.context.ImportContext;
 import org.frameworkset.tran.metrics.TaskMetrics;
 import org.frameworkset.tran.plugin.db.input.DBInputConfig;
-import org.frameworkset.tran.plugin.db.output.DBOutputConfig;
 import org.frameworkset.tran.plugin.milvus.output.MilvusOutputConfig;
-import org.frameworkset.tran.schedule.CallInterceptor;
 import org.frameworkset.tran.schedule.ImportIncreamentConfig;
-import org.frameworkset.tran.schedule.TaskContext;
 import org.frameworkset.tran.task.TaskCommand;
 import org.frameworkset.util.ResourceEnd;
 import org.frameworkset.util.ResourceStart;
@@ -42,26 +42,22 @@ import org.frameworkset.util.ResourceStartResult;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
-import java.text.DateFormat;
-import java.util.Collections;
-import java.util.Date;
-import java.util.HashMap;
-import java.util.Map;
+import java.util.*;
 import java.util.concurrent.atomic.AtomicInteger;
 
 /**
- * <p>Description: 同步数据库数据，并将字段content转化为向量，输出到向量数据库Milvus；调用的Langchain-Chatchat封装的xinference发布的模型服务
- * </p>
+ * <p>Description: 同步数据库数据，并将字段content转化为向量，输出到向量数据库Milvus；调用的xinference发布的模型服务
+ * 请运行测试用例DbdemoTest中调试</p>
  * <p></p>
  * <p>Copyright (c) 2018</p>
  * @Date 2018/9/27 20:38
  * @author biaoping.yin
  * @version 1.0
  */
-public class Db2Milvusdemo {
-	private static final Logger logger = LoggerFactory.getLogger(Db2Milvusdemo.class);
+public class Db2MilvusXinferencedemo {
+	private static final Logger logger = LoggerFactory.getLogger(Db2MilvusXinferencedemo.class);
 	public static void main(String[] args){
-		Db2Milvusdemo dbdemo = new Db2Milvusdemo();
+		Db2MilvusXinferencedemo dbdemo = new Db2MilvusXinferencedemo();
 //		dbdemo.fullImportData(  dropIndice);
 //		dbdemo.scheduleImportData(dropIndice);
 		dbdemo.scheduleImportData();
@@ -94,7 +90,7 @@ public class Db2Milvusdemo {
                         //embedding_model为的向量模型服务数据源名称
                         properties.put("http.poolNames","embedding_model");
                     
-                        properties.put("embedding_model.http.hosts","127.0.0.1:7861");//设置向量模型服务地址，这里调用的Langchain-Chatchat封装的xinference发布的模型服务
+                        properties.put("embedding_model.http.hosts","172.24.176.18:9997");//设置向量模型服务地址，这里调用的xinference发布的模型服务
               
                         properties.put("embedding_model.http.timeoutSocket","60000");
                         properties.put("embedding_model.http.timeoutConnection","40000");
@@ -221,7 +217,7 @@ public class Db2Milvusdemo {
 //		importBuilder.setDateLastValueColumn("log_id");//手动指定日期增量查询字段，默认采用上面设置的sql语句中的增量变量名称作为增量查询字段的名称，指定以后就用指定的字段
 		importBuilder.setFromFirst(true);//setFromfirst(false)，如果作业停了，作业重启后从上次截止位置开始采集数据，
 		//setFromfirst(true) 如果作业停了，作业重启后，重新开始采集数据
-		importBuilder.setLastValueStorePath("logdb2milvus_import");//记录上次采集的增量字段值的文件路径，作为下次增量（或者重启后）采集数据的起点，不同的任务这个路径要不一样
+		importBuilder.setLastValueStorePath("logdb2xmilvus_import");//记录上次采集的增量字段值的文件路径，作为下次增量（或者重启后）采集数据的起点，不同的任务这个路径要不一样
 //		importBuilder.setLastValueStoreTableName("logs");//记录上次采集的增量字段值的表，可以不指定，采用默认表名increament_tab
 		importBuilder.setLastValueType(ImportIncreamentConfig.NUMBER_TYPE);//如果没有指定增量查询字段名称，则需要指定字段类型：ImportIncreamentConfig.NUMBER_TYPE 数字类型
 		// 或者ImportIncreamentConfig.TIMESTAMP_TYPE 日期类型
@@ -242,14 +238,26 @@ public class Db2Milvusdemo {
                String content = context.getStringValue("LOG_CONTENT");
                if(content != null){
                    Map params = new HashMap();
-                   params.put("text",content);
-                   //调用向量服务，将LOG_CONTENT转换为向量数据
-                   BaseResponse baseResponse = HttpRequestProxy.sendJsonBody("embedding_model",params,"/fqa-py-api/knowledge_base/kb_embedding_textv1",BaseResponse.class);
-                   if(baseResponse.getCode() == 200){
-                       context.addFieldValue("content",baseResponse.getData());//设置向量数据
+                   params.put("input",content);
+                   params.put("model","custom-bge-large-zh-v1.5");
+//                   {"input": ["\\u5411\\u91cf\\u8f6c\\u6362"], "model": "custom-bge-large-zh-v1.5", "encoding_format": "base64"}
+//                   String params = "{\"input\": [\"\\u5411\\u91cf\\u8f6c\\u6362\"], \"model\": \"custom-bge-large-zh-v1.5\", \"encoding_format\": \"base64\"}";
+//                   Headers({'host': '172.24.176.18:9997', 'accept-encoding': 'gzip, deflate, br', 'connection': 'keep-alive', 
+//                   'accept': 'application/json', 'content-type': 'application/json', 'user-agent': 'OpenAI/Python 1.35.13', 
+//                   'x-stainless-lang': 'python', 'x-stainless-package-version': '1.35.13', 'x-stainless-os': 'Windows', 
+//                   'x-stainless-arch': 'other:amd64', 'x-stainless-runtime': 'CPython', 'x-stainless-runtime-version': '3.10.14', 
+//                   'authorization': '[secure]', 'x-stainless-async': 'false', 
+//                   'openai-organization': '', 'content-length': '105'})
+                   //调用xinference向量服务，将LOG_CONTENT转换为向量数据
+                 
+                   XinferenceResponse result = HttpRequestProxy.sendJsonBody("embedding_model",params,"/v1/embeddings",XinferenceResponse.class);
+                   if(result != null){
+                       List<Data> data = result.getData();
+                       if(data != null && data.size() > 0 )
+                       context.addFieldValue("content",data.get(0).getEmbedding());//设置向量数据
                    }
                    else {
-                       throw new DataImportException("change LOG_CONTENT to vector failed:"+baseResponse.getMsg());
+                       throw new DataImportException("change LOG_CONTENT to vector failed:XinferenceResponse is null");
                    }
                }
                //添加主键信息
