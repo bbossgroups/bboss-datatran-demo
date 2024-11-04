@@ -46,8 +46,7 @@ import java.util.*;
 import java.util.concurrent.atomic.AtomicInteger;
 
 /**
- * <p>Description: 同步数据库数据，并将字段content转化为向量，输出到向量数据库Milvus；调用的xinference发布的模型服务
- * 请运行测试用例DbdemoTest中调试</p>
+ * <p>Description: 同步数据库数据，并将字段content转化为向量，输出到向量数据库Milvus；调用的xinference发布的模型服务</p>
  * <p></p>
  * <p>Copyright (c) 2018</p>
  * @Date 2018/9/27 20:38

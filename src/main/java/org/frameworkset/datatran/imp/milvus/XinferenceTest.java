@@ -57,8 +57,11 @@ public class XinferenceTest {
 
         Map params = new HashMap();
         params.put("text",content);
-        //调用向量服务，将LOG_CONTENT转换为向量数据---lanchat返回结果
+        //调用的Langchain-Chatchat封装的xinference发布的模型服务，将LOG_CONTENT转换为向量数据---lanchat返回结果
         BaseResponse baseResponse = HttpRequestProxy.sendJsonBody("embedding_model_lanchat",params,"/fqa-py-api/knowledge_base/kb_embedding_textv1",BaseResponse.class);
+        if(baseResponse.getCode() == 200){
+            float[] embedding = baseResponse.getData();//获取向量数据
+        }
         params = new HashMap();
         params.put("input",content);
         params.put("model","custom-bge-large-zh-v1.5");
@@ -79,7 +82,9 @@ public class XinferenceTest {
         base64 = Base64.getEncoder().encodeToString(content.getBytes(StandardCharsets.ISO_8859_1));
         String sparams1 = "{\"input\": [\""+base64+"\"], \"model\": \"custom-bge-large-zh-v1.5\", \"encoding_format\": \"base64\"}";
         String sresult1 = HttpRequestProxy.sendJsonBody("embedding_model_xinference",sparams1,"/v1/embeddings",String.class);//---与lanchat返回结果不一致
+        //调用的xinference发布的模型服务
         XinferenceResponse result = HttpRequestProxy.sendJsonBody("embedding_model_xinference",params,"/v1/embeddings",XinferenceResponse.class);//-------与lanchat返回结果一致
+        float[] embedding = result.getData().get(0).getEmbedding();
         System.out.println();
     }
 
