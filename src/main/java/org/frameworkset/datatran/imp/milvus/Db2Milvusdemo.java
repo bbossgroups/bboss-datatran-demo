@@ -196,6 +196,7 @@ public class Db2Milvusdemo {
 				.setSqlName("demoexport").setParallelDatarefactor(true);
 		importBuilder.setInputConfig(dbInputConfig);
 
+        //Milvus输出插件配置
 		MilvusOutputConfig milvusOutputConfig = new MilvusOutputConfig();
         milvusOutputConfig.setName("ucr_chan_fqa")  //使用之前定义的向量数据库数据源，无需设置向量数据库地址和名称以及token等信息
 //                             .setDbName("ucr_chan_fqa")
