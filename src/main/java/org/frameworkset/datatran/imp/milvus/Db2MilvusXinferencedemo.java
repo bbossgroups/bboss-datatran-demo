@@ -261,7 +261,7 @@ public class Db2MilvusXinferencedemo {
 //                   'x-stainless-arch': 'other:amd64', 'x-stainless-runtime': 'CPython', 'x-stainless-runtime-version': '3.10.14', 
 //                   'authorization': '[secure]', 'x-stainless-async': 'false', 
 //                   'openai-organization': '', 'content-length': '105'})
-                   //调用xinference向量服务，将LOG_CONTENT转换为向量数据
+                   //调用的 xinference 发布的向量模型模型服务，将LOG_CONTENT转换为向量数据
                  
                    XinferenceResponse result = HttpRequestProxy.sendJsonBody("embedding_model",params,"/v1/embeddings",XinferenceResponse.class);
                    if(result != null){
