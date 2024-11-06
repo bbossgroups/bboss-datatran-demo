@@ -76,7 +76,7 @@ public class Db2MilvusXinferencedemo {
          * 默认值ImportIncreamentConfig.STATUSID_POLICY_JOBID_QUERYSTATEMENT
          */
         importBuilder.setStatusIdPolicy(ImportIncreamentConfig.STATUSID_POLICY_JOBID);
-        String collectionName = "demo";
+        String collectionName = "demo";//向量表名称
         importBuilder.setImportStartAction(new ImportStartAction() {
             @Override
             public void startAction(ImportContext importContext) {
@@ -89,7 +89,7 @@ public class Db2MilvusXinferencedemo {
                         //embedding_model为的向量模型服务数据源名称
                         properties.put("http.poolNames","embedding_model");
                     
-                        properties.put("embedding_model.http.hosts","172.24.176.18:9997");//设置向量模型服务地址，这里调用的xinference发布的模型服务
+                        properties.put("embedding_model.http.hosts","172.24.176.18:9997");///设置向量模型服务地址(这里调用的xinference发布的模型服务),多个地址逗号分隔，可以实现点到点负载和容灾
               
                         properties.put("embedding_model.http.timeoutSocket","60000");
                         properties.put("embedding_model.http.timeoutConnection","40000");
@@ -188,8 +188,11 @@ public class Db2MilvusXinferencedemo {
 				.setDbPassword("123456")
 				.setValidateSQL("select 1")
 				.setUsePool(true)//是否使用连接池
-				.setSqlFilepath("sql.xml")
-				.setSqlName("demoexport").setParallelDatarefactor(true);
+//				.setSqlFilepath("sql.xml") //从配置文件获取名称为demoexport的sql语句
+//				.setSqlName("demoexport")
+                .setSql("select * from td_sm_log where log_id > #[LOG_ID]")
+                .setParallelDatarefactor(true);
+        
 		importBuilder.setInputConfig(dbInputConfig);
         
         //Milvus输出插件配置
@@ -204,15 +207,14 @@ public class Db2MilvusXinferencedemo {
 		importBuilder.setOutputConfig(milvusOutputConfig);
 
 	 
-		importBuilder.setBatchSize(100); //可选项,批量导入db的记录数，默认为-1，逐条处理，> 0时批量处理
-		//定时任务配置，
+		importBuilder.setBatchSize(100); //可选项,批量导入db的记录数
+		//任务定时调度配置，
 		importBuilder.setFixedRate(false)//参考jdk timer task文档对fixedRate的说明
 //					 .setScheduleDate(date) //指定任务开始执行时间：日期
 				.setDeyLay(1000L) // 任务延迟执行deylay毫秒后执行
 				.setPeriod(5000L); //每隔period毫秒执行，如果不设置，只执行一次
-		//定时任务配置结束
+		//任务定时调度配置结束
   
-//		//设置任务执行拦截器结束，可以添加多个
 		//增量配置开始
 		importBuilder.setLastValueColumn("LOG_ID");//手动指定数字增量查询字段，默认采用上面设置的sql语句中的增量变量名称作为增量查询字段的名称，指定以后就用指定的字段
 //		importBuilder.setDateLastValueColumn("log_id");//手动指定日期增量查询字段，默认采用上面设置的sql语句中的增量变量名称作为增量查询字段的名称，指定以后就用指定的字段
@@ -239,16 +241,16 @@ public class Db2MilvusXinferencedemo {
 		importBuilder.setDataRefactor(new DataRefactor() {
             /**
              * 加工和处理数据：向量化处理，在记录中添加向量表demo_vector对应的三个字段的值：
-             *    log_id  主键字段
-             *    collecttime 采集时间
-             *    content  日志内容对应的向量字段
-             *    log_content  日志内容
+             *   log_id 主键字段，对应数据库表td_sm_log的log_id字段
+             *   collecttime 采集时间
+             *   content 日志内容对应的向量字段，来源于数据库表td_sm_log的LOG_CONTENT字段
+             *   log_content 日志内容，来源于数据库表td_sm_log的LOG_CONTENT字段
              * @param context 包含需要加工数据记录的上下文对象
              * @throws Exception
              */
 			public void refactor(Context context) throws Exception  {
 
-                String content = context.getStringValue("LOG_CONTENT");//需要通过表字段名称获取字段值，不能通过映射后的字段名称获取数据
+               String content = context.getStringValue("LOG_CONTENT");//需要通过表字段名称获取字段值，不能通过映射后的字段名称获取数据
                if(content != null){
                    Map params = new HashMap();
                    params.put("input",content);
@@ -261,13 +263,14 @@ public class Db2MilvusXinferencedemo {
 //                   'x-stainless-arch': 'other:amd64', 'x-stainless-runtime': 'CPython', 'x-stainless-runtime-version': '3.10.14', 
 //                   'authorization': '[secure]', 'x-stainless-async': 'false', 
 //                   'openai-organization': '', 'content-length': '105'})
+                   
                    //调用的 xinference 发布的向量模型模型服务，将LOG_CONTENT转换为向量数据
                  
                    XinferenceResponse result = HttpRequestProxy.sendJsonBody("embedding_model",params,"/v1/embeddings",XinferenceResponse.class);
                    if(result != null){
-                       List<Data> data = result.getData();
-                       if(data != null && data.size() > 0 )
-                       context.addFieldValue("content",data.get(0).getEmbedding());//设置向量数据
+                       float[] embedding = result.embedding();
+                       if(embedding != null)
+                            context.addFieldValue("content",embedding);//设置向量数据
                    }
                    else {
                        throw new DataImportException("change LOG_CONTENT to vector failed:XinferenceResponse is null");
@@ -311,12 +314,11 @@ public class Db2MilvusXinferencedemo {
 
 		});
 		/**
-		 * 执行数据库表数据导入es操作
+		 * 执行数据库表数据向量化处理并保存到Milvus数据库作业
 		 */
 		DataStream dataStream = importBuilder.builder();
 		dataStream.execute();//执行导入操作
 
-		logger.info("come to end.");
 
 
 	}

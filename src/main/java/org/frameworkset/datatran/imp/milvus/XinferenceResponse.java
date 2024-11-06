@@ -62,4 +62,12 @@ public class XinferenceResponse {
     public void setData(List<Data> data) {
         this.data = data;
     }
+
+    public float[] embedding(){
+        List<Data> data = getData();
+        if(data != null && data.size() > 0 ){
+            return data.get(0).getEmbedding();
+        }
+        return null;
+    }
 }
