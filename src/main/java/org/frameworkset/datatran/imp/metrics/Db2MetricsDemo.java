@@ -22,6 +22,7 @@ import org.frameworkset.elasticsearch.boot.ElasticSearchBoot;
 import org.frameworkset.elasticsearch.boot.ElasticsearchBootResult;
 import org.frameworkset.elasticsearch.bulk.*;
 import org.frameworkset.elasticsearch.client.ClientInterface;
+import org.frameworkset.tran.metrics.entity.MetricKey;
 import org.frameworkset.util.beans.ObjectHolder;
 import org.frameworkset.spi.assemble.PropertiesUtil;
 import org.frameworkset.spi.geoip.IpInfo;
@@ -243,13 +244,13 @@ public class Db2MetricsDemo {
 				//指标1 按操作模块统计模块操作次数
 				addMetricBuilder(new MetricBuilder() {
 					@Override
-					public String buildMetricKey(MapData mapData){
+					public MetricKey buildMetricKey(MapData mapData){
                         CommonRecord data = (CommonRecord) mapData.getData();
                         String operModule = (String) data.getData("operModule");
                         if(operModule == null || operModule.equals("")){
                             operModule = "未知模块";
                         }
-						return operModule;
+						return new MetricKey(operModule);
 					}
 					@Override
 					public KeyMetricBuilder metricBuilder(){
@@ -265,13 +266,13 @@ public class Db2MetricsDemo {
 				//指标2 按照用户统计操作次数
 				addMetricBuilder(new MetricBuilder() {
 					@Override
-					public String buildMetricKey(MapData mapData){
+					public MetricKey buildMetricKey(MapData mapData){
                         CommonRecord data = (CommonRecord) mapData.getData();
                         String logUser = (String) data.getData("logOperuser");//
                         if(logUser == null || logUser.equals("")){
                             logUser = "未知用户";
                         }
-						return logUser;
+						return new MetricKey(logUser);
 					}
 					@Override
 					public KeyMetricBuilder metricBuilder(){

@@ -21,6 +21,7 @@ import org.frameworkset.elasticsearch.ElasticSearchHelper;
 import org.frameworkset.elasticsearch.boot.ElasticSearchBoot;
 import org.frameworkset.elasticsearch.boot.ElasticsearchBootResult;
 import org.frameworkset.elasticsearch.bulk.*;
+import org.frameworkset.tran.metrics.entity.MetricKey;
 import org.frameworkset.tran.plugin.metrics.output.*;
 import org.frameworkset.util.beans.ObjectHolder;
 import org.frameworkset.spi.assemble.PropertiesUtil;
@@ -238,49 +239,38 @@ public class Db2MetricsMapdataDemo {
 			@Override
 			public void builderMetrics(){
                 //自定义MapData，只能设置一个BuildMapData
-                setBuildMapData(new BuildMapData() {
-                    @Override
-                    public ETLMapData buildMapData(MetricsData metricsData) {
-                        BuildMapDataContext buildMapDataContext = metricsData.getBuildMapDataContext();
-                        ETLMapData mapData = new ETLMapData(){
-                            /**
-                             * 根据指标标识，获取指标的时间统计维度字段，默认返回dataTime字段值，不同的指标需要指定不同的时间维度统计字段
-                             * 分析处理作业可以覆盖本方法，自定义获取时间维度字段值
-                             * @param metricsKey
-                             * @return
-                             */
-                            public Date metricsDataTime(String metricsKey) {
+                setBuildMapData(metricsData -> {
+                    BuildMapDataContext buildMapDataContext = metricsData.getBuildMapDataContext();
+                    ETLMapData mapData = new ETLMapData(){
+                        /**
+                         * 根据指标标识，获取指标的时间统计维度字段，默认返回dataTime字段值，不同的指标需要指定不同的时间维度统计字段
+                         * 分析处理作业可以覆盖本方法，自定义获取时间维度字段值
+                         * @param metricsKey
+                         * @return
+                         */
+                        public Date metricsDataTime(MetricKey metricsKey) {
 //						if(metricsKey.equals("xxxx") ) {
 //							Date time = (Date)data.get("collectime");
 //							return time;
 //						}
-                                return getDataTime();
-                            }
+                            return getDataTime();
+                        }
 
-                        };
-                        Date dateTime = (Date) metricsData.getCommonRecord().getData("logOpertime");
-                        mapData.setDataTime(dateTime);//默认按照操作时间作为指标时间维度字段，上面复写了metricsDataTime方法，可以根据指标key指定不同的时间维度值
-                        mapData.setData(metricsData.getCommonRecord());
-                        mapData.setDayFormat(buildMapDataContext.getDayFormat());
-                        mapData.setHourFormat(buildMapDataContext.getHourFormat());
-                        mapData.setMinuteFormat(buildMapDataContext.getMinuteFormat());
-                        mapData.setYearFormat(buildMapDataContext.getYearFormat());
-                        mapData.setMonthFormat(buildMapDataContext.getMonthFormat());
-                        mapData.setWeekFormat(buildMapDataContext.getWeekFormat());
-                        return mapData;
-                    }
+                    };
+                   
+                    return mapData;
                 });
                 //可以添加多个指标构建器
 				//指标1 按操作模块统计模块操作次数
 				addMetricBuilder(new MetricBuilder() {
 					@Override
-					public String buildMetricKey(MapData mapData){ //生成指标key
+					public MetricKey buildMetricKey(MapData mapData){ //生成指标key
                         CommonRecord data = (CommonRecord) mapData.getData();
                         String operModule = (String) data.getData("operModule");
                         if(operModule == null || operModule.equals("")){
                             operModule = "未知模块";
                         }
-						return operModule;
+						return new MetricKey(operModule);
 					}
 					@Override
 					public KeyMetricBuilder metricBuilder(){
@@ -296,13 +286,13 @@ public class Db2MetricsMapdataDemo {
 				//指标2 按照用户统计操作次数
 				addMetricBuilder(new MetricBuilder() {
 					@Override
-					public String buildMetricKey(MapData mapData){
+					public MetricKey buildMetricKey(MapData mapData){
                         CommonRecord data = (CommonRecord) mapData.getData();
                         String logUser = (String) data.getData("logOperuser");//
                         if(logUser == null || logUser.equals("")){
                             logUser = "未知用户";
                         }
-						return logUser;
+						return new MetricKey(logUser);
 					}
 					@Override
 					public KeyMetricBuilder metricBuilder(){
@@ -356,6 +346,7 @@ public class Db2MetricsMapdataDemo {
 
 			}
 		};
+        keyMetrics.setDataTimeField("logOpertime");
         // 直接实现map和persistent方法，定义一个ETLMetrics
         ETLMetrics keyMetrics1 = new ETLMetrics(Metrics.MetricsType_KeyTimeMetircs){
             @Override
@@ -424,38 +415,28 @@ public class Db2MetricsMapdataDemo {
             }
         };
         //如果要自定义创建MapData,设置BuildMapData即可
-        keyMetrics1.setBuildMapData(new BuildMapData() {
-            @Override
-            public ETLMapData buildMapData(MetricsData metricsData) {
-                BuildMapDataContext buildMapDataContext = metricsData.getBuildMapDataContext();
-                ETLMapData mapData = new ETLMapData(){
-                    /**
-                     * 根据指标标识，获取指标的时间统计维度字段，默认返回dataTime字段值，不同的指标需要指定不同的时间维度统计字段
-                     * 分析处理作业可以覆盖本方法，自定义获取时间维度字段值
-                     * @param metricsKey
-                     * @return
-                     */
-                    public Date metricsDataTime(String metricsKey) {
+        keyMetrics1.setBuildMapData(metricsData -> {
+            BuildMapDataContext buildMapDataContext = metricsData.getBuildMapDataContext();
+            ETLMapData mapData = new ETLMapData(){
+                /**
+                 * 根据指标标识，获取指标的时间统计维度字段，默认返回dataTime字段值，不同的指标需要指定不同的时间维度统计字段
+                 * 分析处理作业可以覆盖本方法，自定义获取时间维度字段值
+                 * @param metricsKey
+                 * @return
+                 */
+                public Date metricsDataTime(MetricKey metricsKey) {
 //						if(metricsKey.equals("xxxx") ) {
 //							Date time = (Date)data.get("collectime");
 //							return time;
 //						}
-                        return getDataTime();
-                    }
+                    return getDataTime();
+                }
 
-                };
-                Date dateTime = (Date) metricsData.getCommonRecord().getData("logOpertime");
-                mapData.setDataTime(dateTime);//默认按照操作时间作为指标时间维度字段，上面复写了metricsDataTime方法，可以根据指标key指定不同的时间维度值
-                mapData.setData(metricsData.getCommonRecord());
-                mapData.setDayFormat(buildMapDataContext.getDayFormat());
-                mapData.setHourFormat(buildMapDataContext.getHourFormat());
-                mapData.setMinuteFormat(buildMapDataContext.getMinuteFormat());
-                mapData.setYearFormat(buildMapDataContext.getYearFormat());
-                mapData.setMonthFormat(buildMapDataContext.getMonthFormat());
-                mapData.setWeekFormat(buildMapDataContext.getWeekFormat());
-                return mapData;
-            }
+            };
+            
+            return mapData;
         });
+        keyMetrics1.setDataTimeField("logOpertime");
         // key metrics中包含两个segment(S0,S1)
         keyMetrics1.setSegmentBoundSize(5000000);
         keyMetrics1.setTimeWindows(10);

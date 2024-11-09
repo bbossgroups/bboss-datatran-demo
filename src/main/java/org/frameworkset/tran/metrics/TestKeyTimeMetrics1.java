@@ -18,6 +18,7 @@ package org.frameworkset.tran.metrics;
 import org.frameworkset.elasticsearch.bulk.*;
 import org.frameworkset.tran.metrics.entity.KeyMetric;
 import org.frameworkset.tran.metrics.entity.MapData;
+import org.frameworkset.tran.metrics.entity.MetricKey;
 import org.frameworkset.tran.metrics.job.KeyMetricBuilder;
 import org.frameworkset.tran.metrics.job.Metrics;
 import org.frameworkset.tran.metrics.job.MetricsConfig;
@@ -90,10 +91,10 @@ public class TestKeyTimeMetrics1 {
 			public void builderMetrics(){
 				addMetricBuilder(new MetricBuilder() {
 					@Override
-					public String buildMetricKey(MapData mapData){
+					public MetricKey buildMetricKey(MapData mapData){
 						Map data = (Map) mapData.getData();
 						String name = (String) data.get("name");
-						return name;
+						return new MetricKey(name);
 					}
 					@Override
 					public KeyMetricBuilder metricBuilder(){

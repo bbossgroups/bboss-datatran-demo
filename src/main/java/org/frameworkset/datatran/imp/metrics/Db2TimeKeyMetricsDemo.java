@@ -28,6 +28,7 @@ import org.frameworkset.tran.context.ImportContext;
 import org.frameworkset.tran.metrics.TaskMetrics;
 import org.frameworkset.tran.metrics.entity.KeyMetric;
 import org.frameworkset.tran.metrics.entity.MapData;
+import org.frameworkset.tran.metrics.entity.MetricKey;
 import org.frameworkset.tran.metrics.job.KeyMetricBuilder;
 import org.frameworkset.tran.metrics.job.Metrics;
 import org.frameworkset.tran.metrics.job.MetricsConfig;
@@ -237,14 +238,14 @@ public class Db2TimeKeyMetricsDemo {
 				//指标1 按操作模块统计模块操作次数
 				addMetricBuilder(new MetricBuilder() {
 					@Override
-					public String buildMetricKey(MapData mapData){
+					public MetricKey buildMetricKey(MapData mapData){
                         CommonRecord data = (CommonRecord) mapData.getData();
                         logger.info(SimpleStringUtil.object2json(data.getDatas()));
                         String operModule = (String) data.getData("operModule");
                         if(operModule == null || operModule.equals("")){
                             operModule = "未知模块";
                         }
-						return operModule;
+						return new MetricKey(operModule);
 					}
 					@Override
 					public KeyMetricBuilder metricBuilder(){
@@ -260,13 +261,13 @@ public class Db2TimeKeyMetricsDemo {
 				//指标2 按照用户统计操作次数
 				addMetricBuilder(new MetricBuilder() {
 					@Override
-					public String buildMetricKey(MapData mapData){
+					public MetricKey buildMetricKey(MapData mapData){
                         CommonRecord data = (CommonRecord) mapData.getData();
                         String logUser = (String) data.getData("logOperuser");//
                         if(logUser == null || logUser.equals("")){
                             logUser = "未知用户";
                         }
-						return logUser;
+						return new MetricKey(logUser);
 					}
 					@Override
 					public KeyMetricBuilder metricBuilder(){

@@ -21,7 +21,8 @@ import org.frameworkset.elasticsearch.boot.ElasticSearchBoot;
 import org.frameworkset.elasticsearch.boot.ElasticsearchBootResult;
 import org.frameworkset.elasticsearch.bulk.*;
 import org.frameworkset.elasticsearch.client.ClientInterface;
-import org.frameworkset.tran.plugin.metrics.output.ETLMapData;
+import org.frameworkset.tran.metrics.entity.MetricKey;
+import org.frameworkset.tran.plugin.metrics.output.*;
 import org.frameworkset.util.beans.ObjectHolder;
 import org.frameworkset.elasticsearch.serial.SerialUtil;
 import org.frameworkset.tran.*;
@@ -39,9 +40,6 @@ import org.frameworkset.tran.metrics.job.KeyMetricBuilder;
 import org.frameworkset.tran.metrics.job.Metrics;
 import org.frameworkset.tran.plugin.es.output.ElasticsearchOutputConfig;
 import org.frameworkset.tran.plugin.file.input.FileInputConfig;
-import org.frameworkset.tran.plugin.metrics.output.BuildMapData;
-import org.frameworkset.tran.plugin.metrics.output.ETLMetrics;
-import org.frameworkset.tran.plugin.metrics.output.MetricsData;
 import org.frameworkset.tran.schedule.CallInterceptor;
 import org.frameworkset.tran.schedule.TaskContext;
 import org.frameworkset.tran.task.TaskCommand;
@@ -219,7 +217,7 @@ public class FileLog2ESWithMetricsCustomDateTimeDemo {
                         operModule = "未知模块";
                     }
                     String metricKey = "LoginModuleMetric:"+operModule;
-                    metric(metricKey, mapData, new KeyMetricBuilder() {
+                    metric(new MetricKey(metricKey,1), mapData, new KeyMetricBuilder() {
                         @Override
                         public KeyMetric build() {
                             return new LoginModuleMetric();
@@ -230,7 +228,7 @@ public class FileLog2ESWithMetricsCustomDateTimeDemo {
                     //指标2 按照用户统计操作次数
                     String logUser = (String) data.getData("logOperuser");
                     metricKey = "LoginUserMetric:"+logUser;
-                    metric(metricKey, mapData, new KeyMetricBuilder() {
+                    metric(new MetricKey(metricKey,2), mapData, new KeyMetricBuilder() {
                         @Override
                         public KeyMetric build() {
                             return new LoginUserMetric();
@@ -281,10 +279,9 @@ public class FileLog2ESWithMetricsCustomDateTimeDemo {
         /**
          * 自定义创建不同指标的MapData,设置BuildMapData接口即可
          */
-        keyMetrics.setBuildMapData(new BuildMapData() {
+        keyMetrics.setBuildMapData(new SimpleBuildMapData() {
             @Override
             public ETLMapData buildMapData(MetricsData metricsData) {
-                BuildMapDataContext buildMapDataContext = metricsData.getBuildMapDataContext();
                 CommonRecord record = metricsData.getCommonRecord();
                 ETLMapData mapData = new ETLMapData(){
                     /**
@@ -293,24 +290,18 @@ public class FileLog2ESWithMetricsCustomDateTimeDemo {
                      * @param metricsKey
                      * @return
                      */
-                    public Date metricsDataTime(String metricsKey) {
-                        if(metricsKey.startsWith("LoginUserMetric:") ) {//根据不同的key获取对应的指标时间字段,LoginUserMetric指标使用collectime时间字段作为时间维度
+                    public Date metricsDataTime(MetricKey metricsKey) {
+                        if(metricsKey.getMetricType() == 2 ) {//根据不同的key获取对应的指标时间字段,LoginUserMetric指标使用collectime时间字段作为时间维度
                            Date time = (Date)record.getData("collectime");
                            return time;
                         }
                         else {
-                            return (Date) record.getData("logOpertime");//其他指标使用全局logOpertime字段作为时间维度
+                            return getDataTime();
                         }
                     }
 
                 };
-                mapData.setData(record);
-                mapData.setDayFormat(buildMapDataContext.getDayFormat());
-                mapData.setHourFormat(buildMapDataContext.getHourFormat());
-                mapData.setMinuteFormat(buildMapDataContext.getMinuteFormat());
-                mapData.setYearFormat(buildMapDataContext.getYearFormat());
-                mapData.setMonthFormat(buildMapDataContext.getMonthFormat());
-                mapData.setWeekFormat(buildMapDataContext.getWeekFormat());
+                
                 return mapData;
             }
         });
