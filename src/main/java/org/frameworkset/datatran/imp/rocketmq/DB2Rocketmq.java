@@ -16,56 +16,48 @@ package org.frameworkset.datatran.imp.rocketmq;
  */
 
 import com.frameworkset.util.SimpleStringUtil;
-import org.frameworkset.datatran.imp.Db2DBdemo;
-import org.frameworkset.elasticsearch.serial.SerialUtil;
-import org.frameworkset.spi.geoip.IpInfo;
-import org.frameworkset.tran.*;
+import org.frameworkset.tran.CommonRecord;
+import org.frameworkset.tran.DataRefactor;
+import org.frameworkset.tran.DataStream;
+import org.frameworkset.tran.ExportResultHandler;
 import org.frameworkset.tran.config.ImportBuilder;
 import org.frameworkset.tran.context.Context;
-import org.frameworkset.tran.context.ImportContext;
 import org.frameworkset.tran.metrics.TaskMetrics;
-import org.frameworkset.tran.plugin.custom.output.CustomOutPut;
-import org.frameworkset.tran.plugin.custom.output.CustomOutputConfig;
 import org.frameworkset.tran.plugin.db.input.DBInputConfig;
-import org.frameworkset.tran.plugin.db.output.DBOutputConfig;
-import org.frameworkset.tran.plugin.rocketmq.input.RocketmqInputConfig;
-import org.frameworkset.tran.schedule.CallInterceptor;
+import org.frameworkset.tran.plugin.rocketmq.output.RocketmqOutputConfig;
 import org.frameworkset.tran.schedule.ImportIncreamentConfig;
 import org.frameworkset.tran.schedule.TaskContext;
 import org.frameworkset.tran.task.TaskCommand;
+import org.frameworkset.tran.util.RecordGenerator;
+import org.frameworkset.tran.util.RecordGeneratorContext;
+import org.frameworkset.tran.util.RecordGeneratorV1;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
-import java.text.DateFormat;
-import java.util.Date;
-import java.util.List;
-import java.util.Map;
-import java.util.concurrent.atomic.AtomicInteger;
+import java.io.Writer;
+
+import static org.frameworkset.tran.context.Context.ROCKETMQ_TOPIC_KEY;
+
 
 /**
  * <p>Description: </p>
  * <p></p>
  *
  * @author biaoping.yin
- * @Date 2024/11/21
+ * @Date 2024/11/22
  */
-public class Rockemq2Custom {
-
-    private static final Logger logger = LoggerFactory.getLogger(Rockemq2Custom.class);
+public class DB2Rocketmq {
+    private static Logger logger = LoggerFactory.getLogger(DB2Rocketmq.class);
     public static void main(String[] args){
-        Rockemq2Custom rockemq2Custom = new Rockemq2Custom();
-//		dbdemo.fullImportData(  dropIndice);
-//		dbdemo.scheduleImportData(dropIndice);
-        rockemq2Custom.scheduleImportData();
-//		dbdemo.scheduleImportData(dropIndice);
+        DB2Rocketmq db2Rocketmq = new DB2Rocketmq();
+        db2Rocketmq.scheduleImportData();
     }
-
     /**
      * elasticsearch地址和数据库地址都从外部配置文件application.properties中获取，加载数据源配置和es配置
      */
     public void scheduleImportData(){
         ImportBuilder importBuilder = ImportBuilder.newInstance();
-        importBuilder.setJobId("Rockemq2Custom");
+        importBuilder.setJobId("DB2Rocketmq");
         /**
          * 设置增量状态ID生成策略，在设置jobId的情况下起作用
          * ImportIncreamentConfig.STATUSID_POLICY_JOBID 采用jobType+jobId作为增量状态id
@@ -85,37 +77,28 @@ public class Rockemq2Custom {
         /**
          * 源db相关配置
          */
-        RocketmqInputConfig rocketmqInputConfig = new RocketmqInputConfig();
-        rocketmqInputConfig.setNamesrvAddr("172.24.176.18:9876")
-                .setConsumerGroup("etlgroup2")
+        DBInputConfig dbInputConfig = new DBInputConfig();
+        dbInputConfig.setDbName("source")
+                .setDbDriver("com.mysql.cj.jdbc.Driver") //数据库驱动程序，必须导入相关数据库的驱动jar包
+                .setDbUrl("jdbc:mysql://localhost:3306/bboss?useUnicode=true&characterEncoding=utf-8&useSSL=false&allowPublicKeyRetrieval=true") //通过useCursorFetch=true启用mysql的游标fetch机制，否则会有严重的性能隐患，useCursorFetch必须和jdbcFetchSize参数配合使用，否则不会生效
+                .setDbUser("root")
+                .setDbPassword("123456")
+                .setValidateSQL("select 1")
+                .setUsePool(true)//是否使用连接池
+                .setSqlFilepath("sql.xml")
+                .setSqlName("demoexport").setParallelDatarefactor(true);
+        importBuilder.setInputConfig(dbInputConfig);
+
+        RocketmqOutputConfig rocketmqOutputConfig = new RocketmqOutputConfig();
+        rocketmqOutputConfig.setNamesrvAddr("172.24.176.18:9876")
+                .setProductGroup("etlgroup2")
                 .setTopic("etltopic")
                 .setTag("json").setAccessKey("Rocketmq")
-                .setSecretKey("12345678").setMaxPollRecords(100)
-                .setConsumeMessageBatchMaxSize(50)
-                .setConsumeFromWhere("CONSUME_FROM_FIRST_OFFSET")
-                .setWorkThreads(10)
-                .setKeyDeserializer("org.frameworkset.rocketmq.codec.StringCodecDeserial")
-                .setValueDeserializer("org.frameworkset.rocketmq.codec.JsonMapCodecDeserial");
-               ;
-        importBuilder.setInputConfig(rocketmqInputConfig);
+                .setSecretKey("12345678") ;
+        
+        importBuilder.setOutputConfig(rocketmqOutputConfig);
 
-        //自己处理数据
-        CustomOutputConfig customOutputConfig = new CustomOutputConfig();
-        customOutputConfig.setCustomOutPut(new CustomOutPut() {
-            @Override
-            public void handleData(TaskContext taskContext, List<CommonRecord> datas) {
-
-                //You can do any thing here for datas
-                for(CommonRecord record:datas){
-                    Map<String,Object> data = record.getDatas();
-                    logger.info(SimpleStringUtil.object2json(data));
-                    logger.info(SimpleStringUtil.object2json(record.getMetaDatas()));
-
-                }
-            }
-        });
-        importBuilder.setOutputConfig(customOutputConfig);
-
+       
         importBuilder.setBatchSize(10); //可选项,批量导入db的记录数，默认为-1，逐条处理，> 0时批量处理
         //定时任务配置，
         importBuilder.setFixedRate(false)//参考jdk timer task文档对fixedRate的说明
@@ -123,9 +106,20 @@ public class Rockemq2Custom {
                 .setDeyLay(1000L) // 任务延迟执行deylay毫秒后执行
                 .setPeriod(5000L); //每隔period毫秒执行，如果不设置，只执行一次
         //定时任务配置结束
-//
-
-  
+ 
+//		//设置任务执行拦截器结束，可以添加多个
+        //增量配置开始
+//		importBuilder.setLastValueColumn("log_id");//手动指定数字增量查询字段，默认采用上面设置的sql语句中的增量变量名称作为增量查询字段的名称，指定以后就用指定的字段
+//		importBuilder.setDateLastValueColumn("log_id");//手动指定日期增量查询字段，默认采用上面设置的sql语句中的增量变量名称作为增量查询字段的名称，指定以后就用指定的字段
+        importBuilder.setFromFirst(true);//setFromfirst(false)，如果作业停了，作业重启后从上次截止位置开始采集数据，
+        //setFromfirst(true) 如果作业停了，作业重启后，重新开始采集数据
+        importBuilder.setLastValueStorePath("DB2Rocketmq_import");//记录上次采集的增量字段值的文件路径，作为下次增量（或者重启后）采集数据的起点，不同的任务这个路径要不一样
+//		importBuilder.setLastValueStoreTableName("logs");//记录上次采集的增量字段值的表，可以不指定，采用默认表名increament_tab
+        importBuilder.setLastValueType(ImportIncreamentConfig.NUMBER_TYPE);//如果没有指定增量查询字段名称，则需要指定字段类型：ImportIncreamentConfig.NUMBER_TYPE 数字类型
+        // 或者ImportIncreamentConfig.TIMESTAMP_TYPE 日期类型
+        //增量配置结束
+        
+       
         /**
          * 重新设置数据结构
          */
@@ -138,8 +132,11 @@ public class Rockemq2Custom {
 //					return;
 //				}
 
+                context.setMessageKey("testKey");
 
 
+//                context.addTempData(ROCKETMQ_TOPIC_KEY,"othertopic");
+                
                 context.addFieldValue("author","duoduo");
                
             }
@@ -153,7 +150,8 @@ public class Rockemq2Custom {
         importBuilder.setThreadCount(50);//设置批量导入线程池工作线程数量
         importBuilder.setContinueOnError(true);//任务出现异常，是否继续执行作业：true（默认值）继续执行 false 中断作业执行
 
-        importBuilder.setPrintTaskLog(true); //可选项，true 打印任务执行日志（耗时，处理记录数） false 不打印，默认值false
+        importBuilder.setUseLowcase(false)  //可选项，true 列名称转小写，false列名称不转换小写，默认false，只要在UseJavaName为false的情况下，配置才起作用
+                .setPrintTaskLog(true); //可选项，true 打印任务执行日志（耗时，处理记录数） false 不打印，默认值false
         importBuilder.setExportResultHandler(new ExportResultHandler<String>() {
             @Override
             public void success(TaskCommand<String> taskCommand, String result) {
@@ -176,11 +174,12 @@ public class Rockemq2Custom {
 
         });
         /**
-         * 执行作业
+         * 执行数据库表数据导入Rocketmq操作
          */
         DataStream dataStream = importBuilder.builder();
         dataStream.execute();//执行导入操作
 
+        logger.info("come to end.");
 
 
     }
