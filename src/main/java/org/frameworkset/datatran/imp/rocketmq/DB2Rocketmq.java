@@ -26,15 +26,9 @@ import org.frameworkset.tran.metrics.TaskMetrics;
 import org.frameworkset.tran.plugin.db.input.DBInputConfig;
 import org.frameworkset.tran.plugin.rocketmq.output.RocketmqOutputConfig;
 import org.frameworkset.tran.schedule.ImportIncreamentConfig;
-import org.frameworkset.tran.schedule.TaskContext;
 import org.frameworkset.tran.task.TaskCommand;
-import org.frameworkset.tran.util.RecordGenerator;
-import org.frameworkset.tran.util.RecordGeneratorContext;
-import org.frameworkset.tran.util.RecordGeneratorV1;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
-
-import java.io.Writer;
 
 import static org.frameworkset.tran.context.Context.ROCKETMQ_TOPIC_KEY;
 
@@ -92,9 +86,11 @@ public class DB2Rocketmq {
         RocketmqOutputConfig rocketmqOutputConfig = new RocketmqOutputConfig();
         rocketmqOutputConfig.setNamesrvAddr("172.24.176.18:9876")
                 .setProductGroup("etlgroup2")
-                .setTopic("etltopic")
+                .setTopic("etltopic")//全局topic
                 .setTag("json").setAccessKey("Rocketmq")
-                .setSecretKey("12345678") ;
+                .setSecretKey("12345678");
+        rocketmqOutputConfig.setValueCodecSerial("org.frameworkset.rocketmq.codec.StringBytesCodecSerial")
+                .setKeyCodecSerial("org.frameworkset.rocketmq.codec.StringCodecSerial") ;
         
         importBuilder.setOutputConfig(rocketmqOutputConfig);
 
@@ -121,7 +117,7 @@ public class DB2Rocketmq {
         
        
         /**
-         * 重新设置数据结构
+         * 设置数据结构和消息key以及记录级别topic
          */
         importBuilder.setDataRefactor(new DataRefactor() {
             public void refactor(Context context) throws Exception  {
@@ -132,10 +128,11 @@ public class DB2Rocketmq {
 //					return;
 //				}
 
+                //设置消息key
                 context.setMessageKey("testKey");
 
-
-//                context.addTempData(ROCKETMQ_TOPIC_KEY,"othertopic");
+                //设置消息发送的主题
+                context.addTempData(Context.ROCKETMQ_TOPIC_KEY,"othertopic");
                 
                 context.addFieldValue("author","duoduo");
                
