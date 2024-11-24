@@ -83,7 +83,7 @@ public class Rockemq2Custom {
 
 
         /**
-         * 源db相关配置
+         * Rocketmq输入插件配置
          */
         RocketmqInputConfig rocketmqInputConfig = new RocketmqInputConfig();
         rocketmqInputConfig.setNamesrvAddr("172.24.176.18:9876")
@@ -92,11 +92,22 @@ public class Rockemq2Custom {
                 .setTag("json").setAccessKey("Rocketmq")
                 .setSecretKey("12345678").setMaxPollRecords(100)
                 .setConsumeMessageBatchMaxSize(50)
+                /**
+                 *      * CONSUME_FROM_LAST_OFFSET,
+                 *      *
+                 *      *     @Deprecated
+                 *      *     CONSUME_FROM_LAST_OFFSET_AND_FROM_MIN_WHEN_BOOT_FIRST,
+                 *      *     @Deprecated
+                 *      *     CONSUME_FROM_MIN_OFFSET,
+                 *      *     @Deprecated
+                 *      *     CONSUME_FROM_MAX_OFFSET,
+                 *      *     CONSUME_FROM_FIRST_OFFSET,
+                 *      *     CONSUME_FROM_TIMESTAMP,
+                 */
                 .setConsumeFromWhere("CONSUME_FROM_FIRST_OFFSET")
                 .setWorkThreads(10)
                 .setKeyDeserializer("org.frameworkset.rocketmq.codec.StringCodecDeserial")
                 .setValueDeserializer("org.frameworkset.rocketmq.codec.JsonMapCodecDeserial");
-               ;
         importBuilder.setInputConfig(rocketmqInputConfig);
 
         //自己处理数据
