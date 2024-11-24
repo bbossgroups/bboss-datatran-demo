@@ -91,7 +91,7 @@ public class Milvus2CustomDemo {
 
 
 		/**
-		 * 源db相关配置
+		 * Milvus相关配置
 		 */
         String[] array = {"log_id","collecttime","log_content","content"};//定义要返回的字段清单
 		MilvusInputConfig milvusInputConfig = new MilvusInputConfig();
