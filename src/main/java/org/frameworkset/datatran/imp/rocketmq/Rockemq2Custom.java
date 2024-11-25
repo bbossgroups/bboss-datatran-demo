@@ -148,8 +148,8 @@ public class Rockemq2Custom {
 //					context.setDrop(true);
 //					return;
 //				}
-
-
+                //获取元数据
+                String topic = (String)context.getMetaValue("topic");
 
                 context.addFieldValue("author","duoduo");
                
