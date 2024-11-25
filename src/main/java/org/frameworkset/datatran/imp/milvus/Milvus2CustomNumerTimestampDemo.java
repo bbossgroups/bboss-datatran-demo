@@ -16,8 +16,10 @@ package org.frameworkset.datatran.imp.milvus;
  */
 
 import com.frameworkset.util.SimpleStringUtil;
- 
-import org.frameworkset.tran.*;
+import org.frameworkset.tran.CommonRecord;
+import org.frameworkset.tran.DataRefactor;
+import org.frameworkset.tran.DataStream;
+import org.frameworkset.tran.ExportResultHandler;
 import org.frameworkset.tran.config.ImportBuilder;
 import org.frameworkset.tran.context.Context;
 import org.frameworkset.tran.metrics.TaskMetrics;
@@ -30,10 +32,16 @@ import org.frameworkset.tran.task.TaskCommand;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
-import java.util.*;
+import java.text.DateFormat;
+import java.text.ParseException;
+import java.text.SimpleDateFormat;
+import java.util.Arrays;
+import java.util.Date;
+import java.util.List;
+import java.util.Map;
 
 /**
- * <p>Description: 基于数字类型字段log_id增量同步采集Milvus向量数据库数据，通过自定义插件进行数据输出
+ * <p>Description: 基于数字类型时间戳字段collecttime增量同步采集Milvus向量数据库数据，通过自定义插件进行数据输出
  * </p>
  * <p></p>
  * <p>Copyright (c) 2018</p>
@@ -41,17 +49,17 @@ import java.util.*;
  * @author biaoping.yin
  * @version 1.0
  */
-public class Milvus2CustomDemo {
-	private static final Logger logger = LoggerFactory.getLogger(Milvus2CustomDemo.class);
+public class Milvus2CustomNumerTimestampDemo {
+	private static final Logger logger = LoggerFactory.getLogger(Milvus2CustomNumerTimestampDemo.class);
 	public static void main(String[] args){
-		Milvus2CustomDemo dbdemo = new Milvus2CustomDemo();
+		Milvus2CustomNumerTimestampDemo dbdemo = new Milvus2CustomNumerTimestampDemo();
 		dbdemo.scheduleImportData();
 	}
 
  
 	public void scheduleImportData(){
 		ImportBuilder importBuilder = ImportBuilder.newInstance();
-        importBuilder.setJobId("Milvus2CustomDemo");
+        importBuilder.setJobId("Milvus2CustomNumerTimestampDemo");
         /**
          * 设置增量状态ID生成策略，在设置jobId的情况下起作用
          * ImportIncreamentConfig.STATUSID_POLICY_JOBID 采用jobType+jobId作为增量状态id
@@ -109,15 +117,24 @@ public class Milvus2CustomDemo {
   
 //		//设置任务执行拦截器结束，可以添加多个
 		//增量配置开始
-		importBuilder.setLastValueColumn("log_id");//手动指定数字增量查询字段，默认采用上面设置的sql语句中的增量变量名称作为增量查询字段的名称，指定以后就用指定的字段
+		importBuilder.setLastValueColumn("collecttime");//手动指定数字增量查询字段，默认采用上面设置的sql语句中的增量变量名称作为增量查询字段的名称，指定以后就用指定的字段
 //		importBuilder.setDateLastValueColumn("log_id");//手动指定日期增量查询字段，默认采用上面设置的sql语句中的增量变量名称作为增量查询字段的名称，指定以后就用指定的字段
 		importBuilder.setFromFirst(true);//setFromfirst(false)，如果作业停了，作业重启后从上次截止位置开始采集数据，
 		//setFromfirst(true) 如果作业停了，作业重启后，重新开始采集数据
-		importBuilder.setLastValueStorePath("Milvus2CustomDemo_import");//记录上次采集的增量字段值的文件路径，作为下次增量（或者重启后）采集数据的起点，不同的任务这个路径要不一样
+		importBuilder.setLastValueStorePath("Milvus2CustomNumerTimestampDemo_import");//记录上次采集的增量字段值的文件路径，作为下次增量（或者重启后）采集数据的起点，不同的任务这个路径要不一样
 //		importBuilder.setLastValueStoreTableName("logs");//记录上次采集的增量字段值的表，可以不指定，采用默认表名increament_tab
 		importBuilder.setLastValueType(ImportIncreamentConfig.NUMBER_TYPE);//如果没有指定增量查询字段名称，则需要指定字段类型：ImportIncreamentConfig.NUMBER_TYPE 数字类型
 		// 或者ImportIncreamentConfig.TIMESTAMP_TYPE 日期类型
-		//增量配置结束
+        importBuilder.setNumberTypeTimestamp(true);
+        importBuilder.setIncreamentEndOffset(5);
+        DateFormat dateFormat = new SimpleDateFormat("yyyy-MM-dd HH:mm:ss");
+
+        try {
+            importBuilder.setLastValue(dateFormat.parse("1970-01-01 00:00:00").getTime());
+        } catch (ParseException e) {
+            throw new RuntimeException(e);
+        }
+        //增量配置结束
  
 		/**
 		 * 加工和处理数据
