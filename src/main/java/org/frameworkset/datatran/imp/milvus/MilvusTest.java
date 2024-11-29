@@ -15,11 +15,9 @@ package org.frameworkset.datatran.imp.milvus;
  * limitations under the License.
  */
 
-import com.google.common.collect.Lists;
 import io.milvus.orm.iterator.QueryIterator;
 import io.milvus.orm.iterator.SearchIterator;
 import io.milvus.response.QueryResultsWrapper;
-import io.milvus.v2.client.MilvusClientV2;
 import io.milvus.v2.common.ConsistencyLevel;
 import io.milvus.v2.common.IndexParam;
 import io.milvus.v2.service.vector.request.QueryIteratorReq;
@@ -30,7 +28,6 @@ import io.milvus.v2.service.vector.request.data.FloatVec;
 import io.milvus.v2.service.vector.response.QueryResp;
 import io.milvus.v2.service.vector.response.SearchResp;
 import org.frameworkset.nosql.milvus.MilvusConfig;
-import org.frameworkset.nosql.milvus.MilvusFunction;
 import org.frameworkset.nosql.milvus.MilvusHelper;
 import org.frameworkset.spi.remote.http.HttpRequestProxy;
 
@@ -217,7 +214,7 @@ public class MilvusTest {
     }
 
     public static void main(String[] args){
-        searchIterator(args);
+//        searchIterator(args);
         queryIterator(args);
 //        query(args);
 //        search(args);
@@ -288,7 +285,7 @@ public class MilvusTest {
 
 
 
-        String collectionName = "demo";//向量表名称
+        String collectionName = "targetdemo";//向量表名称
         //3. 在向量数据源chan_fqa的向量表demo上执行向量检索
          MilvusHelper.executeRequest("chan_fqa", milvusClientV2 -> {
 
@@ -296,11 +293,12 @@ public class MilvusTest {
             String[] array = {"log_id","collecttime","log_content"};//定义要返回的字段清单
             QueryIterator queryIterator = milvusClientV2.queryIterator(QueryIteratorReq.builder()
                     .collectionName(collectionName)
-                    .expr("log_id < 100000")//指定过滤条件，可以进行条件组合，具体参考文档：https://milvus.io/api-reference/java/v2.4.x/v2/Vector/search.md
+//                    .expr("log_id > 0")//指定过滤条件，可以进行条件组合，具体参考文档：https://milvus.io/api-reference/java/v2.4.x/v2/Vector/search.md
                     .outputFields(Arrays.asList(array))
-                    .batchSize(50L)                     
+                    .batchSize(1000)                     
                     .build());
 
+            int i = 0;
             while (true) {
                 List<QueryResultsWrapper.RowRecord> res = queryIterator.next();
                 if (res.isEmpty()) {
@@ -310,9 +308,11 @@ public class MilvusTest {
                 }
 
                 for (QueryResultsWrapper.RowRecord record : res) {
-                    System.out.println(record);
+                    i ++;
+//                    System.out.println(record);
                 }
             }
+            System.out.println("i:"+i);
             return null;
 
         });
