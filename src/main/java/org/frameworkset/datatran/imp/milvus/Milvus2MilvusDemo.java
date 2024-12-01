@@ -136,9 +136,7 @@ public class Milvus2MilvusDemo {
                 //销毁初始化阶段自定义的数据源
                 importContext.destroyResources(new ResourceEnd() {
                     @Override
-                    public void endResource(ResourceStartResult resourceStartResult) {
-
-                        
+                    public void endResource(ResourceStartResult resourceStartResult) {                        
                         //销毁初始化阶段自定义的向量数据库数据源
                         if(resourceStartResult instanceof MilvusStartResult){
                             MilvusHelper.shutdown((MilvusStartResult) resourceStartResult);
@@ -156,11 +154,10 @@ public class Milvus2MilvusDemo {
 		MilvusInputConfig milvusInputConfig = new MilvusInputConfig();
 		milvusInputConfig.setName("ucr_chan_fqa")  //使用之前定义的向量数据库数据源，无需设置向量数据库地址和名称以及token等信息
 //                             .setDbName("ucr_chan_fqa")
-//                            .setExpr("log_id < 100000")//指定过滤条件，可以进行条件组合，具体参考文档：https://milvus.io/api-reference/java/v2.4.x/v2/Vector/search.md
+                            .setExpr("log_id < 100000")//指定过滤条件，可以进行条件组合，具体参考文档：https://milvus.io/api-reference/java/v2.4.x/v2/Vector/search.md
 //                             .setUri("http://172.24.176.18:19530").setToken("")
-                            .setOutputFields(Arrays.asList(array))
-                             
-                             .setCollectionName("demo");
+                            .setOutputFields(Arrays.asList(array))  //设置返回字段清单                           
+                             .setCollectionName("demo");//指定源表名称
 		importBuilder.setInputConfig(milvusInputConfig);
 
         /**

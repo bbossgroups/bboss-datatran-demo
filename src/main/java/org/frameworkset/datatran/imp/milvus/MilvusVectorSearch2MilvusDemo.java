@@ -22,7 +22,6 @@ import io.milvus.v2.common.IndexParam;
 import io.milvus.v2.service.collection.request.AddFieldReq;
 import io.milvus.v2.service.collection.request.CreateCollectionReq;
 import io.milvus.v2.service.collection.request.HasCollectionReq;
-import io.milvus.v2.service.vector.request.data.BaseVector;
 import io.milvus.v2.service.vector.request.data.FloatVec;
 import org.frameworkset.nosql.milvus.MilvusConfig;
 import org.frameworkset.nosql.milvus.MilvusFunction;
@@ -37,7 +36,6 @@ import org.frameworkset.tran.ImportStartAction;
 import org.frameworkset.tran.config.ImportBuilder;
 import org.frameworkset.tran.context.ImportContext;
 import org.frameworkset.tran.metrics.TaskMetrics;
-import org.frameworkset.tran.plugin.milvus.input.BuildMilvusVectorDataFunction;
 import org.frameworkset.tran.plugin.milvus.input.MilvusVectorInputConfig;
 import org.frameworkset.tran.plugin.milvus.output.MilvusOutputConfig;
 import org.frameworkset.tran.schedule.ImportIncreamentConfig;
@@ -177,14 +175,13 @@ public class MilvusVectorSearch2MilvusDemo {
 		/**
 		 * 源Milvus相关配置，这里用与目标库相同的Milvus数据源ucr_chan_fqa（在startaction中初始化）
 		 */
-        String[] array = {"log_id","collecttime","log_content","content"};//定义要返回的字段清单
-        
+        String[] array = {"log_id","collecttime","log_content","content"};//定义要返回的字段清单        
        
 		MilvusVectorInputConfig milvusInputConfig = new MilvusVectorInputConfig();
-		milvusInputConfig.setVectorFieldName("content")
-                .setBuildMilvusVectorDataFunction(() -> {
+		milvusInputConfig.setVectorFieldName("content")//设置向量字段 
+                .setBuildMilvusVectorDataFunction(() -> { //注册检索文本条件向量化转换函数
                     Map eparams = new HashMap();
-                    eparams.put("input", "新增了机构");//content向量字段查询条件转换为向量
+                    eparams.put("input", "新增了机构");//查询条件文本内容 
                     eparams.put("model", "custom-bge-large-zh-v1.5");//指定Xinference向量模型名称
                     //调用的 xinference 发布的向量模型模型服务，将查询条件转换为向量
                     XinferenceResponse result = HttpRequestProxy.sendJsonBody("embedding_model", eparams,
@@ -193,15 +190,14 @@ public class MilvusVectorSearch2MilvusDemo {
                     return Collections.singletonList(new FloatVec(embedding));
                 })
                 .setSearchParams("{\"radius\": 0.85}") //返回content与查询条件相似度为0.85以上的记录
-//                            .topK(300)
                 .setMetricType(IndexParam.MetricType.COSINE) //采用余弦相似度算法
                 .setConsistencyLevel(ConsistencyLevel.BOUNDED)
                 .setName("ucr_chan_fqa")  //使用之前定义的向量数据库数据源，无需设置向量数据库地址和名称以及token等信息
 //                             .setDbName("ucr_chan_fqa")
-//                            .setExpr("log_id < 100000")//指定过滤条件，可以进行条件组合，具体参考文档：https://milvus.io/api-reference/java/v2.4.x/v2/Vector/search.md
+                            .setExpr("log_id < 100000")//指定过滤条件，可以进行条件组合，具体参考文档：https://milvus.io/api-reference/java/v2.4.x/v2/Vector/search.md
 //                             .setUri("http://172.24.176.18:19530").setToken("")
-                            .setOutputFields(Arrays.asList(array))                            
-                             .setCollectionName("demo");
+                            .setOutputFields(Arrays.asList(array))  //指定返回字段清单                          
+                             .setCollectionName("demo");//指定源表名称
 		importBuilder.setInputConfig(milvusInputConfig);
 
         /**
@@ -212,9 +208,10 @@ public class MilvusVectorSearch2MilvusDemo {
 //                             .setDbName("ucr_chan_fqa")
 //                             .setUri("http://172.24.176.18:19530")
 //                             .setToken("")
-                .setCollectionName(targetCollectionName)
-                .setLoadCollectionSchema(true)
-                .setUpsert(true);//存在更新，不存在则插入
+                .setCollectionName(targetCollectionName) //指标目标表名称
+                //预加载目标表结构（表结构不会变化时设置为true），如果不预加载，每批次插入数据时，都会从Milvus获取一次目标表结构
+                .setLoadCollectionSchema(true)  
+                .setUpsert(true);//设置为true，记录存在更新，不存在则插入
         importBuilder.setOutputConfig(milvusOutputConfig);
 
         importBuilder.setFetchSize(100);
@@ -225,19 +222,19 @@ public class MilvusVectorSearch2MilvusDemo {
 				.setDeyLay(1000L) // 任务延迟执行deylay毫秒后执行
 				.setPeriod(5000L); //每隔period毫秒执行，如果不设置，只执行一次
 		//定时任务配置结束
-  
-//		//设置任务执行拦截器结束，可以添加多个
-		//增量配置开始
-		importBuilder.setLastValueColumn("log_id");//手动指定数字增量查询字段，默认采用上面设置的sql语句中的增量变量名称作为增量查询字段的名称，指定以后就用指定的字段
-//		importBuilder.setDateLastValueColumn("log_id");//手动指定日期增量查询字段，默认采用上面设置的sql语句中的增量变量名称作为增量查询字段的名称，指定以后就用指定的字段
-		importBuilder.setFromFirst(true);//setFromfirst(false)，如果作业停了，作业重启后从上次截止位置开始采集数据，
-		//setFromfirst(true) 如果作业停了，作业重启后，重新开始采集数据
-		importBuilder.setLastValueStorePath("MilvusVectorSearch2MilvusDemo_import");//记录上次采集的增量字段值的文件路径，作为下次增量（或者重启后）采集数据的起点，不同的任务这个路径要不一样
-//		importBuilder.setLastValueStoreTableName("logs");//记录上次采集的增量字段值的表，可以不指定，采用默认表名increament_tab
-		importBuilder.setLastValueType(ImportIncreamentConfig.NUMBER_TYPE);//如果没有指定增量查询字段名称，则需要指定字段类型：ImportIncreamentConfig.NUMBER_TYPE 数字类型
-		// 或者ImportIncreamentConfig.TIMESTAMP_TYPE 日期类型
-        importBuilder.setLastValue(-100000);
-		//增量配置结束
+
+        //增量配置开始
+        importBuilder.setLastValueColumn("log_id");//指定数字增量查询字段
+        //setFromfirst(true) 如果作业停了，作业重启后，重新开始采集数据
+        //setFromfirst(false)，如果作业停了，作业重启后从上次截止位置开始采集数据，
+        importBuilder.setFromFirst(false);
+
+        importBuilder.setLastValueStorePath("MilvusVectorSearch2MilvusDemo_import");//记录上次采集的增量字段值的文件路径，作为下次增量（或者重启后）采集数据的起点，不同的任务这个路径要不一样
+        //importBuilder.setLastValueStoreTableName("logs");//记录上次采集的增量字段值的表，可以不指定，采用默认表名increament_tab
+        importBuilder.setLastValueType(ImportIncreamentConfig.NUMBER_TYPE);//如果没有指定增量查询字段名称，则需要指定字段类型：ImportIncreamentConfig.NUMBER_TYPE 数字类型
+        // 或者ImportIncreamentConfig.TIMESTAMP_TYPE 日期类型
+        importBuilder.setLastValue(-100000);//增量起始值
+        //增量配置结束
  
 		
 		
