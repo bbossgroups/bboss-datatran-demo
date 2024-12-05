@@ -206,7 +206,7 @@ public class Db2Milvusdemo {
 		importBuilder.setOutputConfig(milvusOutputConfig);
 
 	 
-		importBuilder.setBatchSize(50); //可选项,批量导入db的记录数，默认为-1，逐条处理，> 0时批量处理
+		importBuilder.setBatchSize(50); //可选项,批量导入Milvus记录数
 		//定时任务配置，
 		importBuilder.setFixedRate(false)//参考jdk timer task文档对fixedRate的说明
 //					 .setScheduleDate(date) //指定任务开始执行时间：日期

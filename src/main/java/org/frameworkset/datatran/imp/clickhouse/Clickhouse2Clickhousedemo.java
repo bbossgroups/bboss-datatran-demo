@@ -257,8 +257,7 @@ public class Clickhouse2Clickhousedemo {
 		importBuilder.setThreadCount(50);//设置批量导入线程池工作线程数量
 		importBuilder.setContinueOnError(true);//任务出现异常，是否继续执行作业：true（默认值）继续执行 false 中断作业执行
 
-		importBuilder
-				.setPrintTaskLog(true); //可选项，true 打印任务执行日志（耗时，处理记录数） false 不打印，默认值false
+		importBuilder.setPrintTaskLog(true); //可选项，true 打印任务执行日志（耗时，处理记录数） false 不打印，默认值false
 		importBuilder.setExportResultHandler(new ExportResultHandler<String>() {
 			@Override
 			public void success(TaskCommand<String> taskCommand, String result) {

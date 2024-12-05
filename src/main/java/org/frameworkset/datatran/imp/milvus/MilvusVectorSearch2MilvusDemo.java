@@ -214,8 +214,8 @@ public class MilvusVectorSearch2MilvusDemo {
                 .setUpsert(true);//设置为true，记录存在更新，不存在则插入
         importBuilder.setOutputConfig(milvusOutputConfig);
 
-        importBuilder.setFetchSize(100);
-		importBuilder.setBatchSize(50); //可选项,批量导入db的记录数，默认为-1，逐条处理，> 0时批量处理
+        importBuilder.setFetchSize(1000); // 批量从Milvus拉取记录数
+        importBuilder.setBatchSize(50); //可选项,批量输出Milvus记录数
 		//定时任务配置，
 		importBuilder.setFixedRate(false)//参考jdk timer task文档对fixedRate的说明
 //					 .setScheduleDate(date) //指定任务开始执行时间：日期

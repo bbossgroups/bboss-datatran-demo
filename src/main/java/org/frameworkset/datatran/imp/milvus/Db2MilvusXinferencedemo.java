@@ -207,7 +207,8 @@ public class Db2MilvusXinferencedemo {
 		importBuilder.setOutputConfig(milvusOutputConfig);
 
 	 
-		importBuilder.setBatchSize(100); //可选项,批量导入db的记录数
+        
+		importBuilder.setBatchSize(100); //可选项,批量导入Milvus的记录数
 		//任务定时调度配置，
 		importBuilder.setFixedRate(false)//参考jdk timer task文档对fixedRate的说明
 //					 .setScheduleDate(date) //指定任务开始执行时间：日期
@@ -286,9 +287,9 @@ public class Db2MilvusXinferencedemo {
 		/**
 		 * 内置线程池配置，实现多线程并行数据导入功能，作业完成退出时自动关闭该线程池
 		 */
-		importBuilder.setParallel(true);//设置为多线程并行批量导入,false串行
-		importBuilder.setQueue(5);//设置批量导入线程池等待队列长度
-		importBuilder.setThreadCount(50);//设置批量导入线程池工作线程数量
+        importBuilder.setParallel(true);//设置为多线程并行批量导入,false串行
+        importBuilder.setQueue(5);//设置批量导入线程池等待队列长度
+        importBuilder.setThreadCount(50);//设置批量导入线程池工作线程数量
 		importBuilder.setContinueOnError(true);//任务出现异常，是否继续执行作业：true（默认值）继续执行 false 中断作业执行
 
 		importBuilder.setPrintTaskLog(true); //可选项，true 打印任务执行日志（耗时，处理记录数） false 不打印，默认值false
@@ -296,6 +297,10 @@ public class Db2MilvusXinferencedemo {
 			@Override
 			public void success(TaskCommand<Object> taskCommand, Object result) {
 				TaskMetrics taskMetrics = taskCommand.getTaskMetrics();
+                List<CommonRecord> records = taskCommand.getRecords();
+                for(CommonRecord commonRecord:records){
+                    Map<String, Object> data = commonRecord.getDatas();
+                }
 				logger.info(result.toString());
 			}
 
