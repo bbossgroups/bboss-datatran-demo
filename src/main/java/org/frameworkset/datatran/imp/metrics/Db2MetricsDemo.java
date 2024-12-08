@@ -361,7 +361,7 @@ public class Db2MetricsDemo {
         importBuilder.setLastValueType(ImportIncreamentConfig.NUMBER_TYPE);//如果没有指定增量查询字段名称，则需要指定字段类型：ImportIncreamentConfig.NUMBER_TYPE 数字类型
 
         /**
-         * 重新设置es数据结构
+         * 记录级别数据加工、转换、过滤处理
          */
         importBuilder.setDataRefactor(new DataRefactor() {
             public void refactor(Context context) throws Exception  {

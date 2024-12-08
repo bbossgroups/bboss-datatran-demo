@@ -86,10 +86,11 @@ public class Rockemq2Custom {
          * Rocketmq输入插件配置
          */
         RocketmqInputConfig rocketmqInputConfig = new RocketmqInputConfig();
-        rocketmqInputConfig.setNamesrvAddr("172.24.176.18:9876")
-                .setConsumerGroup("etlgroup2")
-                .setTopic("etltopic")
-                .setTag("json").setAccessKey("Rocketmq")
+        rocketmqInputConfig.setNamesrvAddr("172.24.176.18:9876") //Rocketmq服务器地址
+                .setConsumerGroup("etlgroup2")  //消费组
+                .setTopic("etltopic")  //消费主题
+                .setTag("json") //指定消费过滤tag，参考Rocketmq官方文档配置
+                .setAccessKey("Rocketmq") 
                 .setSecretKey("12345678").setMaxPollRecords(100)
                 .setConsumeMessageBatchMaxSize(50)
                 /**
@@ -105,9 +106,9 @@ public class Rockemq2Custom {
                  *      *     CONSUME_FROM_TIMESTAMP,
                  */
                 .setConsumeFromWhere("CONSUME_FROM_FIRST_OFFSET")
-                .setWorkThreads(10)
-                .setKeyDeserializer("org.frameworkset.rocketmq.codec.StringCodecDeserial")
-                .setValueDeserializer("org.frameworkset.rocketmq.codec.JsonMapCodecDeserial");
+                .setWorkThreads(10)//并行消费线程数
+                .setKeyDeserializer("org.frameworkset.rocketmq.codec.StringCodecDeserial") //消息key解码器
+                .setValueDeserializer("org.frameworkset.rocketmq.codec.JsonMapCodecDeserial");//消息解码器
         importBuilder.setInputConfig(rocketmqInputConfig);
 
         //自己处理数据

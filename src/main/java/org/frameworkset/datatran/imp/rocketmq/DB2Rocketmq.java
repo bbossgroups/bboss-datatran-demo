@@ -84,14 +84,16 @@ public class DB2Rocketmq {
         importBuilder.setInputConfig(dbInputConfig);
 
         RocketmqOutputConfig rocketmqOutputConfig = new RocketmqOutputConfig();
-        rocketmqOutputConfig.setNamesrvAddr("172.24.176.18:9876")
-                .setProductGroup("etlgroup2")
-                .setTopic("etltopic")//全局topic
-                .setTag("json").setAccessKey("Rocketmq")
+        rocketmqOutputConfig.setNamesrvAddr("172.24.176.18:9876") //指定Rocketmq服务器namesrv地址
+                .setProductGroup("etlgroup2") //执行发送消息组
+                .setTopic("etltopic")//指定topic
+                .setTag("json")//指定消息tag
+                .setAccessKey("Rocketmq") 
                 .setSecretKey("12345678");
-        rocketmqOutputConfig.setValueCodecSerial("org.frameworkset.rocketmq.codec.StringBytesCodecSerial")
-                .setKeyCodecSerial("org.frameworkset.rocketmq.codec.StringCodecSerial") ;
-        
+        rocketmqOutputConfig.setValueCodecSerial("org.frameworkset.rocketmq.codec.StringBytesCodecSerial") //指定消息编码器，将从数据库抽取的数据转换为json，再转换为byte数组发送到Rocketmq主题
+        //指定消息key编码器，将key转换为String，可以在datarefactor中，通过context设置消息key
+        //context.setMessageKey("testKey")
+                .setKeyCodecSerial("org.frameworkset.rocketmq.codec.StringCodecSerial") ;        
         importBuilder.setOutputConfig(rocketmqOutputConfig);
 
        
@@ -171,10 +173,10 @@ public class DB2Rocketmq {
 
         });
         /**
-         * 执行数据库表数据导入Rocketmq操作
+         * 执行导出数据库表数据并发送Rocketmq作业
          */
         DataStream dataStream = importBuilder.builder();
-        dataStream.execute();//执行导入操作
+        dataStream.execute();//执行
 
         logger.info("come to end.");
 
