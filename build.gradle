@@ -145,9 +145,42 @@ configure(allprojects) { project ->
                 [group: 'com.bbossgroups.plugins', name: 'bboss-datatran-rocketmq', version: "${bboss_es_version}", transitive: true],
                 [group: 'com.bbossgroups.plugins', name: 'bboss-datatran-binlog', version: "${bboss_es_version}", transitive: true],
 				[group: 'com.bbossgroups', name: 'bboss-schedule', version: "${bboss_version}", transitive: true],
+                [group: 'com.bbossgroups.plugins', name: 'bboss-datatran-kafka2x', version: "${bboss_es_version}", transitive: true],
                 [group: 'com.github.housepower', name: 'clickhouse-native-jdbc-shaded', version: "${clickhouse_verion}", transitive: true],
 
         )
+        api (
+                [group: 'org.apache.kafka', name: 'kafka_2.12', version: "${kafka2x}", transitive: true],
+        ){
+            exclude group: 'log4j', module: 'log4j'
+            exclude group: 'org.slf4j', module: 'slf4j-log4j12'
+            exclude group: 'org.slf4j', module: 'slf4j-reload4j'
+            exclude group: 'org.apache.zookeeper', module: 'zookeeper'
+        }
+
+        api ([group: 'org.apache.kafka', name: 'kafka-tools', version: "${kafka2x}", transitive: true],){
+            exclude group: 'log4j', module: 'log4j'
+            exclude group: 'org.slf4j', module: 'slf4j-log4j12'
+            exclude group: 'org.slf4j', module: 'slf4j-reload4j'
+            exclude group: 'org.eclipse.jetty', module: 'jetty-server'
+
+            exclude group: 'org.eclipse.jetty', module: 'jetty-servlets'
+
+            exclude group: 'org.eclipse.jetty', module: 'jetty-servlet'
+            exclude group: 'org.glassfish.jersey.containers', module: 'jersey-container-servlet'
+        }
+
+        api ([group: 'org.apache.kafka', name: 'kafka-clients', version: "${kafka2x}", transitive: true],){
+            exclude group: 'log4j', module: 'log4j'
+            exclude group: 'org.slf4j', module: 'slf4j-log4j12'
+            exclude group: 'org.slf4j', module: 'slf4j-reload4j'
+        }
+
+        api ([group: 'org.apache.kafka', name: 'kafka-streams', version: "${kafka2x}", transitive: true],){
+            exclude group: 'log4j', module: 'log4j'
+            exclude group: 'org.slf4j', module: 'slf4j-log4j12'
+            exclude group: 'org.slf4j', module: 'slf4j-reload4j'
+        }
 		api 'org.postgresql:postgresql:42.3.3'
 //		api 'org.apache-extras.beanshell:bsh:2.0b6'
 		api 'org.xerial:sqlite-jdbc:3.47.1.0'
