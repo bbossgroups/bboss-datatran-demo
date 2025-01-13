@@ -27,6 +27,12 @@
 
     <!--
 插入数据sql
+{"collecttime":1736736793296,"optime":1736736793283,"filePath":"C:/workdir/textdown/师大2021年新生医保（2021年）申报名单-合并-20250111165757-1.txt",
+"hostIp":"10.13.13.188","hostName":"yinbp","fileId":"C:/workdir/textdown/师大2021年新生医保（2021年）申报名单-合并-20250111165757-1.txt","pointer":2247,
+"title":"解放","subtitle":"小康","ipinfo":"{\"country\":\"中国\",\"countryId\":\"CN\",\"region\":\"浙江省\",\"regionId\":\"ZJ\",\"city\":\"杭州市\",\"isp\":\"电信\",\"orinIsp\":\"Chinanet\",\"ispId\":4134,\"ip\":\"115.204.150.34\",\"timeZone\":\"Asia/Shanghai\",\"continentCode\":\"AS\",\"continentName\":\"亚洲\",\"geoPoint\":{\"lon\":120.1612,\"lat\":30.2994}}",
+"newcollecttime":"2025-01-11T08:57:57.541Z","author":"张无忌","logOpertime":"2018-05-02T11:54:44.000Z","logId":378,
+"logOperuser":"admin","opOrgid":"99999999","operModule":"认证管理",
+"logVisitorial":"115.204.150.34","logContent":"admin(系统管理员) 登陆[公共开发平台]","remark1":"","operType":1,"testint":5}
 -->
     <property name="insertSql_javaName">
         <![CDATA[INSERT INTO batchtest ( name, author, content, title, optime, oper, subtitle, collecttime,ipinfo)
@@ -35,6 +41,21 @@
                          #[logContent], ## 来源dbdemo索引中的 logContent字段
                          #[title], ## 通过datarefactor增加的字段
                          #[logOpertime], ## 来源dbdemo索引中的 logOpertime字段
+                         #[logOperuser],  ## 来源dbdemo索引中的 logOperuser字段
+                         #[subtitle], ## 通过datarefactor增加的字段
+                         #[collecttime], ## 通过datarefactor增加的字段
+                         #[ipinfo]) ## 通过datarefactor增加的地理位置信息字段
+]]>
+    </property>
+
+
+    <property name="insertSql_filelog">
+        <![CDATA[INSERT INTO batchtest ( name, author, content, title, optime, oper, subtitle, collecttime,ipinfo)
+                VALUES ( #[operModule],  ## 来源dbdemo索引中的 operModule字段
+                         #[author], ## 通过datarefactor增加的字段
+                         #[logContent], ## 来源dbdemo索引中的 logContent字段
+                         #[title], ## 通过datarefactor增加的字段
+                         #[optime], ## 来源dbdemo索引中的 logOpertime字段
                          #[logOperuser],  ## 来源dbdemo索引中的 logOperuser字段
                          #[subtitle], ## 通过datarefactor增加的字段
                          #[collecttime], ## 通过datarefactor增加的字段
