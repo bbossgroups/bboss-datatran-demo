@@ -37,6 +37,7 @@ import org.frameworkset.tran.metrics.entity.MapData;
 import org.frameworkset.tran.metrics.entity.MetricKey;
 import org.frameworkset.tran.metrics.job.KeyMetricBuilder;
 import org.frameworkset.tran.metrics.job.Metrics;
+import org.frameworkset.tran.metrics.job.MetricsConfig;
 import org.frameworkset.tran.metrics.job.builder.MetricBuilder;
 import org.frameworkset.tran.plugin.custom.output.CustomOutPut;
 import org.frameworkset.tran.plugin.custom.output.CustomOutputConfig;
@@ -320,8 +321,11 @@ public class FTPFileLog2DBDemo {
 			public void refactor(Context context) throws Exception  {
 				//可以根据条件定义是否丢弃当前记录
 				//context.setDrop(true);return;
-
-				context.addFieldValue("collecttime",new Date());
+                String collecttime =  context.getStringValue("collecttime");
+                if(collecttime != null && !collecttime.equals("")) {
+                    Date date = MetricsConfig.getUTCFormatWithoutTimeZone().parse(collecttime);
+                    context.addFieldValue("collecttime", date);
+                }
 
 				
 
