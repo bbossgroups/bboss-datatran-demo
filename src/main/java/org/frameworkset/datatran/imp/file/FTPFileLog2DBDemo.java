@@ -25,6 +25,8 @@ import org.frameworkset.tran.DataRefactor;
 import org.frameworkset.tran.DataStream;
 import org.frameworkset.tran.config.ImportBuilder;
 import org.frameworkset.tran.context.Context;
+import org.frameworkset.tran.context.InitJobContextCall;
+import org.frameworkset.tran.context.JobContext;
 import org.frameworkset.tran.ftp.FtpConfig;
 import org.frameworkset.tran.ftp.RemoteFileValidate;
 import org.frameworkset.tran.ftp.ValidateContext;
@@ -68,6 +70,13 @@ public class FTPFileLog2DBDemo {
 		ImportBuilder importBuilder = new ImportBuilder();
 		importBuilder.setBatchSize(10)//设置批量入库的记录数
 				.setFetchSize(1000);//设置按批读取文件行数
+
+        importBuilder.setInitJobContextCall(new InitJobContextCall() {
+            @Override
+            public void initJobContext(JobContext jobContext) {
+                jobContext.addJobData("testdata",1);
+            }
+        });
 		//设置强制刷新检测空闲时间间隔，单位：毫秒，在空闲flushInterval后，还没有数据到来，强制将已经入列的数据进行存储操作，默认8秒,为0时关闭本机制
 		importBuilder.setFlushInterval(10000l);
 		FileInputConfig fileInputConfig = new FileInputConfig();
@@ -117,7 +126,7 @@ public class FTPFileLog2DBDemo {
 										  FileConfig fileConfig) {
 						String name = fileInfo.getFileName();
 //						//判断是否采集文件数据，返回true标识采集，false 不采集
-
+                        Object value = fileConfig.getJobData("testdata");
 						if(name.endsWith(".txt"))
 							return true;
 						else

@@ -206,6 +206,7 @@ public class Db2MultiOutputDemo {
              */
             @Override
             public void persistent(Collection< KeyMetric> metrics) {
+                Object value = importContext.getJobContextData("name");
                 metrics.forEach(keyMetric->{
                     List<Map> loginmodulekeymetrics = new ArrayList<>();
                     List<Map> loginuserkeymetrics = new ArrayList<>();
