@@ -151,6 +151,9 @@ public class Db2FilterMultiOutputDemo {
 
 
         importBuilder.setOutputRecordsFilter((config, records) -> {
+            /**
+             * 可以根据插件类型过滤记录，亦可以根据id或者name过滤记录
+             */
             if(config instanceof ElasticsearchOutputConfig) {
                 return records;
             }
