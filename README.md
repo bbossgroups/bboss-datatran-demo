@@ -30,21 +30,26 @@ Elasticsearch version requirements: 1.x,2.X,5.X,6.X,7.x,8,x,+
 Spring booter 1.x,2.x,+
 
 
-# 构建部署
-## 源码下载
+# 开发调试构建部署
+一 环境搭建
+
+源码下载
 
 https://gitee.com/bboss/bboss-datatran-demo
 
  
-前提：[安装和配置gradle](https://esdoc.bbossgroups.com/#/bboss-build)
-### 修改配置：
-一、设置mainclass，设置为要运行的带Main方法的运行类
+环境搭建参考文档：[安装和配置gradle](https://esdoc.bbossgroups.com/#/bboss-build)
+
+
+
+
+二、设置mainclass，设置为要运行的带Main方法的运行类
 
 打开配置文件application.properties，修改mainclass配置：
 
 mainclass=org.frameworkset.datatran.imp.Db2EleasticsearchDemo
 
-二、开发和调试
+三、开发和调试
 
 如果需要测试和调试导入功能，运行Db2EleasticsearchDemo的main方法即可即可：
 
@@ -66,13 +71,13 @@ public class Db2EleasticsearchDemo {
 测试调试通过后，即可打包发布作业运行包
  
 
-三、打包
+四、打包
 
 运行指令，打包发布版本
 
 release.bat
 
-四、 运行
+五、 运行
 
 打包成功后，在build/distributions目录下会生成可以运行的zip包，解压后，找到demo的运行指令，就可以启动和运行demo。
 
