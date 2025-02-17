@@ -42,21 +42,29 @@ https://gitee.com/bboss/bboss-datatran-demo
 
 打开配置文件application.properties，修改mainclass配置：
 
-mainclass=org.frameworkset.elasticsearch.TestKerberos
+mainclass=org.frameworkset.datatran.imp.Db2EleasticsearchDemo
 
-二、设置Elasticsearch地址和认证信息
+二、开发和调试
 
-参考[《bboss elasticsearch开发库使用介绍》](https://esdoc.bbossgroups.com/#/development)修改elasticsearch的相关配置，
+如果需要测试和调试导入功能，运行Db2EleasticsearchDemo的main方法即可即可：
 
-打开配置文件application.properties，修改es地址，es账号和口令：
 
-elasticsearch.rest.hostNames=127.0.1.1:9200
+```java
+public class Db2EleasticsearchDemo {
+	public static void main(String args[]){
 
-如果启动了elasticsearch认证，修改es账号和口令：
+		Db2EleasticsearchDemo db2EleasticsearchDemo = new Db2EleasticsearchDemo();
+        		//从配置文件application.properties中获取参数值
+        		boolean dropIndice = PropertiesUtil.getPropertiesContainer().getBooleanSystemEnvProperty("dropIndice",true);
+        
+        		db2EleasticsearchDemo.scheduleTimestampImportData(dropIndice);
+	}
+    .....
+}
+```
 
-elasticUser=elastic
-
-elasticPassword=changeme
+测试调试通过后，即可打包发布作业运行包
+ 
 
 三、打包
 
