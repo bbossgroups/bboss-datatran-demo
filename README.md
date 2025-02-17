@@ -31,59 +31,66 @@ Spring booter 1.x,2.x,+
 
 
 # 构建部署
-## 准备工作
-需要通过gradle构建发布版本，gradle安装配置参考文档：
+## 源码下载
 
-https://esdoc.bbossgroups.com/#/bboss-build
-
-## 下载源码工程-基于gradle
 https://gitee.com/bboss/bboss-datatran-demo
 
-从上面的地址下载源码工程，然后导入idea或者eclipse，根据自己的需求，修改导入程序逻辑
+ 
+前提：[安装和配置gradle](https://esdoc.bbossgroups.com/#/bboss-build)
+### 修改配置：
+一、设置mainclass，设置为要运行的带Main方法的运行类
 
-org.frameworkset.datatran.imp.Db2EleasticsearchDemo
+打开配置文件application.properties，修改mainclass配置：
 
-如果需要测试和调试导入功能，运行Db2EleasticsearchDemo的main方法即可即可：
+mainclass=org.frameworkset.elasticsearch.TestKerberos
 
+二、设置Elasticsearch地址和认证信息
 
-```java
-public class Db2EleasticsearchDemo {
-	public static void main(String args[]){
+参考[《bboss elasticsearch开发库使用介绍》](https://esdoc.bbossgroups.com/#/development)修改elasticsearch的相关配置，
 
-		Db2EleasticsearchDemo db2EleasticsearchDemo = new Db2EleasticsearchDemo();
-        		//从配置文件application.properties中获取参数值
-        		boolean dropIndice = PropertiesUtil.getPropertiesContainer().getBooleanSystemEnvProperty("dropIndice",true);
-        
-        		db2EleasticsearchDemo.scheduleTimestampImportData(dropIndice);
-	}
-    .....
-}
-```
+打开配置文件application.properties，修改es地址，es账号和口令：
 
-测试调试通过后
-修改application.properties中的mainclass配置。
-mainclass=org.frameworkset.datatran.imp.Db2EleasticsearchDemo
+elasticsearch.rest.hostNames=127.0.1.1:9200
 
-构建发布可运行的版本：进入命令行模式，在源码工程根目录bboss-datatran-demo下运行以下gradle指令打包发布版本
+如果启动了elasticsearch认证，修改es账号和口令：
+
+elasticUser=elastic
+
+elasticPassword=changeme
+
+三、打包
+
+运行指令，打包发布版本
+
 release.bat
 
-## 运行作业
-gradle构建成功后，在build/distributions目录下会生成可以运行的zip包，解压运行导入程序
+四、 运行
+
+打包成功后，在build/distributions目录下会生成可以运行的zip包，解压后，找到demo的运行指令，就可以启动和运行demo。
+
+修改JVM参数：打开jvm.options文件，可以设置jvm相关参数
+
+调整内存：
+
+```properties
+-Xms1g
+-Xmx1g
+
+-XX:NewSize=512m
+-XX:MaxNewSize=512m
+-Xss256k
+```
+
+
+运行demo
 
 linux：
 
-chmod +x restart.sh
+chmod +x startup.sh
 
-./restart.sh
+./startup.sh
 
-windows: restart.bat
-
-## 作业jvm配置
-修改jvm.options，设置内存大小和其他jvm参数
-
--Xms1g
-
--Xmx1g
+windows: startup.bat
 
 ## 在工程中添加多个表同步作业
 默认的作业任务是Dbdemo，同步表td_sm_log的数据到索引dbdemo/dbdemo中
