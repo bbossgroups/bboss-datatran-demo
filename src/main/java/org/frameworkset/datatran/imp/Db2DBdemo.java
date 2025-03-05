@@ -15,6 +15,8 @@ package org.frameworkset.datatran.imp;
  * limitations under the License.
  */
 
+import com.frameworkset.common.poolman.ConfigSQLExecutor;
+import com.frameworkset.common.poolman.SQLExecutor;
 import com.frameworkset.util.SimpleStringUtil;
 import org.frameworkset.elasticsearch.serial.SerialUtil;
 import org.frameworkset.spi.geoip.IpInfo;
@@ -37,6 +39,7 @@ import org.slf4j.LoggerFactory;
 
 import java.text.DateFormat;
 import java.util.Date;
+import java.util.Map;
 import java.util.concurrent.atomic.AtomicInteger;
 
 /**
@@ -225,7 +228,8 @@ public class Db2DBdemo {
 		importBuilder.setGeoipDatabase("d:/geolite2/GeoLite2-City.mmdb");
 		importBuilder.setGeoipAsnDatabase("d:/geolite2/GeoLite2-ASN.mmdb");
 		importBuilder.setGeoip2regionDatabase("d:/geolite2/ip2region.db");
-		/**
+//        ConfigSQLExecutor configSQLExecutor = new ConfigSQLExecutor("sql.xml");
+		/**"
 		 * 重新设置数据结构
 		 */
 		importBuilder.setDataRefactor(new DataRefactor() {
@@ -236,8 +240,24 @@ public class Db2DBdemo {
 //					context.setDrop(true);
 //					return;
 //				}
-
-
+                /**
+                //根据条件判断记录是否存在，如果存在将记录标记为update
+                
+                DBOutputConfig dbOutputConfig = (DBOutputConfig)context.getImportContext().getOutputConfig();
+                Integer count = SQLExecutor.queryObjectWithDBName(Integer.class,dbOutputConfig.getTargetDbname(),
+                        "select count(1) from head where billid = ? and othercondition= ?",
+                        context.getIntegerValue("billid"),"otherconditionvalue");
+                if(count != null && count > 0 ){
+                    context.markRecoredUpdate();
+                }
+                
+                count = configSQLExecutor.queryObjectWithDBName(Integer.class,dbOutputConfig.getTargetDbname(),
+                        "countSql",//在sql.xml文件中配置的sql语句名称
+                        context.getIntegerValue("billid"),"otherconditionvalue");
+                if(count != null && count > 0 ){
+                    context.markRecoredUpdate();
+                }
+                 */
 
 				context.addFieldValue("author","duoduo");
 				context.addFieldValue("title","解放");
@@ -269,16 +289,18 @@ public class Db2DBdemo {
 //				Date optime = context.getDateValue("LOG_OPERTIME");
 //
 //				context.addFieldValue("logOpertime",dateFormat.format(optime));
+              
 
+ 
 				/**
 				 //关联查询数据,单值查询
-				 Map headdata = SQLExecutor.queryObjectWithDBName(Map.class,context.getEsjdbc().getDbConfig().getDbName(),
+				 Map headdata = SQLExecutor.queryObjectWithDBName(Map.class,dbOutputConfig.getTargetDbname(),
 				 "select * from head where billid = ? and othercondition= ?",
 				 context.getIntegerValue("billid"),"otherconditionvalue");//多个条件用逗号分隔追加
 				 //将headdata中的数据,调用addFieldValue方法将数据加入当前es文档，具体如何构建文档数据结构根据需求定
 				 context.addFieldValue("headdata",headdata);
 				 //关联查询数据,多值查询
-				 List<Map> facedatas = SQLExecutor.queryListWithDBName(Map.class,context.getEsjdbc().getDbConfig().getDbName(),
+				 List<Map> facedatas = SQLExecutor.queryListWithDBName(Map.class,"test",
 				 "select * from facedata where billid = ?",
 				 context.getIntegerValue("billid"));
 				 //将facedatas中的数据,调用addFieldValue方法将数据加入当前es文档，具体如何构建文档数据结构根据需求定
