@@ -71,10 +71,11 @@ configure(allprojects) { project ->
 
 	repositories {
 		mavenLocal()
+        
+		mavenCentral()
         maven {
             url "https://maven.aliyun.com/repository/public"
         }
-		mavenCentral()
 
 	}
 	if(project.getProperty('skipTest').equals("true"))
@@ -150,7 +151,7 @@ configure(allprojects) { project ->
 
         )
         api (
-                [group: 'org.apache.kafka', name: 'kafka_2.12', version: "${kafka2x}", transitive: true],
+                [group: 'org.apache.kafka', name: 'kafka_2.12', version: "${kafka2x_12}", transitive: true],
         ){
             exclude group: 'log4j', module: 'log4j'
             exclude group: 'org.slf4j', module: 'slf4j-log4j12'
