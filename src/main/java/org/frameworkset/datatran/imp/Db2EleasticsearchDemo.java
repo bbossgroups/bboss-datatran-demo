@@ -170,6 +170,7 @@ public class Db2EleasticsearchDemo {
 				.setDbMinIdleSize(5)
 				.setDbMaxSize(10)
 				.setShowSql(true);//是否使用连接池;
+        dbInputConfig.setParallelDatarefactor(true);
 		importBuilder.setInputConfig(dbInputConfig);
 
 
@@ -308,10 +309,8 @@ public class Db2EleasticsearchDemo {
 				IpInfo ipInfo = context.getIpInfoByIp("219.133.80.136");
 				if(ipInfo != null)
 					context.addFieldValue("ipInfo", SimpleStringUtil.object2json(ipInfo));
-//                context.addFieldValues(bean);
-//                context.addMapFieldValues(map);
-//                context.addFieldValues(bean,false);
-//                context.addMapFieldValues(map,false);
+                //可在记录级别设置索引名称，覆盖全局配置
+                context.setIndex("dbdemocontext");
 			}
 		});
 		//映射和转换配置结束
