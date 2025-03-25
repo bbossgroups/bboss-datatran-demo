@@ -366,7 +366,7 @@ public class Db2FilterMultiOutputDemo {
         kafkaOutputConfig.addKafkaProperty("value.serializer","org.apache.kafka.common.serialization.StringSerializer");
         kafkaOutputConfig.addKafkaProperty("key.serializer","org.apache.kafka.common.serialization.LongSerializer");
         kafkaOutputConfig.addKafkaProperty("compression.type","gzip");
-        kafkaOutputConfig.addKafkaProperty("bootstrap.servers","10.13.6.127:9092");
+        kafkaOutputConfig.addKafkaProperty("bootstrap.servers","101.131.6.127:9092");
         kafkaOutputConfig.addKafkaProperty("batch.size","10");
 //		kafkaOutputConfig.addKafkaProperty("linger.ms","10000");
 //		kafkaOutputConfig.addKafkaProperty("buffer.memory","10000");
