@@ -40,7 +40,6 @@ import org.frameworkset.util.ResourceStartResult;
 import org.frameworkset.util.TimeUtil;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
-import org.sqlite.SQLiteConfig;
 
 import java.util.Date;
 import java.util.LinkedHashMap;
@@ -65,7 +64,7 @@ public class Db2EleasticsearchOnceScheduleDateDemo {
 //		dbdemo.scheduleImportData(dropIndice);
 		db2EleasticsearchDemo.scheduleTimestampImportData(dropIndice);
 
-		SQLiteConfig config = new SQLiteConfig();
+//		SQLiteConfig config = new SQLiteConfig();
 //		dbdemo.scheduleImportData(dropIndice);
 //		args[1].charAt(0) == args[2].charAt(0);
 	}

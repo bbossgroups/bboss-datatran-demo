@@ -131,6 +131,13 @@ public class Db2EleasticsearchDemo {
 					} catch (Exception e) {
 						logger.error("Drop indice dbdemo failed:",e);
 					}
+                    try {
+                        //清除测试表,导入的时候回重建表，测试的时候加上为了看测试效果，实际线上环境不要删表
+                        ElasticSearchHelper.getRestClientUtil().dropIndice("dbdemocontext");
+                    } catch (Exception e) {
+                        logger.error("Drop indice dbdemocontext failed:",e);
+                    }
+                    
 				}
 			}
 		});
@@ -158,7 +165,8 @@ public class Db2EleasticsearchDemo {
 		// 通过setLastValueType方法告诉工具增量字段的类型，默认是数字类型
 
 //		importBuilder.setSql("select * from td_sm_log where LOG_OPERTIME > #[LOG_OPERTIME]");
-		dbInputConfig.setSql("select * from td_sm_log where log_id > #[log_id]")
+        //设置为并行处理数据库记录后，增量字段要按照表字段的大小写来设置
+		dbInputConfig.setSql("select * from td_sm_log where log_id > #[LOG_ID]")
 				.setDbName("test")
 				.setDbDriver("com.mysql.cj.jdbc.Driver") //数据库驱动程序，必须导入相关数据库的驱动jar包
 				.setDbUrl("jdbc:mysql://192.168.137.1:3306/bboss?useUnicode=true&allowPublicKeyRetrieval=true&characterEncoding=utf-8&useSSL=false&rewriteBatchedStatements=true") //通过useCursorFetch=true启用mysql的游标fetch机制，否则会有严重的性能隐患，useCursorFetch必须和jdbcFetchSize参数配合使用，否则不会生效
@@ -193,7 +201,7 @@ public class Db2EleasticsearchDemo {
 				.addElasticsearchProperty("default.http.maxTotal","200")
 				.addElasticsearchProperty("default.http.defaultMaxPerRoute","100")
 				.setIndex("dbdemo")
-				.setEsIdField("log_id")//设置文档主键，不设置，则自动产生文档id
+				.setEsIdField("LOG_ID")//设置文档主键，不设置，则自动产生文档id
 				.setDebugResponse(false)//设置是否将每次处理的reponse打印到日志文件中，默认false
 				.setDiscardBulkResponse(false);//设置是否需要批量处理的响应报文，不需要设置为false，true为需要，默认false
 
@@ -258,7 +266,7 @@ public class Db2EleasticsearchDemo {
 //		//设置任务执行拦截器结束，可以添加多个
 		//增量配置开始
 //		importBuilder.setStatusDbname("test");//设置增量状态数据源名称
-		importBuilder.setLastValueColumn("log_id");//手动指定数字增量查询字段，默认采用上面设置的sql语句中的增量变量名称作为增量查询字段的名称，指定以后就用指定的字段
+		importBuilder.setLastValueColumn("LOG_ID");//手动指定数字增量查询字段，默认采用上面设置的sql语句中的增量变量名称作为增量查询字段的名称，指定以后就用指定的字段
 		importBuilder.setFromFirst(true);//setFromfirst(false)，如果作业停了，作业重启后从上次截止位置开始采集数据，
 //		setFromfirst(true) 如果作业停了，作业重启后，重新开始采集数据
 		importBuilder.setStatusDbname("testStatus");//指定增量状态数据源名称

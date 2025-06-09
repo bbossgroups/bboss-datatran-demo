@@ -15,12 +15,7 @@ package org.frameworkset.datatran.imp.multioutput;
  * limitations under the License.
  */
 
-import com.frameworkset.common.poolman.SQLExecutor;
 import com.frameworkset.util.SimpleStringUtil;
-import org.frameworkset.datatran.imp.metrics.LoginModuleMetric;
-import org.frameworkset.datatran.imp.metrics.LoginUserMetric;
-import org.frameworkset.elasticsearch.ElasticSearchHelper;
-import org.frameworkset.elasticsearch.client.ClientInterface;
 import org.frameworkset.elasticsearch.serial.SerialUtil;
 import org.frameworkset.spi.geoip.IpInfo;
 import org.frameworkset.tran.*;
@@ -29,21 +24,10 @@ import org.frameworkset.tran.context.Context;
 import org.frameworkset.tran.context.ImportContext;
 import org.frameworkset.tran.metrics.MetricsLogLevel;
 import org.frameworkset.tran.metrics.TaskMetrics;
-import org.frameworkset.tran.metrics.entity.KeyMetric;
-import org.frameworkset.tran.metrics.entity.MapData;
-import org.frameworkset.tran.metrics.entity.MetricKey;
-import org.frameworkset.tran.metrics.job.KeyMetricBuilder;
-import org.frameworkset.tran.metrics.job.Metrics;
-import org.frameworkset.tran.metrics.job.builder.MetricBuilder;
 import org.frameworkset.tran.output.fileftp.FilenameGenerator;
-import org.frameworkset.tran.output.minio.MinioFileConfig;
+import org.frameworkset.tran.output.minio.OSSFileConfig;
 import org.frameworkset.tran.plugin.db.input.DBInputConfig;
-import org.frameworkset.tran.plugin.db.output.DBOutputConfig;
-import org.frameworkset.tran.plugin.es.output.ElasticsearchOutputConfig;
-import org.frameworkset.tran.plugin.file.output.ExcelFileOutputConfig;
 import org.frameworkset.tran.plugin.file.output.FileOutputConfig;
-import org.frameworkset.tran.plugin.metrics.output.ETLMetrics;
-import org.frameworkset.tran.plugin.metrics.output.MetricsOutputConfig;
 import org.frameworkset.tran.schedule.CallInterceptor;
 import org.frameworkset.tran.schedule.ImportIncreamentConfig;
 import org.frameworkset.tran.schedule.TaskContext;
@@ -53,10 +37,9 @@ import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
 import java.io.Writer;
-import java.sql.SQLException;
 import java.text.DateFormat;
 import java.text.SimpleDateFormat;
-import java.util.*;
+import java.util.Date;
 import java.util.concurrent.atomic.AtomicInteger;
 
 /**
@@ -118,22 +101,22 @@ public class Db2TextMiniodemo {
 		 
 
         FileOutputConfig fileOutputConfig = new FileOutputConfig();
-        MinioFileConfig minioFileConfig = new MinioFileConfig();
-        fileOutputConfig.setMinioFileConfig(minioFileConfig);
+        OSSFileConfig ossFileConfig = new OSSFileConfig();
+        fileOutputConfig.setOSSFileConfig(ossFileConfig);
 
-        minioFileConfig.setBackupSuccessFiles(true);
-        minioFileConfig.setTransferEmptyFiles(false);
-        minioFileConfig.setEndpoint("http://172.24.176.18:9000");
+        ossFileConfig.setBackupSuccessFiles(true);
+        ossFileConfig.setTransferEmptyFiles(false);
+        ossFileConfig.setEndpoint("http://172.24.176.18:9000");
 
-        minioFileConfig.setName("miniotest");
-        minioFileConfig.setAccessKeyId("O3CBPdUzJICHsMp7pj6h");
-        minioFileConfig.setSecretAccesskey("Y6o9piJTjhL6wRQcHeI7fRCyeM2LTSavGcCVx8th");
-        minioFileConfig.setConnectTimeout(5000);
-        minioFileConfig.setReadTimeout(5000);
-        minioFileConfig.setWriteTimeout(5000);
-        minioFileConfig.setBucket("etlfiles");
-        minioFileConfig.setFailedFileResendInterval(-1);
-        minioFileConfig.setSendFileAsyn(true);//异步发送文件
+        ossFileConfig.setName("miniotest");
+        ossFileConfig.setAccessKeyId("O3CBPdUzJICHsMp7pj6h");
+        ossFileConfig.setSecretAccesskey("Y6o9piJTjhL6wRQcHeI7fRCyeM2LTSavGcCVx8th");
+        ossFileConfig.setConnectTimeout(5000);
+        ossFileConfig.setReadTimeout(5000);
+        ossFileConfig.setWriteTimeout(5000);
+        ossFileConfig.setBucket("etlfiles");
+        ossFileConfig.setFailedFileResendInterval(-1);
+        ossFileConfig.setSendFileAsyn(true);//异步发送文件
         fileOutputConfig.setMaxFileRecordSize(200);
         fileOutputConfig.setFileDir("c:/workdir/ES2FileMinioDemo");
         fileOutputConfig.setFilenameGenerator(new FilenameGenerator() {

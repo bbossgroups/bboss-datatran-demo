@@ -37,7 +37,7 @@ import org.frameworkset.tran.metrics.job.KeyMetricBuilder;
 import org.frameworkset.tran.metrics.job.Metrics;
 import org.frameworkset.tran.metrics.job.builder.MetricBuilder;
 import org.frameworkset.tran.output.fileftp.FilenameGenerator;
-import org.frameworkset.tran.output.minio.MinioFileConfig;
+import org.frameworkset.tran.output.minio.OSSFileConfig;
 import org.frameworkset.tran.plugin.db.input.DBInputConfig;
 import org.frameworkset.tran.plugin.db.output.DBOutputConfig;
 import org.frameworkset.tran.plugin.es.output.ElasticsearchOutputConfig;
@@ -269,22 +269,22 @@ public class Db2FilterMultiOutputDemo {
         importBuilder.setFlushMetricsOnScheduleTaskCompleted(true);
 
         FileOutputConfig fileOutputConfig = new FileOutputConfig();
-        MinioFileConfig minioFileConfig = new MinioFileConfig();
-        fileOutputConfig.setMinioFileConfig(minioFileConfig);
+        OSSFileConfig ossFileConfig = new OSSFileConfig();
+        fileOutputConfig.setOSSFileConfig(ossFileConfig);
 
-        minioFileConfig.setBackupSuccessFiles(true);
-        minioFileConfig.setTransferEmptyFiles(false);
-        minioFileConfig.setEndpoint("http://172.24.176.18:9000");
+        ossFileConfig.setBackupSuccessFiles(true);
+        ossFileConfig.setTransferEmptyFiles(false);
+        ossFileConfig.setEndpoint("http://172.24.176.18:9000");
 
-        minioFileConfig.setName("miniotest");
-        minioFileConfig.setAccessKeyId("O3CBPdUzJICHsMp7pj6h");
-        minioFileConfig.setSecretAccesskey("Y6o9piJTjhL6wRQcHeI7fRCyeM2LTSavGcCVx8th");
-        minioFileConfig.setConnectTimeout(5000);
-        minioFileConfig.setReadTimeout(5000);
-        minioFileConfig.setWriteTimeout(5000);
-        minioFileConfig.setBucket("etlfiles");
-        minioFileConfig.setFailedFileResendInterval(-1);
-        minioFileConfig.setSendFileAsyn(true);//异步发送文件
+        ossFileConfig.setName("miniotest");
+        ossFileConfig.setAccessKeyId("O3CBPdUzJICHsMp7pj6h");
+        ossFileConfig.setSecretAccesskey("Y6o9piJTjhL6wRQcHeI7fRCyeM2LTSavGcCVx8th");
+        ossFileConfig.setConnectTimeout(5000);
+        ossFileConfig.setReadTimeout(5000);
+        ossFileConfig.setWriteTimeout(5000);
+        ossFileConfig.setBucket("etlfiles");
+        ossFileConfig.setFailedFileResendInterval(-1);
+        ossFileConfig.setSendFileAsyn(true);//异步发送文件
         fileOutputConfig.setMaxFileRecordSize(200);
         fileOutputConfig.setFileDir("c:/workdir/ES2FileMinioDemo");
         fileOutputConfig.setFilenameGenerator(new FilenameGenerator() {
@@ -319,18 +319,18 @@ public class Db2FilterMultiOutputDemo {
         importBuilder.addOutputConfig(fileOutputConfig);
 
         ExcelFileOutputConfig excelFileOutputConfig = new ExcelFileOutputConfig();
-        minioFileConfig = new MinioFileConfig();
-        excelFileOutputConfig.setMinioFileConfig(minioFileConfig);
+        ossFileConfig = new OSSFileConfig();
+        excelFileOutputConfig.setOSSFileConfig(ossFileConfig);
 
-        minioFileConfig.setBackupSuccessFiles(true);
-        minioFileConfig.setTransferEmptyFiles(false);
+        ossFileConfig.setBackupSuccessFiles(true);
+        ossFileConfig.setTransferEmptyFiles(false);
          
 
-        minioFileConfig.setName("miniotest");
+        ossFileConfig.setName("miniotest");
        
-        minioFileConfig.setBucket("excelfiles");
-        minioFileConfig.setFailedFileResendInterval(-1);
-        minioFileConfig.setSendFileAsyn(true);//异步发送文件
+        ossFileConfig.setBucket("excelfiles");
+        ossFileConfig.setFailedFileResendInterval(-1);
+        ossFileConfig.setSendFileAsyn(true);//异步发送文件
         excelFileOutputConfig.setTitle("师大2021年新生医保（2021年）申报名单");
         excelFileOutputConfig.setSheetName("2021年新生医保申报单");
 

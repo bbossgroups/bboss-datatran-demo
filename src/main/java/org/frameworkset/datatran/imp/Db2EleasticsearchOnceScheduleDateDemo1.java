@@ -33,7 +33,6 @@ import org.frameworkset.tran.task.TaskCommand;
 import org.frameworkset.util.TimeUtil;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
-import org.sqlite.SQLiteConfig;
 
 import java.util.Date;
 
@@ -56,7 +55,6 @@ public class Db2EleasticsearchOnceScheduleDateDemo1 {
 //		dbdemo.scheduleImportData(dropIndice);
 		db2EleasticsearchDemo.scheduleTimestampImportData(dropIndice);
 
-		SQLiteConfig config = new SQLiteConfig();
 //		dbdemo.scheduleImportData(dropIndice);
 //		args[1].charAt(0) == args[2].charAt(0);
 	}
