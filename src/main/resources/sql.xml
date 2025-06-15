@@ -8,6 +8,8 @@
     <property name="demoexport"><![CDATA[select * from td_sm_log where log_id > #[LOG_ID]]]></property>
     <property name="demoexportFull"><![CDATA[select * from td_sm_log ]]></property>
 
+    <property name="demoexportLimit"><![CDATA[select * from td_sm_log limit 10]]></property>
+
     <!--
     插入数据sql
     -->
