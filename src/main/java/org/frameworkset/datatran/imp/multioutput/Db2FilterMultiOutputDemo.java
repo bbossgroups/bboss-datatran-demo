@@ -37,7 +37,7 @@ import org.frameworkset.tran.metrics.job.KeyMetricBuilder;
 import org.frameworkset.tran.metrics.job.Metrics;
 import org.frameworkset.tran.metrics.job.builder.MetricBuilder;
 import org.frameworkset.tran.output.fileftp.FilenameGenerator;
-import org.frameworkset.tran.output.minio.OSSFileConfig;
+import org.frameworkset.tran.output.s3.OSSFileConfig;
 import org.frameworkset.tran.plugin.db.input.DBInputConfig;
 import org.frameworkset.tran.plugin.db.output.DBOutputConfig;
 import org.frameworkset.tran.plugin.es.output.ElasticsearchOutputConfig;
@@ -109,7 +109,7 @@ public class Db2FilterMultiOutputDemo {
 		DBInputConfig dbInputConfig = new DBInputConfig();
 		dbInputConfig.setDbName("source")
 				.setDbDriver("com.mysql.cj.jdbc.Driver") //数据库驱动程序，必须导入相关数据库的驱动jar包
-				.setDbUrl("jdbc:mysql://localhost:3306/bboss?useUnicode=true&characterEncoding=utf-8&useSSL=false&allowPublicKeyRetrieval=true") //通过useCursorFetch=true启用mysql的游标fetch机制，否则会有严重的性能隐患，useCursorFetch必须和jdbcFetchSize参数配合使用，否则不会生效
+				.setDbUrl("jdbc:mysql://localhost:3306/bboss?useUnicode=true&characterEncoding=utf-8&useSSL=false&allowPublicKeyRetrieval=true") 
 				.setDbUser("root")
 				.setDbPassword("123456")
 				.setValidateSQL("select 1")
@@ -121,7 +121,7 @@ public class Db2FilterMultiOutputDemo {
 		DBOutputConfig dbOutputConfig = new DBOutputConfig();
 		dbOutputConfig.setDbName("target")
 				.setDbDriver("com.mysql.cj.jdbc.Driver") //数据库驱动程序，必须导入相关数据库的驱动jar包
-				.setDbUrl("jdbc:mysql://localhost:3306/bboss?useUnicode=true&characterEncoding=utf-8&useSSL=false&rewriteBatchedStatements=true&allowPublicKeyRetrieval=true") //通过useCursorFetch=true启用mysql的游标fetch机制，否则会有严重的性能隐患，useCursorFetch必须和jdbcFetchSize参数配合使用，否则不会生效
+				.setDbUrl("jdbc:mysql://localhost:3306/bboss?useUnicode=true&characterEncoding=utf-8&useSSL=false&rewriteBatchedStatements=true&allowPublicKeyRetrieval=true") 
 				.setDbUser("root")
 				.setDbPassword("123456")
 				.setValidateSQL("select 1")
