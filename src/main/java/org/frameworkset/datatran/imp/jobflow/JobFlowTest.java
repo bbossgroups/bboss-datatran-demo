@@ -186,8 +186,8 @@ public class JobFlowTest {
 //        jobFlowScheduleConfig.setScheduleDate(TimeUtil.addDateHours(new Date(),2));//2小时后开始执行
 //        jobFlowScheduleConfig.setScheduleDate(TimeUtil.addDateMinitues(new Date(),1));//1分钟后开始执行
 //        jobFlowScheduleConfig.setScheduleEndDate(TimeUtil.addDates(new Date(),10));//10天后结束
-        jobFlowScheduleConfig.setScheduleEndDate(TimeUtil.addDateMinitues(new Date(),1));//2分钟后结束
-        jobFlowScheduleConfig.setPeriod(10000L);
+        jobFlowScheduleConfig.setScheduleEndDate(TimeUtil.addDateMinitues(new Date(),10));//2分钟后结束
+        jobFlowScheduleConfig.setPeriod(1000000L);
         jobFlowBuilder.setJobFlowScheduleConfig(jobFlowScheduleConfig);
         /**
          * 作为测试用例，所有的作业工作流流程节点共用一个作业定义
@@ -199,6 +199,9 @@ public class JobFlowTest {
         SimpleJobFlowNodeBuilder jobFlowNodeBuilder = new SimpleJobFlowNodeBuilder();
         jobFlowNodeBuilder.setNodeName("SimpleJobFlowNode").setNodeId("1");
         NodeTrigger nodeTrigger = new NodeTrigger();
+        /**
+         * boolean evalTriggerScript(JobFlow jobFlow, JobFlowNode jobFlowNode, JobFlowExecuteContext jobFlowExecuteContext) throws Exception
+         */
         nodeTrigger.setTriggerScript("return 0 < 1;");
         /**
          * 1.1 为第一个任务节点添加一个带触发器的作业
@@ -224,11 +227,11 @@ public class JobFlowTest {
          * 2.构建第二个任务节点：并行任务节点
          */
         ParrelJobFlowNodeBuilder parrelJobFlowNodeBuilder = new ParrelJobFlowNodeBuilder();
-        parrelJobFlowNodeBuilder.setNodeName("ParrelJobFlowNodeBuilder").setNodeId("2");
+        parrelJobFlowNodeBuilder.setNodeName("ParrelJobFlowNode").setNodeId("2");
         /**
          * 2.1 为第二个并行任务节点添加第一个带触发器的作业任务
          */
-        parrelJobFlowNodeBuilder.addImportBuilder(new ImportBuilderCreate() {
+        parrelJobFlowNodeBuilder.addImportBuilder("ParrelJobFlowNode-SimpleJobFlowNode-2","ParrelJobFlowNode-SimpleJobFlowNode-2-1",new ImportBuilderCreate() {
             @Override
             public ImportBuilder createImportBuilder(JobFlowNodeBuilder jobFlowNodeBuilder) {
                 return buildDB2Custom(1);
@@ -242,7 +245,7 @@ public class JobFlowTest {
         /**
          * 2.2 为第二个并行任务节点添加第二个不带触发器的作业任务
          */
-        parrelJobFlowNodeBuilder.addImportBuilder(new ImportBuilderCreate() {
+        parrelJobFlowNodeBuilder.addImportBuilder("ParrelJobFlowNode-SimpleJobFlowNode-2","ParrelJobFlowNode-SimpleJobFlowNode-2-2",new ImportBuilderCreate() {
             @Override
             public ImportBuilder createImportBuilder(JobFlowNodeBuilder jobFlowNodeBuilder) {
                 return buildDB2Custom(2);
@@ -252,16 +255,16 @@ public class JobFlowTest {
          * 2.3 为第二个并行任务节点添加第三个串行复杂流程子任务
          */
         SequenceJobFlowNodeBuilder comJobFlowNodeBuilder = new SequenceJobFlowNodeBuilder();
-        comJobFlowNodeBuilder.setNodeName("SequenceJobFlowNodeBuilder").setNodeId("2-3");
-        comJobFlowNodeBuilder.addImportBuilder(buildDB2Custom(3));
-        comJobFlowNodeBuilder.addImportBuilder(buildDB2Custom(4));
+        comJobFlowNodeBuilder.setNodeName("SequenceJobFlowNode").setNodeId("ParrelJobFlowNode-2-3");
+        comJobFlowNodeBuilder.addImportBuilder("SequenceJobFlowNode-SequenceJobFlowNode","ParrelJobFlowNode-2-3-1",buildDB2Custom(3));
+        comJobFlowNodeBuilder.addImportBuilder("SequenceJobFlowNode-SequenceJobFlowNode","ParrelJobFlowNode-2-3-2",buildDB2Custom(4));
         
         parrelJobFlowNodeBuilder.addJobFlowNodeBuilder(comJobFlowNodeBuilder);
 
         ParrelJobFlowNodeBuilder subParrelJobFlowNodeBuilder = new ParrelJobFlowNodeBuilder();
-        subParrelJobFlowNodeBuilder.setNodeName("ParrelJobFlowNodeBuilder").setNodeId("2-4");
-        subParrelJobFlowNodeBuilder.addImportBuilder(buildDB2Custom(5));
-        subParrelJobFlowNodeBuilder.addImportBuilder(buildDB2Custom(6));
+        subParrelJobFlowNodeBuilder.setNodeName("ParrelJobFlowNode").setNodeId("ParrelJobFlowNode-2-4");
+        subParrelJobFlowNodeBuilder.addImportBuilder("ParrelJobFlowNode-SequenceJobFlowNode","ParrelJobFlowNode-2-4-1",buildDB2Custom(5));
+        subParrelJobFlowNodeBuilder.addImportBuilder("ParrelJobFlowNode-SequenceJobFlowNode","ParrelJobFlowNode-2-4-2",buildDB2Custom(6));
         /**
          * 2.4 为第二个并行任务节点添加第三个并行行复杂流程子任务
          */
