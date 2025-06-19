@@ -25,6 +25,7 @@ import org.frameworkset.tran.input.file.FileConfig;
 import org.frameworkset.tran.input.file.FileFilter;
 import org.frameworkset.tran.input.file.FilterFileInfo;
 import org.frameworkset.tran.jobflow.*;
+import org.frameworkset.tran.jobflow.builder.*;
 import org.frameworkset.tran.jobflow.schedule.JobFlowScheduleConfig;
 import org.frameworkset.tran.plugin.custom.output.CustomOutPut;
 import org.frameworkset.tran.plugin.custom.output.CustomOutputConfig;
@@ -188,6 +189,7 @@ public class JobFlowTest {
 //        jobFlowScheduleConfig.setScheduleEndDate(TimeUtil.addDates(new Date(),10));//10天后结束
         jobFlowScheduleConfig.setScheduleEndDate(TimeUtil.addDateMinitues(new Date(),10));//2分钟后结束
         jobFlowScheduleConfig.setPeriod(1000000L);
+        jobFlowScheduleConfig.setExecuteOneTime(true);
         jobFlowBuilder.setJobFlowScheduleConfig(jobFlowScheduleConfig);
         /**
          * 作为测试用例，所有的作业工作流流程节点共用一个作业定义
