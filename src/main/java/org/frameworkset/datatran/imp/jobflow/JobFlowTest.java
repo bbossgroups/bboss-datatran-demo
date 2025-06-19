@@ -304,11 +304,11 @@ public class JobFlowTest {
         JobFlow jobFlow = jobFlowBuilder.build();
         jobFlow.start();
 //        
-//        jobFlow.stop();
+        jobFlow.stop();
 //
-//        jobFlow.pause();
+        jobFlow.pause();
 //        
-//        jobFlow.consume();
+        jobFlow.consume();
         
 
     }
