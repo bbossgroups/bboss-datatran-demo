@@ -263,7 +263,7 @@ public class JobFlowTest {
         NodeTrigger parrelnewNodeTrigger = new NodeTrigger();
         parrelnewNodeTrigger.setTriggerScriptAPI(new TriggerScriptAPI() {
             @Override
-            public boolean evalTriggerScript(NodeTriggerContext nodeTriggerContext) throws Exception {
+            public boolean needTrigger(NodeTriggerContext nodeTriggerContext) throws Exception {
                 return false;
             }
         });
