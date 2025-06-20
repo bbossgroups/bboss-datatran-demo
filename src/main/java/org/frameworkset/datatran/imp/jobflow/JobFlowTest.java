@@ -26,7 +26,11 @@ import org.frameworkset.tran.input.file.FileFilter;
 import org.frameworkset.tran.input.file.FilterFileInfo;
 import org.frameworkset.tran.jobflow.*;
 import org.frameworkset.tran.jobflow.builder.*;
+import org.frameworkset.tran.jobflow.context.JobFlowExecuteContext;
+import org.frameworkset.tran.jobflow.context.NodeTriggerContext;
+import org.frameworkset.tran.jobflow.context.StaticContext;
 import org.frameworkset.tran.jobflow.schedule.JobFlowScheduleConfig;
+import org.frameworkset.tran.jobflow.script.TriggerScriptAPI;
 import org.frameworkset.tran.plugin.custom.output.CustomOutPut;
 import org.frameworkset.tran.plugin.custom.output.CustomOutputConfig;
 import org.frameworkset.tran.plugin.db.input.DBInputConfig;
@@ -204,7 +208,33 @@ public class JobFlowTest {
         /**
          * boolean evalTriggerScript(JobFlow jobFlow, JobFlowNode jobFlowNode, JobFlowExecuteContext jobFlowExecuteContext) throws Exception
          */
-        nodeTrigger.setTriggerScript("return 0 < 1;");
+//        nodeTrigger.setTriggerScript("return 0 < 1;");
+        String script = """                
+                [import]
+                 //导入脚本中需要引用的java类
+                 import org.frameworkset.tran.jobflow.context.StaticContext; 
+                [/import]
+                StaticContext staticContext = nodeTriggerContext.getPreJobFlowStaticContext();
+                //前序节点执行异常结束，则忽略当前节点执行
+                if(staticContext != null && staticContext.getExecuteException() != null)
+                    return false;
+                else{
+                    return true;
+                }
+                """;
+        nodeTrigger.setTriggerScript(script);
+//        
+//        nodeTrigger.setTriggerScriptAPI(new TriggerScriptAPI() {
+//            @Override
+//            public boolean evalTriggerScript(NodeTriggerContext nodeTriggerContext) throws Exception {
+//                StaticContext staticContext = nodeTriggerContext.getPreJobFlowStaticContext();
+//                if(staticContext != null && staticContext.getExecuteException() != null)
+//                    return false;
+//                else{
+//                    return true;
+//                }
+//            }
+//        });
         /**
          * 1.1 为第一个任务节点添加一个带触发器的作业
          */
@@ -230,6 +260,14 @@ public class JobFlowTest {
          */
         ParrelJobFlowNodeBuilder parrelJobFlowNodeBuilder = new ParrelJobFlowNodeBuilder();
         parrelJobFlowNodeBuilder.setNodeName("ParrelJobFlowNode").setNodeId("2");
+        NodeTrigger parrelnewNodeTrigger = new NodeTrigger();
+        parrelnewNodeTrigger.setTriggerScriptAPI(new TriggerScriptAPI() {
+            @Override
+            public boolean evalTriggerScript(NodeTriggerContext nodeTriggerContext) throws Exception {
+                return false;
+            }
+        });
+        parrelJobFlowNodeBuilder.setNodeTrigger(parrelnewNodeTrigger);
         /**
          * 2.1 为第二个并行任务节点添加第一个带触发器的作业任务
          */
