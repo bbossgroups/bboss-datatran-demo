@@ -35,6 +35,7 @@ import org.frameworkset.tran.plugin.custom.output.CustomOutputConfig;
 import org.frameworkset.tran.plugin.db.input.DBInputConfig;
 import org.frameworkset.tran.plugin.db.output.DBOutputConfig;
 import org.frameworkset.tran.plugin.file.input.ExcelFileInputConfig;
+import org.frameworkset.tran.schedule.CallInterceptor;
 import org.frameworkset.tran.schedule.TaskContext;
 import org.frameworkset.util.TimeUtil;
 import org.frameworkset.util.concurrent.Count;
@@ -57,6 +58,23 @@ public class JobFlowTest {
         ImportBuilder importBuilder = new ImportBuilder();
         importBuilder.setBatchSize(500)//设置批量入库的记录数
                 .setFetchSize(1000);//设置按批读取文件行数
+
+        importBuilder.addCallInterceptor(new CallInterceptor() {
+            @Override
+            public void preCall(TaskContext taskContext) {
+                taskContext.getJobFlowExecuteContext().addContextData("test","测试");
+            }
+
+            @Override
+            public void afterCall(TaskContext taskContext) {
+
+            }
+
+            @Override
+            public void throwException(TaskContext taskContext, Throwable e) {
+
+            }
+        });
 
         ExcelFileInputConfig config = new ExcelFileInputConfig();
         config.setDisableScanNewFiles(true);
@@ -160,6 +178,7 @@ public class JobFlowTest {
             @Override
             public void handleData(TaskContext taskContext, List<CommonRecord> datas) {
 
+                String test = (String) taskContext.getJobFlowExecuteContext().getContextData("test");
                 //You can do any thing here for datas
                 for(CommonRecord record:datas){
                     Map<String,Object> data = record.getDatas();
@@ -207,19 +226,18 @@ public class JobFlowTest {
          * boolean evalTriggerScript(JobFlow jobFlow, JobFlowNode jobFlowNode, JobFlowExecuteContext jobFlowExecuteContext) throws Exception
          */
 //        nodeTrigger.setTriggerScript("return 0 < 1;");
-        String script = """                
-                [import]
-                 //导入脚本中需要引用的java类
-                 import org.frameworkset.tran.jobflow.context.StaticContext; 
-                [/import]
-                StaticContext staticContext = nodeTriggerContext.getPreJobFlowStaticContext();
-                //前序节点执行异常结束，则忽略当前节点执行
-                if(staticContext != null && staticContext.getExecuteException() != null)
-                    return false;
-                else{
-                    return true;
-                }
-                """;
+        String script = new StringBuilder()
+                .append("[import]")
+                .append("//导入脚本中需要引用的java类\r\n")
+                .append(" import org.frameworkset.tran.jobflow.context.StaticContext; ")
+                .append("[/import]")
+                .append("StaticContext staticContext = nodeTriggerContext.getPreJobFlowStaticContext();")
+                .append("//前序节点执行异常结束，则忽略当前节点执行\r\n")
+                .append("if(staticContext != null && staticContext.getExecuteException() != null)")
+                .append("    return false;")
+                .append("else{")
+                .append("    return true;")
+                .append("}").toString();
         nodeTrigger.setTriggerScript(script);
 //        
 //        nodeTrigger.setTriggerScriptAPI(new TriggerScriptAPI() {
