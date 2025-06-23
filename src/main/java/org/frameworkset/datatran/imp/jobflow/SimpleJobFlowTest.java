@@ -53,16 +53,16 @@ public class SimpleJobFlowTest {
         /**
          * 1.构建第一个任务节点：单任务节点
          */
-        JobFlowNodeBuilder jobFlowNodeBuilder = new SimpleJobFlowNodeBuilderTest("1", "DatatranJobFlowNode") ;
+        JobFlowNodeBuilder jobFlowNodeBuilder = new CommonJobFlowNodeBuilder("1", "DatatranJobFlowNode",new JobFlowNodeFunctionTest()) ;
         NodeTrigger nodeTrigger = new NodeTrigger();
         /**
-         * boolean evalTriggerScript(JobFlow jobFlow, JobFlowNode jobFlowNode, JobFlowExecuteContext jobFlowExecuteContext) throws Exception
+         * boolean needTrigger(NodeTriggerContext nodeTriggerContext) throws Exception
          */
 //        nodeTrigger.setTriggerScript("return 0 < 1;");
         String script = new StringBuilder()                
                 .append("[import]")
                 .append("//导入脚本中需要引用的java类\r\n")
-                .append(" import org.frameworkset.tran.jobflow.context.StaticContext; ")
+                .append(" //import org.frameworkset.tran.jobflow.context.StaticContext; ")
                 .append("[/import]")
                 .append("StaticContext staticContext = nodeTriggerContext.getPreJobFlowStaticContext();")
                 .append("//前序节点执行异常结束，则忽略当前节点执行\r\n")
@@ -109,23 +109,23 @@ public class SimpleJobFlowTest {
          * 2.1 为第二个并行任务节点添加第一个带触发器的作业任务
          */
         parrelJobFlowNodeBuilder.addJobFlowNodeBuilder(
-                new SimpleJobFlowNodeBuilderTest("ParrelJobFlowNode-DatatranJobFlowNode-2","ParrelJobFlowNode-DatatranJobFlowNode-2-1").setNodeTrigger(nodeTrigger));
+                new CommonJobFlowNodeBuilder("ParrelJobFlowNode-DatatranJobFlowNode-2","ParrelJobFlowNode-DatatranJobFlowNode-2-1",new JobFlowNodeFunctionTest()).setNodeTrigger(nodeTrigger));
         /**
          * 2.2 为第二个并行任务节点添加第二个不带触发器的作业任务
          */
-        parrelJobFlowNodeBuilder.addJobFlowNodeBuilder(new SimpleJobFlowNodeBuilderTest("ParrelJobFlowNode-DatatranJobFlowNode-2","ParrelJobFlowNode-DatatranJobFlowNode-2-2") );
+        parrelJobFlowNodeBuilder.addJobFlowNodeBuilder(new CommonJobFlowNodeBuilder("ParrelJobFlowNode-DatatranJobFlowNode-2","ParrelJobFlowNode-DatatranJobFlowNode-2-2",new JobFlowNodeFunctionTest()) );
         /**
          * 2.3 为第二个并行任务节点添加第三个串行复杂流程子任务
          */
         SequenceJobFlowNodeBuilder comJobFlowNodeBuilder = new SequenceJobFlowNodeBuilder("ParrelJobFlowNode-2-3","SequenceJobFlowNode");
-        comJobFlowNodeBuilder.addJobFlowNodeBuilder(new SimpleJobFlowNodeBuilderTest("SequenceJobFlowNode-SequenceJobFlowNode","ParrelJobFlowNode-2-3-1") );
-        comJobFlowNodeBuilder.addJobFlowNodeBuilder(new SimpleJobFlowNodeBuilderTest("SequenceJobFlowNode-SequenceJobFlowNode","ParrelJobFlowNode-2-3-2").setNodeTrigger(nodeTrigger) );
+        comJobFlowNodeBuilder.addJobFlowNodeBuilder(new CommonJobFlowNodeBuilder("SequenceJobFlowNode-SequenceJobFlowNode","ParrelJobFlowNode-2-3-1",new JobFlowNodeFunctionTest()) );
+        comJobFlowNodeBuilder.addJobFlowNodeBuilder(new CommonJobFlowNodeBuilder("SequenceJobFlowNode-SequenceJobFlowNode","ParrelJobFlowNode-2-3-2",new JobFlowNodeFunctionTest()).setNodeTrigger(nodeTrigger) );
 
         parrelJobFlowNodeBuilder.addJobFlowNodeBuilder(comJobFlowNodeBuilder);
 
         ParrelJobFlowNodeBuilder subParrelJobFlowNodeBuilder = new ParrelJobFlowNodeBuilder("ParrelJobFlowNode-2-4","ParrelJobFlowNode");
-        subParrelJobFlowNodeBuilder.addJobFlowNodeBuilder(new SimpleJobFlowNodeBuilderTest("ParrelJobFlowNode-SequenceJobFlowNode","ParrelJobFlowNode-2-4-1") );
-        subParrelJobFlowNodeBuilder.addJobFlowNodeBuilder(new SimpleJobFlowNodeBuilderTest("ParrelJobFlowNode-SequenceJobFlowNode","ParrelJobFlowNode-2-4-2") );
+        subParrelJobFlowNodeBuilder.addJobFlowNodeBuilder(new CommonJobFlowNodeBuilder("ParrelJobFlowNode-SequenceJobFlowNode","ParrelJobFlowNode-2-4-1",new JobFlowNodeFunctionTest()) );
+        subParrelJobFlowNodeBuilder.addJobFlowNodeBuilder(new CommonJobFlowNodeBuilder("ParrelJobFlowNode-SequenceJobFlowNode","ParrelJobFlowNode-2-4-2",new JobFlowNodeFunctionTest()) );
         /**
          * 2.4 为第二个并行任务节点添加第三个并行行复杂流程子任务
          */
@@ -139,7 +139,7 @@ public class SimpleJobFlowTest {
         /**
          * 3.构建第三个任务节点：单任务节点
          */
-        jobFlowNodeBuilder = new SimpleJobFlowNodeBuilderTest("3","DatatranJobFlowNode");
+        jobFlowNodeBuilder = new CommonJobFlowNodeBuilder("3","DatatranJobFlowNode",new JobFlowNodeFunctionTest());
         /**
          * 1.1 为第一个任务节点添加一个带触发器的作业
          */

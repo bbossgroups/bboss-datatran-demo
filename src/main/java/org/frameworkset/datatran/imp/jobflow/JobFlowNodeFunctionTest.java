@@ -33,7 +33,7 @@ public class JobFlowNodeFunctionTest implements JobFlowNodeFunction {
 
     @Override
     public Object call(JobFlowNodeExecuteContext jobFlowNodeExecuteContext) {
-        jobFlowNode.nodeComplete(new Exception("测试异常"));//直接完成任务
+        jobFlowNode.nodeComplete(new Exception("测试异常"));//直接完成任务，需要根据实际情况在任务处理完毕后调用节点完成方法
         return null;
     }
 
@@ -46,16 +46,7 @@ public class JobFlowNodeFunctionTest implements JobFlowNodeFunction {
     public void release() {
 
     }
-
-    @Override
-    public void pauseSchedule() {
-
-    }
-
-    @Override
-    public void resumeSchedule() {
-
-    }
+ 
 
     @Override
     public void stop() {
