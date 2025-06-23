@@ -229,7 +229,7 @@ public class JobFlowTest {
         String script = new StringBuilder()
                 .append("[import]")
                 .append("//导入脚本中需要引用的java类\r\n")
-                .append(" import org.frameworkset.tran.jobflow.context.StaticContext; ")
+                .append(" //import org.frameworkset.tran.jobflow.context.StaticContext; ")
                 .append("[/import]")
                 .append("StaticContext staticContext = nodeTriggerContext.getPreJobFlowStaticContext();")
                 .append("//前序节点执行异常结束，则忽略当前节点执行\r\n")
@@ -268,6 +268,7 @@ public class JobFlowTest {
         parrelnewNodeTrigger.setTriggerScriptAPI(new TriggerScriptAPI() {
             @Override
             public boolean needTrigger(NodeTriggerContext nodeTriggerContext) throws Exception {
+                //
                 return true;
             }
         });
@@ -291,7 +292,8 @@ public class JobFlowTest {
                 .setImportBuilder(buildDB2Custom(3)));
         comJobFlowNodeBuilder.addJobFlowNodeBuilder(new DatatranJobFlowNodeBuilder("SequenceJobFlowNode-SequenceJobFlowNode","ParrelJobFlowNode-2-3-2")
                         .setImportBuilder(buildDB2Custom(4)));
-        
+        comJobFlowNodeBuilder.addJobFlowNodeBuilder(new CommonJobFlowNodeBuilder("SequenceJobFlowNode-SequenceJobFlowNode","ParrelJobFlowNode-2-3-3",new JobFlowNodeFunctionTest()).setNodeTrigger(nodeTrigger) );
+
         parrelJobFlowNodeBuilder.addJobFlowNodeBuilder(comJobFlowNodeBuilder);
 
         ParrelJobFlowNodeBuilder subParrelJobFlowNodeBuilder = new ParrelJobFlowNodeBuilder("ParrelJobFlowNode-2-4","ParrelJobFlowNode");
