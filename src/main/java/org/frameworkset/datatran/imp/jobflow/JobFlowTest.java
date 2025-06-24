@@ -25,9 +25,14 @@ import org.frameworkset.tran.input.file.FileConfig;
 import org.frameworkset.tran.input.file.FileFilter;
 import org.frameworkset.tran.input.file.FilterFileInfo;
 import org.frameworkset.tran.jobflow.JobFlow;
+import org.frameworkset.tran.jobflow.JobFlowNode;
 import org.frameworkset.tran.jobflow.NodeTrigger;
 import org.frameworkset.tran.jobflow.builder.*;
+import org.frameworkset.tran.jobflow.context.JobFlowExecuteContext;
+import org.frameworkset.tran.jobflow.context.JobFlowNodeExecuteContext;
 import org.frameworkset.tran.jobflow.context.NodeTriggerContext;
+import org.frameworkset.tran.jobflow.listener.JobFlowListener;
+import org.frameworkset.tran.jobflow.listener.JobFlowNodeListener;
 import org.frameworkset.tran.jobflow.schedule.JobFlowScheduleConfig;
 import org.frameworkset.tran.jobflow.script.TriggerScriptAPI;
 import org.frameworkset.tran.plugin.custom.output.CustomOutPut;
@@ -212,20 +217,40 @@ public class JobFlowTest {
         jobFlowScheduleConfig.setScheduleEndDate(TimeUtil.addDateMinitues(new Date(),10));//2分钟后结束
         jobFlowScheduleConfig.setPeriod(1000000L);
         jobFlowScheduleConfig.setExecuteOneTime(true);
+//        jobFlowScheduleConfig.addScanNewFileTimeRange("12:00-13:00");
+//        jobFlowScheduleConfig.addSkipScanNewFileTimeRange("12:00-13:00");
         jobFlowBuilder.setJobFlowScheduleConfig(jobFlowScheduleConfig);
-        /**
-         * 作为测试用例，所有的作业工作流流程节点共用一个作业定义
-         */
-//        ImportBuilder importBuilder = build();
+        
+        //为流程添加监听器
+        jobFlowBuilder.addJobFlowListener(new JobFlowListener() {
+            @Override
+            public void beforeStart(JobFlow jobFlow) {
+
+            }
+
+            @Override
+            public void beforeExecute(JobFlowExecuteContext jobFlowExecuteContext) {
+
+            }
+
+            @Override
+            public void afterExecute(JobFlowExecuteContext jobFlowExecuteContext, Throwable throwable) {
+                //打印流程执行监控指标
+                logger.info(SimpleStringUtil.object2json(jobFlowExecuteContext.getJobFlowStaticContext()));
+
+            }
+
+            @Override
+            public void afterEnd(JobFlow jobFlow) {
+
+            }
+        });
         /**
          * 1.构建第一个任务节点：单任务节点
          */
         DatatranJobFlowNodeBuilder jobFlowNodeBuilder = new DatatranJobFlowNodeBuilder("1","DatatranJobFlowNode");
         NodeTrigger nodeTrigger = new NodeTrigger();
-        /**
-         * boolean evalTriggerScript(JobFlow jobFlow, JobFlowNode jobFlowNode, JobFlowExecuteContext jobFlowExecuteContext) throws Exception
-         */
-//        nodeTrigger.setTriggerScript("return 0 < 1;");
+
         String script = new StringBuilder()
                 .append("[import]")
                 .append("//导入脚本中需要引用的java类\r\n")
@@ -239,18 +264,7 @@ public class JobFlowTest {
                 .append("    return true;")
                 .append("}").toString();
         nodeTrigger.setTriggerScript(script);
-//        
-//        nodeTrigger.setTriggerScriptAPI(new TriggerScriptAPI() {
-//            @Override
-//            public boolean evalTriggerScript(NodeTriggerContext nodeTriggerContext) throws Exception {
-//                StaticContext staticContext = nodeTriggerContext.getPreJobFlowStaticContext();
-//                if(staticContext != null && staticContext.getExecuteException() != null)
-//                    return false;
-//                else{
-//                    return true;
-//                }
-//            }
-//        });
+
         /**
          * 1.1 为第一个任务节点添加一个带触发器的作业
          */
@@ -264,15 +278,36 @@ public class JobFlowTest {
          * 2.构建第二个任务节点：并行任务节点
          */
         ParrelJobFlowNodeBuilder parrelJobFlowNodeBuilder = new ParrelJobFlowNodeBuilder("2","ParrelJobFlowNode");
+        //为并行任务节点添加触发器
         NodeTrigger parrelnewNodeTrigger = new NodeTrigger();
         parrelnewNodeTrigger.setTriggerScriptAPI(new TriggerScriptAPI() {
             @Override
             public boolean needTrigger(NodeTriggerContext nodeTriggerContext) throws Exception {
-                //
+                
                 return true;
             }
         });
         parrelJobFlowNodeBuilder.setNodeTrigger(parrelnewNodeTrigger);
+
+        //为并行任务节点添加监听器
+        
+        parrelJobFlowNodeBuilder.addJobFlowNodeListener(new JobFlowNodeListener() {
+            @Override
+            public void beforeExecute(JobFlowNodeExecuteContext jobFlowNodeExecuteContext) {
+
+            }
+
+            @Override
+            public void afterExecute(JobFlowNodeExecuteContext jobFlowNodeExecuteContext, Throwable throwable) {
+                //打印流程节点执行监控指标
+                logger.info(SimpleStringUtil.object2json(jobFlowNodeExecuteContext.getJobFlowNodeStaticContext()));
+            }
+
+            @Override
+            public void afterEnd(JobFlowNode jobFlowNode) {
+
+            }
+        });
         /**
          * 2.1 为第二个并行任务节点添加第一个带触发器的作业任务
          */

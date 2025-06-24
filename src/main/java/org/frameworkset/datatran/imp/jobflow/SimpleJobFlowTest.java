@@ -103,18 +103,8 @@ public class SimpleJobFlowTest {
                 .append("    return true;")
                 .append("}").toString();
         nodeTrigger.setTriggerScript(script);
-//        
-//        nodeTrigger.setTriggerScriptAPI(new TriggerScriptAPI() {
-//            @Override
-//            public boolean evalTriggerScript(NodeTriggerContext nodeTriggerContext) throws Exception {
-//                StaticContext staticContext = nodeTriggerContext.getPreJobFlowStaticContext();
-//                if(staticContext != null && staticContext.getExecuteException() != null)
-//                    return false;
-//                else{
-//                    return true;
-//                }
-//            }
-//        });
+        
+
         /**
          * 1.1 为第一个任务节点添加一个带触发器的作业
          */
