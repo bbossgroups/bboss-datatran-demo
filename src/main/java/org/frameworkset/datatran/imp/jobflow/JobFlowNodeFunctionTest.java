@@ -26,6 +26,10 @@ import org.frameworkset.tran.jobflow.context.JobFlowNodeExecuteContext;
 public class JobFlowNodeFunctionTest implements JobFlowNodeFunction {
 
     private JobFlowNode jobFlowNode;
+    private boolean throwError;
+    public JobFlowNodeFunctionTest(boolean throwError){
+        this.throwError = throwError;
+    }
     @Override
     public void init(JobFlowNode jobFlowNode) {
         this.jobFlowNode = jobFlowNode;
@@ -35,8 +39,12 @@ public class JobFlowNodeFunctionTest implements JobFlowNodeFunction {
     public Object call(JobFlowNodeExecuteContext jobFlowNodeExecuteContext) {
 //        if(true)
 //            throw new RuntimeException("测试异常");
-//        jobFlowNode.nodeComplete(new Exception("测试异常"));//直接完成任务，需要根据实际情况在任务处理完毕后调用节点完成方法
-        jobFlowNode.nodeComplete(null);
+        if(this.throwError) {
+            jobFlowNode.nodeComplete(new Exception("测试异常"));//直接完成任务，需要根据实际情况在任务处理完毕后调用节点完成方法
+        }
+        else{
+            jobFlowNode.nodeComplete(null);
+        }
         return null;
     }
 
