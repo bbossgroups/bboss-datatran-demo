@@ -67,16 +67,34 @@ public class JobFlowTest {
         importBuilder.addCallInterceptor(new CallInterceptor() {
             @Override
             public void preCall(TaskContext taskContext) {
-                taskContext.getJobFlowExecuteContext().addContextData("test","测试");
+                //任务调用前，向流程执行上下文中添加参数
+                taskContext.getJobFlowExecuteContext().addContextData("flowParam","测试");
+                //任务调用前，向往流程节点执行上下文中添加参数
+                taskContext.getJobFlowNodeExecuteContext().addContextData("nodeParam","测试");
+                //任务调用前，向流程子节点所属的复合节点（串行/并行）执行上下文中添加参数
+                if(taskContext.getContainerJobFlowNodeExecuteContext() != null)
+                    taskContext.getContainerJobFlowNodeExecuteContext().addContextData("nodeParam","测试");
             }
 
             @Override
             public void afterCall(TaskContext taskContext) {
+                  //作业执行完后，添加记录处理统计数据到流程执行上下文中（流程节点，流程子节点所属的复合节点（串行/并行）类似）
+                taskContext.getJobFlowExecuteContext().addContextData("flowParam."+taskContext.getJobFlowNodeExecuteContext().getNodeId()+".totalSuccessRecords",taskContext.getJobTaskMetrics().getTotalSuccessRecords());
+                taskContext.getJobFlowExecuteContext().addContextData("flowParam."+taskContext.getJobFlowNodeExecuteContext().getNodeId()+".totalFailedRecords",taskContext.getJobTaskMetrics().getTotalFailedRecords());
+                taskContext.getJobFlowExecuteContext().addContextData("flowParam."+taskContext.getJobFlowNodeExecuteContext().getNodeId()+".totalRecords",taskContext.getJobTaskMetrics().getTotalRecords());
+                taskContext.getJobFlowExecuteContext().addContextData("flowParam."+taskContext.getJobFlowNodeExecuteContext().getNodeId()+".totalIgnoreRecords",taskContext.getJobTaskMetrics().getTotalIgnoreRecords());
+                
 
             }
 
             @Override
             public void throwException(TaskContext taskContext, Throwable e) {
+                //作业执行异常后，添加记录处理统计数据到流程执行上下文中（流程节点，流程子节点所属的复合节点（串行/并行）类似）
+                taskContext.getJobFlowExecuteContext().addContextData("flowParam."+taskContext.getJobFlowNodeExecuteContext().getNodeId()+".totalSuccessRecords",taskContext.getJobTaskMetrics().getTotalSuccessRecords());
+                taskContext.getJobFlowExecuteContext().addContextData("flowParam."+taskContext.getJobFlowNodeExecuteContext().getNodeId()+".totalFailedRecords",taskContext.getJobTaskMetrics().getTotalFailedRecords());
+                taskContext.getJobFlowExecuteContext().addContextData("flowParam."+taskContext.getJobFlowNodeExecuteContext().getNodeId()+".totalRecords",taskContext.getJobTaskMetrics().getTotalRecords());
+                taskContext.getJobFlowExecuteContext().addContextData("flowParam."+taskContext.getJobFlowNodeExecuteContext().getNodeId()+".totalIgnoreRecords",taskContext.getJobTaskMetrics().getTotalIgnoreRecords());
+                taskContext.getJobFlowExecuteContext().addContextData("flowParam."+taskContext.getJobFlowNodeExecuteContext().getNodeId()+".errorinfo",SimpleStringUtil.exceptionToString(e));
 
             }
         });
@@ -141,7 +159,8 @@ public class JobFlowTest {
             public void refactor(Context context) throws Exception  {
 
                 //shebao_org,person_no, name, cert_type,cert_no,zhs_item  ,zhs_class ,zhs_sub_class,zhs_year  , zhs_level
-
+                //从流程执行上下文档中获取参数（流程节点，流程子节点所属的复合节点（串行/并行）类似）
+                Object flowParam = context.getJobFlowExecuteContext().getContextData("flowParam");
                 context.addFieldValue("rowNo",count.getCount());
                 count.increament();
 
@@ -183,7 +202,8 @@ public class JobFlowTest {
             @Override
             public void handleData(TaskContext taskContext, List<CommonRecord> datas) {
 
-                String test = (String) taskContext.getJobFlowExecuteContext().getContextData("test");
+                
+                String flowParam = (String) taskContext.getJobFlowExecuteContext().getContextData("flowParam");
                 //You can do any thing here for datas
                 for(CommonRecord record:datas){
                     Map<String,Object> data = record.getDatas();
