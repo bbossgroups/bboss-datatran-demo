@@ -45,10 +45,10 @@ public class SimpleJobFlowTest {
                 .setJobFlowId("测试id");
         JobFlowScheduleConfig jobFlowScheduleConfig = new JobFlowScheduleConfig();
 //        jobFlowScheduleConfig.setScheduleDate(TimeUtil.addDateHours(new Date(),2));//2小时后开始执行
-//        jobFlowScheduleConfig.setScheduleDate(TimeUtil.addDateMinitues(new Date(),1));//1分钟后开始执行
+        jobFlowScheduleConfig.setScheduleDate(TimeUtil.addDateMinitues(new Date(),1));//1分钟后开始执行
 //        jobFlowScheduleConfig.setScheduleEndDate(TimeUtil.addDates(new Date(),10));//10天后结束
-        jobFlowScheduleConfig.setScheduleEndDate(TimeUtil.addDateMinitues(new Date(),10));//2分钟后结束
-        jobFlowScheduleConfig.setPeriod(1000000L);
+//        jobFlowScheduleConfig.setScheduleEndDate(TimeUtil.addDateMinitues(new Date(),10));//2分钟后结束
+//        jobFlowScheduleConfig.setPeriod(1000000L);
         jobFlowScheduleConfig.setExecuteOneTime(true);
         jobFlowBuilder.setJobFlowScheduleConfig(jobFlowScheduleConfig);
 
