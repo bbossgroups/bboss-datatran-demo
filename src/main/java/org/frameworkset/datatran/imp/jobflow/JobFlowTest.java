@@ -68,21 +68,22 @@ public class JobFlowTest {
             @Override
             public void preCall(TaskContext taskContext) {
                 //任务调用前，向流程执行上下文中添加参数
-                taskContext.getJobFlowExecuteContext().addContextData("flowParam","测试");
+                taskContext.addJobFlowContextData("flowParam","测试");
                 //任务调用前，向往流程节点执行上下文中添加参数
-                taskContext.getJobFlowNodeExecuteContext().addContextData("nodeParam","测试");
+                taskContext.addJobFlowNodeContextData("nodeParam","测试");
                 //任务调用前，向流程子节点所属的复合节点（串行/并行）执行上下文中添加参数
                 if(taskContext.getContainerJobFlowNodeExecuteContext() != null)
-                    taskContext.getContainerJobFlowNodeExecuteContext().addContextData("nodeParam","测试");
+                    taskContext.addContainerJobFlowNodeContextData("nodeParam","测试");
             }
 
             @Override
             public void afterCall(TaskContext taskContext) {
                   //作业执行完后，添加记录处理统计数据到流程执行上下文中（流程节点，流程子节点所属的复合节点（串行/并行）类似）
-                taskContext.getJobFlowExecuteContext().addContextData("flowParam."+taskContext.getJobFlowNodeExecuteContext().getNodeId()+".totalSuccessRecords",taskContext.getJobTaskMetrics().getTotalSuccessRecords());
-                taskContext.getJobFlowExecuteContext().addContextData("flowParam."+taskContext.getJobFlowNodeExecuteContext().getNodeId()+".totalFailedRecords",taskContext.getJobTaskMetrics().getTotalFailedRecords());
-                taskContext.getJobFlowExecuteContext().addContextData("flowParam."+taskContext.getJobFlowNodeExecuteContext().getNodeId()+".totalRecords",taskContext.getJobTaskMetrics().getTotalRecords());
-                taskContext.getJobFlowExecuteContext().addContextData("flowParam."+taskContext.getJobFlowNodeExecuteContext().getNodeId()+".totalIgnoreRecords",taskContext.getJobTaskMetrics().getTotalIgnoreRecords());
+                String nodeId = taskContext.getJobFlowNodeExecuteContext().getNodeId();
+                taskContext.addJobFlowContextData("flowParam."+nodeId+".totalSuccessRecords",taskContext.getJobTaskMetrics().getTotalSuccessRecords());
+                taskContext.addJobFlowContextData("flowParam."+nodeId+".totalFailedRecords",taskContext.getJobTaskMetrics().getTotalFailedRecords());
+                taskContext.addJobFlowContextData("flowParam."+nodeId+".totalRecords",taskContext.getJobTaskMetrics().getTotalRecords());
+                taskContext.addJobFlowContextData("flowParam."+nodeId+".totalIgnoreRecords",taskContext.getJobTaskMetrics().getTotalIgnoreRecords());
                 
 
             }
@@ -90,11 +91,12 @@ public class JobFlowTest {
             @Override
             public void throwException(TaskContext taskContext, Throwable e) {
                 //作业执行异常后，添加记录处理统计数据到流程执行上下文中（流程节点，流程子节点所属的复合节点（串行/并行）类似）
-                taskContext.getJobFlowExecuteContext().addContextData("flowParam."+taskContext.getJobFlowNodeExecuteContext().getNodeId()+".totalSuccessRecords",taskContext.getJobTaskMetrics().getTotalSuccessRecords());
-                taskContext.getJobFlowExecuteContext().addContextData("flowParam."+taskContext.getJobFlowNodeExecuteContext().getNodeId()+".totalFailedRecords",taskContext.getJobTaskMetrics().getTotalFailedRecords());
-                taskContext.getJobFlowExecuteContext().addContextData("flowParam."+taskContext.getJobFlowNodeExecuteContext().getNodeId()+".totalRecords",taskContext.getJobTaskMetrics().getTotalRecords());
-                taskContext.getJobFlowExecuteContext().addContextData("flowParam."+taskContext.getJobFlowNodeExecuteContext().getNodeId()+".totalIgnoreRecords",taskContext.getJobTaskMetrics().getTotalIgnoreRecords());
-                taskContext.getJobFlowExecuteContext().addContextData("flowParam."+taskContext.getJobFlowNodeExecuteContext().getNodeId()+".errorinfo",SimpleStringUtil.exceptionToString(e));
+                String nodeId = taskContext.getJobFlowNodeExecuteContext().getNodeId();
+                taskContext.addJobFlowContextData("flowParam."+nodeId+".totalSuccessRecords",taskContext.getJobTaskMetrics().getTotalSuccessRecords());
+                taskContext.addJobFlowContextData("flowParam."+nodeId+".totalFailedRecords",taskContext.getJobTaskMetrics().getTotalFailedRecords());
+                taskContext.addJobFlowContextData("flowParam."+nodeId+".totalRecords",taskContext.getJobTaskMetrics().getTotalRecords());
+                taskContext.addJobFlowContextData("flowParam."+nodeId+".totalIgnoreRecords",taskContext.getJobTaskMetrics().getTotalIgnoreRecords());
+                taskContext.addJobFlowContextData("flowParam."+nodeId+".errorinfo",SimpleStringUtil.exceptionToString(e));
 
             }
         });
