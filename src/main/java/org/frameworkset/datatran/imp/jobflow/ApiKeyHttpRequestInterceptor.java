@@ -23,6 +23,7 @@ import org.apache.http.protocol.HttpContext;
 import java.io.IOException;
 
 /**
+ * 通过拦截器设置Deepseek apiKey
  * @author biaoping.yin
  * @Date 2025/6/29
  */
@@ -41,6 +42,7 @@ public class ApiKeyHttpRequestInterceptor implements HttpRequestInterceptor {
      */
     @Override
     public void process(HttpRequest request, HttpContext context) throws HttpException, IOException {
-        request.addHeader("Authorization","Bearer xxxxxxxxxxxxxxxxxxxxxxxxxxxxxx");
+        //设置Deepseek Authorization apiKey
+        request.addHeader("Authorization","Bearer sk-9fca9***********************fa2b");
     }
 }
