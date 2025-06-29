@@ -41,6 +41,6 @@ public class ApiKeyHttpRequestInterceptor implements HttpRequestInterceptor {
      */
     @Override
     public void process(HttpRequest request, HttpContext context) throws HttpException, IOException {
-        request.addHeader("Authorization","Bearer sk-9fca957909d94ed5a9f7852be1aefa2b");
+        request.addHeader("Authorization","Bearer xxxxxxxxxxxxxxxxxxxxxxxxxxxxxx");
     }
 }
