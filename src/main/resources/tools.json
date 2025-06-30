@@ -1,0 +1,39 @@
+{
+  "id": "2c7ab053-a1e3-4e3b-b5b6-55aa1aa0ea93",
+  "object": "chat.completion",
+  "created": 1751291360,
+  "model": "deepseek-chat",
+  "choices": [
+    {
+      "index": 0,
+      "message": {
+        "role": "assistant",
+        "content": "",
+        "tool_calls": [
+          {
+            "index": 0,
+            "id": "call_0_fe589928-1c84-4af1-8c0a-f6866f529d28",
+            "type": "function",
+            "function": {
+              "name": "get_weather",
+              "arguments": "{\"location\":\"杭州\"}"
+            }
+          }
+        ]
+      },
+      "logprobs": null,
+      "finish_reason": "tool_calls"
+    }
+  ],
+  "usage": {
+    "prompt_tokens": 131,
+    "completion_tokens": 21,
+    "total_tokens": 152,
+    "prompt_tokens_details": {
+      "cached_tokens": 0
+    },
+    "prompt_cache_hit_tokens": 0,
+    "prompt_cache_miss_tokens": 131
+  },
+  "system_fingerprint": "fp_8802369eaa_prod0623_fp8_kvcache"
+}

@@ -16,6 +16,7 @@ package org.frameworkset.datatran.imp.jobflow;
  */
 
 import java.util.List;
+import java.util.Map;
 
 /**
  * @author biaoping.yin
@@ -27,6 +28,8 @@ public class DeepseekMessages {
     private boolean stream;
     private int max_tokens;
     private List<DeepseekMessage> messages;
+    
+    private List<Map> tools;
 
     public String getModel() {
         return model;
@@ -66,5 +69,13 @@ public class DeepseekMessages {
 
     public void setMax_tokens(int max_tokens) {
         this.max_tokens = max_tokens;
+    }
+
+    public List<Map> getTools() {
+        return tools;
+    }
+
+    public void setTools(List<Map> tools) {
+        this.tools = tools;
     }
 }

@@ -15,6 +15,7 @@ package org.frameworkset.datatran.imp.jobflow;
  * limitations under the License.
  */
 
+import com.frameworkset.util.SimpleStringUtil;
 import org.frameworkset.spi.remote.http.HttpRequestProxy;
 import org.frameworkset.tran.jobflow.JobFlow;
 import org.frameworkset.tran.jobflow.builder.JobFlowBuilder;
@@ -135,6 +136,110 @@ public class JobFlow2ndDeepseekTest {
                 Map response = HttpRequestProxy.sendJsonBody(this.getDeepseekService(), deepseekMessages, "/chat/completions", Map.class);
                 List choices = (List) response.get("choices");
                 Map message = (Map) ((Map) choices.get(0)).get("message");
+                deepseekMessage = new DeepseekMessage();
+                deepseekMessage.setRole("assistant");
+                deepseekMessage.setContent((String) message.get("content"));
+                //将第二个问题答案添加到工作流上下文中，保存Deepseek通话记录
+                deepseekMessageList.add(deepseekMessage);
+                logger.info(deepseekMessage.getContent());
+                return response;
+            }
+
+        }).setDeepseekService("deepseek").setModel("deepseek-chat").setMax_tokens(4096);
+
+        /**
+         * 4 将第二个节点添加到工作流构建器
+         */
+        jobFlowBuilder.addJobFlowNode(jobFlowNodeBuilder);
+
+        /**
+         * 5.构建第三个任务节点：单任务节点 调用工具查询杭州天气
+         */
+        jobFlowNodeBuilder = new DeepseekJobFlowNodeBuilder("3", "Deepseek-chat-天气查询", new DeepseekJobFlowNodeFunction() {
+            @Override
+            public Object call(JobFlowNodeExecuteContext jobFlowNodeExecuteContext) throws Exception {
+                //从工作流上下文中，获取Deepseek历史通话记录
+                List<DeepseekMessage> deepseekMessageList = (List<DeepseekMessage>) jobFlowNodeExecuteContext.getJobFlowContextData("messages");
+                if(deepseekMessageList == null){
+                    deepseekMessageList = new ArrayList<>();
+                    jobFlowNodeExecuteContext.addJobFlowContextData("messages",deepseekMessageList);
+                }
+                //用户查询杭州天气
+                DeepseekMessage deepseekMessage = new DeepseekMessage();
+
+                deepseekMessage.setRole("user");
+                deepseekMessage.setContent("查询杭州天气，并根据天气给出穿衣、饮食以及出行建议");
+                //追加用户问题
+                deepseekMessageList.add(deepseekMessage);
+                DeepseekMessages deepseekMessages = new DeepseekMessages();
+                deepseekMessages.setMessages(deepseekMessageList);
+                //定义工具描述，可以添加多个工具描述
+                String tools_ = """
+                        [
+                            {
+                                "type": "function",
+                                "function": {
+                                    "name": "get_weather",
+                                    "description": "Get weather of an location, the user shoud supply a location first",
+                                    "parameters": {
+                                        "type": "object",
+                                        "properties": {
+                                            "location": {
+                                                "type": "string",
+                                                "description": "The city and state, e.g. San Francisco, CA"
+                                            }
+                                        },
+                                        "required": ["location"]
+                                    }
+                                }
+                            }
+                        ]
+                        """;
+                List<Map> tools = SimpleStringUtil.json2ListObject(tools_,Map.class);
+                deepseekMessages.setModel(model);
+                //设置工具清单
+                deepseekMessages.setTools(tools);
+                deepseekMessages.setStream(stream);
+                deepseekMessages.setMax_tokens(this.max_tokens);
+                //调用Deepseek 对话api，将查询问题和工具清单提交给Deepseek，Deepseek会从问题中提取城市信息，以及匹配的工具信息，返回包含参数的工具信息
+                Map response = HttpRequestProxy.sendJsonBody(this.getDeepseekService(), deepseekMessages, "/chat/completions", Map.class);
+                logger.info(SimpleStringUtil.object2json(response));
+                List choices = (List) response.get("choices");
+                Map message = (Map) ((Map) choices.get(0)).get("message");
+                deepseekMessage = new DeepseekMessage();
+                deepseekMessage.setRole("assistant");
+                deepseekMessage.setContent((String) message.get("content"));
+                List<Map> toolcalls = (List<Map>) message.get("tool_calls");
+                deepseekMessage.setTool_calls(toolcalls);
+                //将包含参数的工具信息添加到聊天记录
+                deepseekMessageList.add(deepseekMessage);
+                
+                //提取匹配的工具信息，并调用工具
+                Map tool = toolcalls.get(0);
+                String toolId = (String) tool.get("id");
+                String functionName = (String) ((Map)tool.get("function")).get("name");
+                String functionArguments = (String) ((Map)tool.get("function")).get("arguments");
+                Map arguments = SimpleStringUtil.json2Object(functionArguments,Map.class);
+                String location = (String) arguments.get("location");
+                logger.info("模拟调用函数：{}(\"{}\")，返回值为：24℃",functionName,location);
+                
+                //将工具返回值和工具id，组装成消息记录
+                deepseekMessage = new DeepseekMessage();
+                deepseekMessage.setRole("tool");
+                deepseekMessage.setContent("24℃");
+                deepseekMessage.setTool_call_id(toolId);
+                //将消息记录添加到消息记录清单
+                deepseekMessageList.add(deepseekMessage);
+                deepseekMessages = new DeepseekMessages();
+                deepseekMessages.setMessages(deepseekMessageList);
+
+                deepseekMessages.setModel(model);
+                deepseekMessages.setStream(stream);
+                deepseekMessages.setMax_tokens(this.max_tokens);
+                //调用Deepseek 对话api，结合用户问题和工具返回值，生成最终的问题答案
+                response = HttpRequestProxy.sendJsonBody(this.getDeepseekService(), deepseekMessages, "/chat/completions", Map.class);
+                choices = (List) response.get("choices");
+                message = (Map) ((Map) choices.get(0)).get("message");
                 deepseekMessage = new DeepseekMessage();
                 deepseekMessage.setRole("assistant");
                 deepseekMessage.setContent((String) message.get("content"));

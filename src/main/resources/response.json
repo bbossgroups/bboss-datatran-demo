@@ -1,0 +1,28 @@
+{
+  "id": "326fe451-0e77-4064-b665-f22bfb8616fa",
+  "object": "chat.completion",
+  "created": 1751202306,
+  "model": "deepseek-chat",
+  "choices": [
+    {
+      "index": 0,
+      "message": {
+        "role": "assistant",
+        "content": "《铁翼行》\n\n\n铁翼横空出汉关， \n扶摇直上九霄间。 \n云涛翻涌千山小， \n日月奔流一瞬还。 \n不羡鲲鹏游瀚海， \n岂惭鸾鹤戏仙班。 \n今朝得遂凌霄志， \n笑指蓬莱咫尺山。\n\n\n注：此诗以李白豪放飘逸的笔法咏现代飞行之奇。首联\"铁翼\"暗喻飞机，\"汉关\"借指华夏疆域；颔联\"千山小\"化用杜甫\"一览众山小\"之境；颈联反用《逍遥游》典故，言飞机之能已超鲲鹏；尾联\"蓬莱咫尺\"呼应李白寻仙之趣，而\"笑指\"二字尽显谪仙风骨。"
+      },
+      "logprobs": null,
+      "finish_reason": "stop"
+    }
+  ],
+  "usage": {
+    "prompt_tokens": 19,
+    "completion_tokens": 174,
+    "total_tokens": 193,
+    "prompt_tokens_details": {
+      "cached_tokens": 0
+    },
+    "prompt_cache_hit_tokens": 0,
+    "prompt_cache_miss_tokens": 19
+  },
+  "system_fingerprint": "fp_8802369eaa_prod0623_fp8_kvcache"
+}

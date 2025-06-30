@@ -15,6 +15,9 @@ package org.frameworkset.datatran.imp.jobflow;
  * limitations under the License.
  */
 
+import java.util.List;
+import java.util.Map;
+
 /**
  * @author biaoping.yin
  * @Date 2025/6/29
@@ -26,6 +29,8 @@ public class DeepseekMessage {
     private boolean prefix;
     private String reasoning_content;
     private String tool_call_id;
+    
+    private List<Map> tool_calls;
 
     public String getRole() {
         return role;
@@ -73,5 +78,13 @@ public class DeepseekMessage {
 
     public void setTool_call_id(String tool_call_id) {
         this.tool_call_id = tool_call_id;
+    }
+
+    public List<Map> getTool_calls() {
+        return tool_calls;
+    }
+
+    public void setTool_calls(List<Map> tool_calls) {
+        this.tool_calls = tool_calls;
     }
 }
