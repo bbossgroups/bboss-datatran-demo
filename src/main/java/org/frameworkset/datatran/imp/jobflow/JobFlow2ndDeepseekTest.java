@@ -87,7 +87,8 @@ public class JobFlow2ndDeepseekTest {
                 deepseekMessage.setContent("模仿李白的风格写一首七律.飞机!");
                 //将问题添加到工作流上下文中，保存Deepseek通话记录
                 deepseekMessageList.add(deepseekMessage);
-                
+
+                //构建Deepseek服务调用报文对象
                 DeepseekMessages deepseekMessages = new DeepseekMessages();
                 deepseekMessages.setMessages(deepseekMessageList);
                 deepseekMessages.setModel(model);
@@ -127,6 +128,8 @@ public class JobFlow2ndDeepseekTest {
                 deepseekMessage.setRole("user");
                 deepseekMessage.setContent("帮忙评估上述诗词的意境");
                 deepseekMessageList.add(deepseekMessage);
+                
+                //构建Deepseek服务调用报文对象
                 DeepseekMessages deepseekMessages = new DeepseekMessages();
                 deepseekMessages.setMessages(deepseekMessageList);
                 deepseekMessages.setModel(model);
@@ -171,6 +174,7 @@ public class JobFlow2ndDeepseekTest {
                 deepseekMessage.setContent("查询杭州天气，并根据天气给出穿衣、饮食以及出行建议");
                 //追加用户问题
                 deepseekMessageList.add(deepseekMessage);
+                //构建Deepseek服务调用报文对象
                 DeepseekMessages deepseekMessages = new DeepseekMessages();
                 deepseekMessages.setMessages(deepseekMessageList);
                 //定义工具描述，可以添加多个工具描述
@@ -223,13 +227,15 @@ public class JobFlow2ndDeepseekTest {
                 String location = (String) arguments.get("location");
                 logger.info("模拟调用函数：{}(\"{}\")，返回值为：24℃",functionName,location);
                 
-                //将工具返回值和工具id，组装成消息记录
+                //将工具调用返回值和工具id，组装成消息记录
                 deepseekMessage = new DeepseekMessage();
                 deepseekMessage.setRole("tool");
                 deepseekMessage.setContent("24℃");
                 deepseekMessage.setTool_call_id(toolId);
                 //将消息记录添加到消息记录清单
                 deepseekMessageList.add(deepseekMessage);
+
+                //构建Deepseek服务调用报文对象
                 deepseekMessages = new DeepseekMessages();
                 deepseekMessages.setMessages(deepseekMessageList);
 
