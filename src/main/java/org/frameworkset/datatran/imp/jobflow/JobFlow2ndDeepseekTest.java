@@ -251,6 +251,7 @@ public class JobFlow2ndDeepseekTest {
                 deepseekMessage.setContent((String) message.get("content"));
                 //将第二个问题答案添加到工作流上下文中，保存Deepseek通话记录
                 deepseekMessageList.add(deepseekMessage);
+                //输出查询杭州天气结果以及饮食、衣着及出行建议
                 logger.info(deepseekMessage.getContent());
                 return response;
             }
@@ -258,7 +259,7 @@ public class JobFlow2ndDeepseekTest {
         }).setDeepseekService("deepseek").setModel("deepseek-chat").setMax_tokens(4096);
 
         /**
-         * 4 将第二个节点添加到工作流构建器
+         * 4 将第工具调用节点添加到工作流构建器
          */
         jobFlowBuilder.addJobFlowNode(jobFlowNodeBuilder);
         
