@@ -44,7 +44,7 @@ public class JobFlow2ndDeepseekTest {
         properties.put("http.poolNames","deepseek");
 
         properties.put("deepseek.http.hosts","https://api.deepseek.com");///设置Deepseek服务地址
-        properties.put("deepseek.http.httpRequestInterceptors","org.frameworkset.datatran.imp.jobflow.ApiKeyHttpRequestInterceptor");//设置apiKey
+        properties.put("deepseek.http.apiKeyId","sk-9fca957xxxxxd5a9f7852be1aefa2b");//设置apiKey
         properties.put("deepseek.http.timeoutSocket","60000");
         properties.put("deepseek.http.timeoutConnection","40000");
         properties.put("deepseek.http.connectionRequestTimeout","70000");

@@ -23,6 +23,7 @@ import org.frameworkset.elasticsearch.client.ClientInterface;
 import org.frameworkset.tran.CommonRecord;
 import org.frameworkset.tran.DataRefactor;
 import org.frameworkset.tran.DataStream;
+import org.frameworkset.tran.ExportResultHandler;
 import org.frameworkset.tran.config.ImportBuilder;
 import org.frameworkset.tran.context.Context;
 import org.frameworkset.tran.context.InitJobContextCall;
@@ -49,10 +50,13 @@ import org.frameworkset.tran.plugin.metrics.output.ETLMetrics;
 import org.frameworkset.tran.plugin.metrics.output.MetricsOutputConfig;
 import org.frameworkset.tran.schedule.CallInterceptor;
 import org.frameworkset.tran.schedule.TaskContext;
+import org.frameworkset.tran.task.TaskCommand;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
 import java.util.*;
+
+import static org.frameworkset.tran.ftp.FtpConfig.TRANSFER_PROTOCOL_SFTP;
 
 /**
  * <p>Description: 从ftp服务器下载excel文件，采集excel文件中数据并交给自定义处理器批量写入redis，redis配置参考resources/redis.xml配置文件</p>
@@ -82,7 +86,7 @@ public class FTPFileLog2DBDemo {
 		FileInputConfig fileInputConfig = new FileInputConfig();
         fileInputConfig.setJsondata(true);
 		FtpConfig ftpConfig = new FtpConfig().setFtpIP("172.24.176.18").setFtpPort(22)
-				.setFtpUser("wsl").setFtpPassword("123456").setDownloadWorkThreads(4)
+				.setFtpUser("wsl").setFtpPassword("123456").setDownloadWorkThreads(4).setTransferProtocol(TRANSFER_PROTOCOL_SFTP)
 				.setRemoteFileDir("/home/wsl/ftpsource").setRemoteFileValidate(new RemoteFileValidate() {
 					/**
 					 * 校验数据文件合法性和完整性接口
@@ -137,6 +141,7 @@ public class FTPFileLog2DBDemo {
 				.setSourcePath("C:\\workdir\\textdown");//指定目录
 		fileInputConfig.addConfig(textFileConfig)
 				;
+        fileInputConfig.setScanNewFileInterval(1*60*1000l);//每隔半1分钟扫描ftp目录下是否有最新ftp文件信息，采集完成或已经下载过的文件不会再下载采集
 		/**
 		 * 备份采集完成文件
 		 * true 备份
@@ -318,7 +323,7 @@ public class FTPFileLog2DBDemo {
 		//增量配置开始
 		importBuilder.setFromFirst(true);//setFromfirst(false)，如果作业停了，作业重启后从上次截止位置开始采集数据，
 		//setFromfirst(true) 如果作业停了，作业重启后，重新开始采集数据
-		importBuilder.setLastValueStorePath("filelogcustom_import");//记录上次采集的增量字段值的文件路径，作为下次增量（或者重启后）采集数据的起点，不同的任务这个路径要不一样
+		importBuilder.setLastValueStorePath("filelogcustom_import1");//记录上次采集的增量字段值的文件路径，作为下次增量（或者重启后）采集数据的起点，不同的任务这个路径要不一样
 		//增量配置结束
 
 		//映射和转换配置开始
@@ -336,7 +341,6 @@ public class FTPFileLog2DBDemo {
                     context.addFieldValue("collecttime", date);
                 }
 
-				
 
 				//直接获取文件元信息
 //				Map fileMata = (Map)context.getValue("@filemeta");
@@ -393,6 +397,23 @@ public class FTPFileLog2DBDemo {
 				}
 			}
 		});
+        
+        importBuilder.setExportResultHandler(new ExportResultHandler() {
+            @Override
+            public void success(TaskCommand taskCommand, Object o) {
+                
+            }
+
+            @Override
+            public void error(TaskCommand taskCommand, Object result) {
+
+            }
+
+            @Override
+            public void exception(TaskCommand taskCommand, Throwable throwable) {
+
+            }
+        });
 
 		/**
 		 * 内置线程池配置，实现多线程并行数据导入功能，作业完成退出时自动关闭该线程池

@@ -17,12 +17,12 @@
                         #*
                         {
                             "term": {
-                                "var1.keyword": #[var1]
+                                "var1.keyword": #[v1]
                             }
                         },
                         {
                             "term": {
-                                "var2.keyword": #[var2]
+                                "aaaa": #[aaaa]
                             }
                         },
                         {
@@ -33,34 +33,12 @@
                         *#
                         {   ## 增量检索范围，可以是时间范围，也可以是数字范围，这里采用的是数字增量字段
                             "range": {
-                                #if($logId)
-                                "logId": {
-                                    "gt": #[logId] ## 数字增量检索字段
+                                
+                                "time": {
+                                    "gt": #[time],
+                                    "lte": #[time__endTime]
                                 }
-                                #end
-                                #if($logOpertime)
-                                "logOpertime": {
-                                    "gt": #[logOpertime] ## 时间增量检索字段
-                                }
-                                #end
-                                #if($collecttime)
-                                "collecttime": {
-                                    "gt": #[collecttime],
-                                    "lte": #[collecttime__endTime]
-                                }
-                                #end
-                                #if($agentStarttime)
-                                "agentStarttime": {
-                                    "gt": #[agentStarttime],
-                                    "lte": #[agentStarttime__endTime]
-                                }
-                                #end
-                                #if($localDateTime)
-                                "localDateTime": {
-                                    "gt": #[localDateTime],
-                                    "lte": #[localDateTime__endTime]
-                                }
-                                #end
+                                
 
                             }
                         }
