@@ -50,6 +50,7 @@ public class SimpleJobFlowTest {
 //        jobFlowScheduleConfig.setScheduleEndDate(TimeUtil.addDateMinitues(new Date(),10));//2分钟后结束
 //        jobFlowScheduleConfig.setPeriod(1000000L);
         jobFlowScheduleConfig.setExecuteOneTime(true);
+        jobFlowScheduleConfig.setExecuteOneTimeSyn(true);
         jobFlowBuilder.setJobFlowScheduleConfig(jobFlowScheduleConfig);
 
         jobFlowBuilder.addJobFlowListener(new JobFlowListener() {
@@ -96,6 +97,7 @@ public class SimpleJobFlowTest {
                 .append(" //import org.frameworkset.tran.jobflow.context.StaticContext; ")
                 .append("[/import]")
                 .append("StaticContext staticContext = nodeTriggerContext.getPreJobFlowStaticContext();")
+                .append("logger.info(\"前序节点执行异常结束，则忽略当前节点执行\");")
                 .append("//前序节点执行异常结束，则忽略当前节点执行\r\n")
                 .append("if(staticContext != null && staticContext.getExecuteException() != null)")
                 .append("    return false;")
@@ -206,11 +208,11 @@ public class SimpleJobFlowTest {
         JobFlow jobFlow = jobFlowBuilder.build();
         jobFlow.start();
 //        
-        jobFlow.stop();
-//
-        jobFlow.pause();
-//        
-        jobFlow.consume();
+//        jobFlow.stop();
+////
+//        jobFlow.pause();
+////        
+//        jobFlow.consume();
 
 
     }

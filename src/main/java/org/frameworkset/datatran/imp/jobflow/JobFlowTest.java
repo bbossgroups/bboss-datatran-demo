@@ -163,6 +163,7 @@ public class JobFlowTest {
                 //shebao_org,person_no, name, cert_type,cert_no,zhs_item  ,zhs_class ,zhs_sub_class,zhs_year  , zhs_level
                 //从流程执行上下文档中获取参数（流程节点，流程子节点所属的复合节点（串行/并行）类似）
                 Object flowParam = context.getJobFlowExecuteContext().getContextData("flowParam");
+//                Object flowParam = context.getJobFlowExecuteContext().getContextData("flowParam","defaultValue");  指定默认值
                 context.addFieldValue("rowNo",count.getCount());
                 count.increament();
 
