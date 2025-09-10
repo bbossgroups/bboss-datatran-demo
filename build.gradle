@@ -150,8 +150,11 @@ configure(allprojects) { project ->
                 [group: 'com.github.housepower', name: 'clickhouse-native-jdbc-shaded', version: "${clickhouse_verion}", transitive: true],
 
         )
+
+        api 'com.opencsv:opencsv:5.12.0'
+        
         api (
-                [group: 'org.apache.kafka', name: 'kafka_2.12', version: "${kafka2x_12}", transitive: true],
+                [group: 'org.apache.kafka', name: 'kafka_2.12', version: kafka2x_12, transitive: true],
         ){
             exclude group: 'log4j', module: 'log4j'
             exclude group: 'org.slf4j', module: 'slf4j-log4j12'
