@@ -1,10 +1,7 @@
 package org.frameworkset.datatran.imp.file;
 
 import com.frameworkset.util.SimpleStringUtil;
-import com.opencsv.*;
-import com.opencsv.exceptions.CsvValidationException;
 import net.schmizz.sshj.sftp.RemoteResourceInfo;
-import org.apache.commons.lang3.StringUtils;
 import org.frameworkset.bulk.*;
 import org.frameworkset.spi.assemble.PropertiesContainer;
 import org.frameworkset.tran.*;
@@ -26,8 +23,8 @@ import org.frameworkset.tran.plugin.custom.output.CustomOutPutContext;
 import org.frameworkset.tran.plugin.custom.output.CustomOutPutV1;
 import org.frameworkset.tran.plugin.custom.output.CustomOutputConfig;
 import org.frameworkset.tran.plugin.file.input.CSVFileInputConfig;
-import org.frameworkset.tran.plugin.file.input.FileInputConfig;
 import org.frameworkset.tran.plugin.metrics.output.ETLMetrics;
+import org.frameworkset.tran.record.FieldMappingManager;
 import org.frameworkset.tran.schedule.CallInterceptor;
 import org.frameworkset.tran.schedule.ImportIncreamentConfig;
 import org.frameworkset.tran.schedule.TaskContext;
@@ -37,9 +34,6 @@ import org.frameworkset.util.beans.ObjectHolder;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
-import java.io.IOException;
-import java.io.StringReader;
-import java.io.StringWriter;
 import java.nio.charset.StandardCharsets;
 import java.sql.Timestamp;
 import java.text.DateFormat;
@@ -67,10 +61,6 @@ public class CSVUserBehaviorJob {
 
     private int maxFilesThreshold;
 
-    private static final CSVParser CSV_PARSER = new CSVParserBuilder()
-            .withSeparator(',')
-            .withQuoteChar('"')
-            .build();
 
 
     private void initFtpConfigParam() {
@@ -128,7 +118,7 @@ public class CSVUserBehaviorJob {
 //        config.setBackupSuccessFileLiveTime( 10 * 60l);
         FtpConfig ftpConfig = new FtpConfig().setFtpIP("172.24.176.18").setFtpPort(22)
                 .setFtpUser("wsl").setFtpPassword("123456").setDownloadWorkThreads(4).setTransferProtocol(FtpConfig.TRANSFER_PROTOCOL_SFTP)
-                .setRemoteFileDir("/mnt/c/sss/sss/21_sss").setSocketTimeout(600000L)
+                .setRemoteFileDir("/mnt/c/xxxx/xxxx/xxxx/数据分析/1000").setSocketTimeout(600000L)
                 .setConnectTimeout(600000L);
         CSVFileConfig csvFileConfig = new CSVFileConfig();
         csvFileConfig.setFtpConfig(ftpConfig);
@@ -164,6 +154,8 @@ public class CSVUserBehaviorJob {
                         }
                     }
                 })
+                .setMaxCellIndexMatchesFailedPolicy(FieldMappingManager.MAX_CELL_INDEX_MATCHES_FAILED_POLICY_IGNORE_RECORD)
+                .setSkipHeaderLines(1)
                 .setSourcePath("c:/data/csv/ai");//指定目录
         config.addConfig(csvFileConfig);
         config.setEnableMeta(true);
@@ -248,6 +240,7 @@ public class CSVUserBehaviorJob {
         csvFileConfig.addCellMapping(13, "RESOLUTION");
         csvFileConfig.addCellMapping(14, "IP");
         csvFileConfig.addCellMapping(15, "USER_AGENT");
+        csvFileConfig.addCellMapping(16, "NOTEXIST");
 
          
         
@@ -343,7 +336,7 @@ public class CSVUserBehaviorJob {
 		//importBuilder.setDateLastValueColumn("EVENT_TIME");//手动指定日期增量查询字段，默认采用上面设置的sql语句中的增量变量名称作为增量查询字段的名称，指定以后就用指定的字段
         //importBuilder.setFromFirst(false);//setFromfirst(false)，如果作业停了，作业重启后从上次截止位置开始采集数据，
         //setFromfirst(true) 如果作业停了，作业重启后，重新开始采集数据
-        importBuilder.setLastValueStorePath("C:/data/cvs/"+JOB_ID+"_csvimport");//todo 推荐绝对路径 记录上次采集的增量字段值的文件路径，作为下次增量（或者重启后）采集数据的起点，不同的任务这个路径要不一样
+        importBuilder.setLastValueStorePath("C:/data/csv/"+JOB_ID+"_csvimport");//todo 推荐绝对路径 记录上次采集的增量字段值的文件路径，作为下次增量（或者重启后）采集数据的起点，不同的任务这个路径要不一样
 //		importBuilder.setLastValueStoreTableName("logs");//记录上次采集的增量字段值的表，可以不指定，采用默认表名increament_tab
         importBuilder.setLastValueType(ImportIncreamentConfig.NUMBER_TYPE);//如果没有指定增量查询字段名称，则需要指定字段类型：ImportIncreamentConfig.NUMBER_TYPE 数字类型
         // 或者ImportIncreamentConfig.TIMESTAMP_TYPE 日期类型
