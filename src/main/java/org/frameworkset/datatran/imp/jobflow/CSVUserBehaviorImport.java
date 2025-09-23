@@ -1,8 +1,9 @@
-package org.frameworkset.datatran.imp.file;
+package org.frameworkset.datatran.imp.jobflow;
 
 import com.frameworkset.util.SimpleStringUtil;
 import net.schmizz.sshj.sftp.RemoteResourceInfo;
 import org.frameworkset.bulk.*;
+import org.frameworkset.datatran.imp.file.UserBehaviorMetric;
 import org.frameworkset.spi.assemble.PropertiesContainer;
 import org.frameworkset.tran.*;
 import org.frameworkset.tran.config.ImportBuilder;
@@ -13,6 +14,7 @@ import org.frameworkset.tran.input.csv.CSVFileConfig;
 import org.frameworkset.tran.input.file.FileConfig;
 import org.frameworkset.tran.input.file.FileFilter;
 import org.frameworkset.tran.input.file.FilterFileInfo;
+import org.frameworkset.tran.jobflow.context.JobFlowNodeExecuteContext;
 import org.frameworkset.tran.metrics.TaskMetrics;
 import org.frameworkset.tran.metrics.entity.KeyMetric;
 import org.frameworkset.tran.metrics.entity.MapData;
@@ -42,9 +44,9 @@ import java.time.OffsetDateTime;
 import java.time.format.DateTimeFormatter;
 import java.util.*;
 
-public class CSVUserBehaviorJob {
+public class CSVUserBehaviorImport {
 
-    private static Logger logger = LoggerFactory.getLogger(CSVUserBehaviorJob.class);
+    private static Logger logger = LoggerFactory.getLogger(CSVUserBehaviorImport.class);
 
     private static final String JOB_ID = "JOB_USER_BEHAVIOR_JOB_ID";
     private static final String JOB_NAME = "JOB_USER_BEHAVIOR_JOB_NAME";
@@ -78,12 +80,9 @@ public class CSVUserBehaviorJob {
         maxFilesThreshold = propertiesContainer.getIntSystemEnvProperty(job+".maxFilesThreshold", 10);
     }
 
-    public static void main(String[] args) {
-        CSVUserBehaviorJob userBehaviorJob = new CSVUserBehaviorJob();
-        userBehaviorJob.run();
-    }
-    public void run() {
-        logger.info("UserBehaviorJob started.");
+ 
+    public ImportBuilder buildImportBuilder(JobFlowNodeExecuteContext jobFlowNodeExecuteContext) {
+        logger.info("build UserBehaviorJob started.");
         //构建BulkProcessor批处理组件，一般作为单实例使用，单实例多线程安全，可放心使用
         ObjectHolder<CommonBulkProcessor> objectHolder = new ObjectHolder<CommonBulkProcessor>();
         this.initFtpConfigParam();
@@ -94,7 +93,8 @@ public class CSVUserBehaviorJob {
         //设置强制刷新检测空闲时间间隔，单位：毫秒，在空闲flushInterval后，还没有数据到来，强制将已经入列的数据进行存储操作，默认8秒,为0时关闭本机制
         importBuilder.setFlushInterval(10000l);
         CSVFileInputConfig config = new CSVFileInputConfig();
-        config.setScanNewFileInterval(10000L);//每隔半1分钟扫描ftp目录下是否有最新ftp文件信息，采集完成或已经下载过的文件不会再下载采集
+        config.setDisableScanNewFiles( true);
+        config.setDisableScanNewFilesCheckpoint(false);
         config.setMaxFilesThreshold(maxFilesThreshold);
         /**
          * 备份采集完成文件
@@ -116,12 +116,8 @@ public class CSVUserBehaviorJob {
          * 默认保留7天
          */
 //        config.setBackupSuccessFileLiveTime( 10 * 60l);
-        FtpConfig ftpConfig = new FtpConfig().setFtpIP("172.24.176.18").setFtpPort(22)
-                .setFtpUser("wsl").setFtpPassword("123456").setDownloadWorkThreads(4).setTransferProtocol(FtpConfig.TRANSFER_PROTOCOL_SFTP)
-                .setRemoteFileDir("/mnt/c/xxx/公司项目/xxxx/数据分析/1000").setSocketTimeout(600000L)
-                .setConnectTimeout(600000L);
+       
         CSVFileConfig csvFileConfig = new CSVFileConfig();
-        csvFileConfig.setFtpConfig(ftpConfig);
         csvFileConfig.setFileFilter(new FileFilter() {//指定ftp文件筛选规则
                     @Override
                     public boolean accept(FilterFileInfo fileInfo, //Ftp文件名称
@@ -156,7 +152,7 @@ public class CSVUserBehaviorJob {
                 })
                 .setMaxCellIndexMatchesFailedPolicy(FieldMappingManager.MAX_CELL_INDEX_MATCHES_FAILED_POLICY_WARN_USENULLVALUE)
                 .setSkipHeaderLines(1)
-                .setSourcePath("c:/data/csv/ai");//指定目录
+                .setSourcePath((String)jobFlowNodeExecuteContext.getJobFlowContextData("csvfilepath"));//从流程执行上下文中获取csv文件目录
         config.addConfig(csvFileConfig);
         config.setEnableMeta(true);
 //		config.setJsondata(true);
@@ -240,7 +236,6 @@ public class CSVUserBehaviorJob {
         csvFileConfig.addCellMapping(13, "RESOLUTION");
         csvFileConfig.addCellMapping(14, "IP");
         csvFileConfig.addCellMapping(15, "USER_AGENT");
-        csvFileConfig.addCellMapping(16, "NOTEXIST");
 
          
         
@@ -320,7 +315,6 @@ public class CSVUserBehaviorJob {
 //                context.addFieldValue("USER_AGENT", messageArr[15]);
                 String filePath = (String)context.getMetaValue("filePath");
                 context.addFieldValue("filePath",filePath);
-                context.addFieldValue("ftpDir",context.getMetaValue("ftpDir"));
                 context.addIgnoreFieldMapping("@message");
                 context.addIgnoreFieldMapping("@timestamp");
                 context.addIgnoreFieldMapping("@filemeta");
@@ -350,12 +344,9 @@ public class CSVUserBehaviorJob {
         importBuilder.setThreadCount(threadCount);//设置批量导入线程池工作线程数量 10
         importBuilder.setContinueOnError(true);//任务出现异常，是否继续执行作业：true（默认值）继续执行 false 中断作业执行
         importBuilder.setPrintTaskLog(true); //可选项，true 打印任务执行日志（耗时，处理记录数） false 不打印，默认值false
-        /**
-         * 执行数据库表数据导入es操作
-         */
-        DataStream dataStream = importBuilder.builder();
-        dataStream.execute();//执行导入操作
-        logger.info("UserBehaviorJob end");
+         
+        logger.info("build UserBehaviorJob end");
+        return importBuilder;
     }
 
     private void setBulkAction(ObjectHolder<CommonBulkProcessor> objectHolder) {
