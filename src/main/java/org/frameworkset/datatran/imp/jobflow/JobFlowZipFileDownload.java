@@ -15,20 +15,14 @@ package org.frameworkset.datatran.imp.jobflow;
  * limitations under the License.
  */
 
-import com.frameworkset.util.SimpleStringUtil;
-import org.frameworkset.tran.config.ImportBuilder;
 import org.frameworkset.tran.ftp.FtpConfig;
-import org.frameworkset.tran.input.file.FilterFileInfo;
 import org.frameworkset.tran.jobflow.*;
 import org.frameworkset.tran.jobflow.builder.DatatranJobFlowNodeBuilder;
-import org.frameworkset.tran.jobflow.builder.ImportBuilderFunction;
 import org.frameworkset.tran.jobflow.builder.JobFlowBuilder;
-import org.frameworkset.tran.jobflow.context.JobFlowExecuteContext;
 import org.frameworkset.tran.jobflow.context.JobFlowNodeExecuteContext;
-import org.frameworkset.tran.jobflow.listener.JobFlowListener;
-import org.frameworkset.tran.jobflow.listener.JobFlowNodeListener;
-import org.frameworkset.tran.jobflow.scan.JobFileFilter;
+import org.frameworkset.tran.jobflow.context.NodeTriggerContext;
 import org.frameworkset.tran.jobflow.schedule.JobFlowScheduleConfig;
+import org.frameworkset.tran.jobflow.script.TriggerScriptAPI;
 import org.frameworkset.util.TimeUtil;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
@@ -96,9 +90,13 @@ public class JobFlowZipFileDownload {
              */
             @Override
             public void recordAfterDownload(DownloadFileMetrics downloadFileMetrics, JobFlowNodeExecuteContext jobFlowNodeExecuteContext, Throwable exception) {
-                //如果文件成功，则记录下载信息
-                if(exception == null)
-                    downloadedFileRecorder.put(downloadFileMetrics.getRemoteFilePath(),o);
+                //如果文件下载解压成功，则记录下载信息
+                if(exception == null) {
+                    //获取从当前压缩文件中解压的文件数量并判断是否大于0，则将解压文件数量保存到流程上下文数据中，用于作为数据采集作业节点的触发条件（只有当前解压文件数量大于0时，才触发下一个任务节点）
+                    if(downloadFileMetrics.getFiles() > 0)
+                        jobFlowNodeExecuteContext.addJobFlowContextData("unzipFiles",downloadFileMetrics.getFiles());
+                    downloadedFileRecorder.put(downloadFileMetrics.getRemoteFilePath(), o);
+                }
             }
         });
         /**
@@ -107,7 +105,7 @@ public class JobFlowZipFileDownload {
         jobFlowNodeBuilder.setBuildDownloadConfigFunction(jobFlowNodeExecuteContext -> {
             FtpConfig ftpConfig = new FtpConfig().setFtpIP("172.24.176.18").setFtpPort(22)
                     .setFtpUser("wsl").setFtpPassword("123456").setDownloadWorkThreads(4).setTransferProtocol(FtpConfig.TRANSFER_PROTOCOL_SFTP)
-                    .setRemoteFileDir("/mnt/c/xxx/公司项目/xxxx/数据分析/zip").setSocketTimeout(600000L)
+                    .setRemoteFileDir("/mnt/c/xxxx/公司项目/xxxx/数据分析/zip").setSocketTimeout(600000L)
                     .setConnectTimeout(600000L)
                     .setUnzip(true)
                     .setUnzipDir("c:/data/unzipfile")//解压目录
@@ -140,12 +138,28 @@ public class JobFlowZipFileDownload {
         
 
         /**
-         * 4.1设置作业构建函数
+         * 4.1设置数据采集作业构建函数
          */
         datatranJobFlowNodeBuilder.setImportBuilderFunction(jobFlowNodeExecuteContext -> {
             CSVUserBehaviorImport csvUserBehaviorImport = new CSVUserBehaviorImport();
             return csvUserBehaviorImport.buildImportBuilder(jobFlowNodeExecuteContext);
         });
+        //4.2 为数据采集作业任务节点添加触发器，当上个节点解压文件数量大于0时，则触发数据采集作业，否则不触发
+        NodeTrigger parrelnewNodeTrigger = new NodeTrigger();
+        parrelnewNodeTrigger.setTriggerScriptAPI(new TriggerScriptAPI() {
+            @Override
+            public boolean needTrigger(NodeTriggerContext nodeTriggerContext) throws Exception {
+                Object unzipFiles = nodeTriggerContext.getJobFlowExecuteContext().getContextData("unzipFiles");
+                //当上个节点解压文件数量大于0时，则触发数据采集作业，否则不触发
+                if(unzipFiles == null || ((Integer)unzipFiles) <= 0){
+                    return false;
+                }
+                else {
+                    return true;
+                }
+            }
+        });
+        datatranJobFlowNodeBuilder.setNodeTrigger(parrelnewNodeTrigger);
         /**
          * 5 将第二个节点添加到工作流构建器
          */
