@@ -80,8 +80,8 @@ public class JobFlowOSSFileLifecycleClean {
             downloadfileConfig
                     .setOssFileInputConfig(ossFileInputConfig)
                     .setScanChild(true)
-                    .setFileLiveTime(1 * 24 * 60 * 60 * 1000L)
-                    .setLifecycle(true)
+                    .setFileLiveTime(1 * 24 * 60 * 60 * 1000L)//设置归档文件保存时间，超过7天则归档
+                    .setLifecycle(true)//设置归档标记为true
                     .setFileNameRegular(".*\\.zip")//可以指定归档的文件名称正则，匹配的文件才会被归档
                     ;
             return downloadfileConfig;
