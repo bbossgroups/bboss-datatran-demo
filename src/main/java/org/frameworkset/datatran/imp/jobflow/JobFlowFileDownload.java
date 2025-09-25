@@ -88,7 +88,7 @@ public class JobFlowFileDownload {
         RemoteFileInputJobFlowNodeBuilder jobFlowNodeBuilder = new RemoteFileInputJobFlowNodeBuilder() ;
         FtpConfig ftpConfig = new FtpConfig().setFtpIP("172.24.176.18").setFtpPort(22)
                 .setFtpUser("wsl").setFtpPassword("123456").setDownloadWorkThreads(4).setTransferProtocol(FtpConfig.TRANSFER_PROTOCOL_SFTP)
-                .setRemoteFileDir("/mnt/c/xxx/公司项目/xxxx/数据分析/1000").setSocketTimeout(600000L)
+                .setRemoteFileDir("/mnt/c/data/1000").setSocketTimeout(600000L)
                 .setConnectTimeout(600000L).setSourcePath("c:/data/csvlocal");
         DownloadfileConfig downloadfileConfig = new DownloadfileConfig();
         downloadfileConfig

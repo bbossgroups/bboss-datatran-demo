@@ -105,7 +105,7 @@ public class JobFlowZipFileDownload {
         jobFlowNodeBuilder.setBuildDownloadConfigFunction(jobFlowNodeExecuteContext -> {
             FtpConfig ftpConfig = new FtpConfig().setFtpIP("172.24.176.18").setFtpPort(22)
                     .setFtpUser("wsl").setFtpPassword("123456").setDownloadWorkThreads(4).setTransferProtocol(FtpConfig.TRANSFER_PROTOCOL_SFTP)
-                    .setRemoteFileDir("/mnt/c/xxxx/公司项目/xxxx/数据分析/zip").setSocketTimeout(600000L)
+                    .setRemoteFileDir("/mnt/c/data/1000").setSocketTimeout(600000L)
                     .setConnectTimeout(600000L)
                     .setUnzip(true)
                     .setUnzipDir("c:/data/unzipfile")//解压目录
