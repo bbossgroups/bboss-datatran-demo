@@ -16,6 +16,7 @@ package org.frameworkset.datatran.imp.jobflow;
  */
 
 import org.frameworkset.tran.ftp.FtpConfig;
+import org.frameworkset.tran.input.s3.OSSFileInputConfig;
 import org.frameworkset.tran.jobflow.DownloadfileConfig;
 import org.frameworkset.tran.jobflow.JobFlow;
 import org.frameworkset.tran.jobflow.RemoteFileInputJobFlowNodeBuilder;
@@ -32,7 +33,7 @@ import java.util.Date;
  * @author biaoping.yin
  * @Date 2025/9/21
  */
-public class JobFlowFileLifecycleClean {
+public class JobFlowOSSFileLifecycleClean {
     private static Logger logger = LoggerFactory.getLogger(SimpleJobFlowTest.class);
     public static void main(String[] args){
         /**
@@ -64,17 +65,24 @@ public class JobFlowFileLifecycleClean {
          */
         jobFlowNodeBuilder.setBuildDownloadConfigFunction(jobFlowNodeExecuteContext -> {
             //指定ftp服务器参数以及归档的远程目录
-            FtpConfig ftpConfig = new FtpConfig().setFtpIP("172.24.176.18").setFtpPort(22)
-                    .setFtpUser("wsl").setFtpPassword("123456").setDownloadWorkThreads(4).setTransferProtocol(FtpConfig.TRANSFER_PROTOCOL_SFTP)
-                    .setRemoteFileDir("/mnt/c/data/1000").setSocketTimeout(600000L)
-                    .setConnectTimeout(600000L); 
+            OSSFileInputConfig ossFileInputConfig = new OSSFileInputConfig()
+                    .setName("miniotest")
+
+                    .setAccessKeyId("N3XNZFqSZfpthypuoOzL")
+                    .setSecretAccesskey("2hkDSEll1Z7oYVfhr0uLEam7r0M4UWT8akEBqO97").setRegion("east-r-a1")
+                    .setEndpoint("http://172.24.176.18:9000")//下载文件成功完成后，删除对应的ftp文件，false 不删除 true 删除
+                    .setDownloadWorkThreads(4)
+                    .setBucket("zipfile")
+                    .setSocketTimeout(600000L)
+                    .setConnectTimeout(600000L)
+                    ;//下载目录
             DownloadfileConfig downloadfileConfig = new DownloadfileConfig();
             downloadfileConfig
-                    .setFtpConfig(ftpConfig)
+                    .setOssFileInputConfig(ossFileInputConfig)
                     .setScanChild(true)
-                    .setFileLiveTime(7 * 24 * 60 * 60 * 1000L)
+                    .setFileLiveTime(1 * 24 * 60 * 60 * 1000L)
                     .setLifecycle(true)
-                    .setFileNameRegular(".*\\.csv")//可以指定归档的文件名称正则，匹配的文件才会被归档
+                    .setFileNameRegular(".*\\.zip")//可以指定归档的文件名称正则，匹配的文件才会被归档
                     ;
             return downloadfileConfig;
         });     

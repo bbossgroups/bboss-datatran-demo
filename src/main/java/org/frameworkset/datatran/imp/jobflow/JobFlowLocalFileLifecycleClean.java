@@ -28,11 +28,11 @@ import org.slf4j.LoggerFactory;
 import java.util.Date;
 
 /**
- * ftp远程文件归档测试
+ * 本地文件归档流程
  * @author biaoping.yin
  * @Date 2025/9/21
  */
-public class JobFlowFileLifecycleClean {
+public class JobFlowLocalFileLifecycleClean {
     private static Logger logger = LoggerFactory.getLogger(SimpleJobFlowTest.class);
     public static void main(String[] args){
         /**
@@ -64,13 +64,10 @@ public class JobFlowFileLifecycleClean {
          */
         jobFlowNodeBuilder.setBuildDownloadConfigFunction(jobFlowNodeExecuteContext -> {
             //指定ftp服务器参数以及归档的远程目录
-            FtpConfig ftpConfig = new FtpConfig().setFtpIP("172.24.176.18").setFtpPort(22)
-                    .setFtpUser("wsl").setFtpPassword("123456").setDownloadWorkThreads(4).setTransferProtocol(FtpConfig.TRANSFER_PROTOCOL_SFTP)
-                    .setRemoteFileDir("/mnt/c/data/1000").setSocketTimeout(600000L)
-                    .setConnectTimeout(600000L); 
+         
             DownloadfileConfig downloadfileConfig = new DownloadfileConfig();
             downloadfileConfig
-                    .setFtpConfig(ftpConfig)
+                    .setSourcePath("c:/data/1000")
                     .setScanChild(true)
                     .setFileLiveTime(7 * 24 * 60 * 60 * 1000L)
                     .setLifecycle(true)
