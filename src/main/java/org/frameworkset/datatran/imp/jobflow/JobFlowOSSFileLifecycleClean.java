@@ -61,21 +61,20 @@ public class JobFlowOSSFileLifecycleClean {
         RemoteFileInputJobFlowNodeBuilder jobFlowNodeBuilder = new RemoteFileInputJobFlowNodeBuilder() ;
         
         /**
-         * 2.2 设置Zip下载远程参数
+         * 2.2 设置OSS文件归档远程参数
          */
         jobFlowNodeBuilder.setBuildDownloadConfigFunction(jobFlowNodeExecuteContext -> {
-            //指定ftp服务器参数以及归档的远程目录
+            //指定OSS服务器参数以及归档的远程目录
             OSSFileInputConfig ossFileInputConfig = new OSSFileInputConfig()
                     .setName("miniotest")
-
                     .setAccessKeyId("N3XNZFqSZfpthypuoOzL")
                     .setSecretAccesskey("2hkDSEll1Z7oYVfhr0uLEam7r0M4UWT8akEBqO97").setRegion("east-r-a1")
-                    .setEndpoint("http://172.24.176.18:9000")//下载文件成功完成后，删除对应的ftp文件，false 不删除 true 删除
+                    .setEndpoint("http://172.24.176.18:9000")
                     .setDownloadWorkThreads(4)
-                    .setBucket("zipfile")
+                    .setBucket("zipfile")//指定需归档的OSS Bucket目录，定期归档其下面的过期文件
                     .setSocketTimeout(600000L)
                     .setConnectTimeout(600000L)
-                    ;//下载目录
+                    ;
             DownloadfileConfig downloadfileConfig = new DownloadfileConfig();
             downloadfileConfig
                     .setOssFileInputConfig(ossFileInputConfig)
@@ -85,10 +84,7 @@ public class JobFlowOSSFileLifecycleClean {
                     .setFileNameRegular(".*\\.zip")//可以指定归档的文件名称正则，匹配的文件才会被归档
                     ;
             return downloadfileConfig;
-        });     
-
-        
-
+        });    
 
         /**
          * 3.将第一个节点添加到工作流构建器

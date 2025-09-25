@@ -60,13 +60,15 @@ public class JobFlowFileLifecycleClean {
         RemoteFileInputJobFlowNodeBuilder jobFlowNodeBuilder = new RemoteFileInputJobFlowNodeBuilder() ;
         
         /**
-         * 2.2 设置Zip下载远程参数
+         * 2.2FTP文件归档远程参数
          */
         jobFlowNodeBuilder.setBuildDownloadConfigFunction(jobFlowNodeExecuteContext -> {
             //指定ftp服务器参数以及归档的远程目录
             FtpConfig ftpConfig = new FtpConfig().setFtpIP("172.24.176.18").setFtpPort(22)
-                    .setFtpUser("wsl").setFtpPassword("123456").setDownloadWorkThreads(4).setTransferProtocol(FtpConfig.TRANSFER_PROTOCOL_SFTP)
-                    .setRemoteFileDir("/mnt/c/data/1000").setSocketTimeout(600000L)
+                    .setFtpUser("wsl").setFtpPassword("123456").setDownloadWorkThreads(4)
+                    .setTransferProtocol(FtpConfig.TRANSFER_PROTOCOL_SFTP)
+                    .setRemoteFileDir("/mnt/c/data/1000")//指定需归档的FTP远程文件目录，定期归档其下面的过期文件
+                    .setSocketTimeout(600000L)
                     .setConnectTimeout(600000L); 
             DownloadfileConfig downloadfileConfig = new DownloadfileConfig();
             downloadfileConfig

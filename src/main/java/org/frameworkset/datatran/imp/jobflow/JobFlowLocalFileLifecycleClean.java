@@ -55,16 +55,15 @@ public class JobFlowLocalFileLifecycleClean {
 
 
         /**
-         * 2.构建第一个任务节点：远程文件归档节点
+         * 2.构建第一个任务节点：本地文件归档节点
          */
         RemoteFileInputJobFlowNodeBuilder jobFlowNodeBuilder = new RemoteFileInputJobFlowNodeBuilder() ;
         
         /**
-         * 2.2 设置Zip下载远程参数
+         * 2.2 设置本地文件归档参数
          */
         jobFlowNodeBuilder.setBuildDownloadConfigFunction(jobFlowNodeExecuteContext -> {
-            //指定ftp服务器参数以及归档的远程目录
-         
+            //指定本地文件有效期和对应的目录         
             DownloadfileConfig downloadfileConfig = new DownloadfileConfig();
             downloadfileConfig
                     .setSourcePath("c:/data/1000")
@@ -75,9 +74,6 @@ public class JobFlowLocalFileLifecycleClean {
                     ;
             return downloadfileConfig;
         });     
-
-        
-
 
         /**
          * 3.将第一个节点添加到工作流构建器
