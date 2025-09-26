@@ -94,7 +94,6 @@ public class JobFlowFileDownload {
         downloadfileConfig
                 .setFtpConfig(ftpConfig)                
                 .setScanChild(true)
-                .setFileNameRegular(".*\\.txt")
                 .setJobFileFilter(new JobFileFilter() {
 
                     /**
