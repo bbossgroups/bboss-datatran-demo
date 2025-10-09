@@ -42,12 +42,12 @@ import java.time.OffsetDateTime;
 import java.time.format.DateTimeFormatter;
 import java.util.*;
 
-public class CSVUserBehaviorJob {
+public class CSVHistoryUserBehaviorJob {
 
-    private static Logger logger = LoggerFactory.getLogger(CSVUserBehaviorJob.class);
+    private static Logger logger = LoggerFactory.getLogger(CSVHistoryUserBehaviorJob.class);
 
-    private static final String JOB_ID = "JOB_USER_BEHAVIOR_JOB_ID";
-    private static final String JOB_NAME = "JOB_USER_BEHAVIOR_JOB_NAME";
+    private static final String JOB_ID = "CSVHistoryUserBehaviorJob_id";
+    private static final String JOB_NAME = "CSVHistoryUserBehaviorJobName";
 
     private String ftpIp;
     private int ftpPort;
@@ -79,7 +79,7 @@ public class CSVUserBehaviorJob {
     }
 
     public static void main(String[] args) {
-        CSVUserBehaviorJob userBehaviorJob = new CSVUserBehaviorJob();
+        CSVHistoryUserBehaviorJob userBehaviorJob = new CSVHistoryUserBehaviorJob();
         userBehaviorJob.run();
     }
     public void run() {
@@ -121,6 +121,7 @@ public class CSVUserBehaviorJob {
                 .setRemoteFileDir("/mnt/c/data/gd").setSocketTimeout(600000L)
                 .setConnectTimeout(600000L);
         CSVFileConfig csvFileConfig = new CSVFileConfig();
+        csvFileConfig.setCharsetEncode("UTF-8");
         csvFileConfig.setFtpConfig(ftpConfig);
         csvFileConfig.setFileFilter(new FileFilter() {//指定ftp文件筛选规则
                     @Override
@@ -128,7 +129,7 @@ public class CSVUserBehaviorJob {
                                           FileConfig fileConfig) {
                         String name = fileInfo.getFileName();
                         //判断是否采集文件数据，返回true标识采集，false 不采集，business_fans_mobile_20250815_QL.csv
-                        boolean nameMatch = name.startsWith("gio_kd_to_chnl_public_platform") ;
+                        boolean nameMatch = name.startsWith("HKJ_KHCDXW_CHAT_20250921");
                         if(nameMatch){
 
                             /**
@@ -157,6 +158,13 @@ public class CSVUserBehaviorJob {
                 .setMaxCellIndexMatchesFailedPolicy(FieldMappingManager.MAX_CELL_INDEX_MATCHES_FAILED_POLICY_WARN_USENULLVALUE)
                 .setSkipHeaderLines(1)
                 .setSourcePath("c:/data/gddown");//指定目录
+
+        csvFileConfig.addCellMapping(0, "EVENT_KEY");
+        csvFileConfig.addCellMapping(1, "USER");
+        csvFileConfig.addCellMapping(2, "ATTRIBUTES");
+        csvFileConfig.addCellMapping(3, "EVENT_TIME");
+
+
         config.addConfig(csvFileConfig);
         config.setEnableMeta(true);
 //		config.setJsondata(true);
@@ -224,23 +232,6 @@ public class CSVUserBehaviorJob {
         this.setImportEndAction(importBuilder, objectHolder);
         //字段映射
 //        csvFileConfig.setSkipHeaderLines(200000);//跳过200000行数据
-        csvFileConfig.addCellMapping(0, "EVENT_KEY");
-        csvFileConfig.addCellMapping(1, "EVENT_TIME");
-        csvFileConfig.addCellMapping(2, "USER");
-        csvFileConfig.addCellMapping(3, "ATTRIBUTES");
-        csvFileConfig.addCellMapping(4, "REFERRER_DOMAIN");
-        csvFileConfig.addCellMapping(5, "COUNTRY_CODE");
-        csvFileConfig.addCellMapping(6, "COUNTRY_NAME");
-        csvFileConfig.addCellMapping(7, "REGION");
-        csvFileConfig.addCellMapping(8, "CITY");
-        csvFileConfig.addCellMapping(9, "BROWSER_VERSION");
-        csvFileConfig.addCellMapping(10, "OS_VERSION");
-        csvFileConfig.addCellMapping(11, "DEVICE_BRAND");
-        csvFileConfig.addCellMapping(12, "DEVICE_MODEL");
-        csvFileConfig.addCellMapping(13, "RESOLUTION");
-        csvFileConfig.addCellMapping(14, "IP");
-        csvFileConfig.addCellMapping(15, "USER_AGENT");
-        csvFileConfig.addCellMapping(16, "NOTEXIST");
 
          
         
@@ -283,23 +274,23 @@ public class CSVUserBehaviorJob {
                  */
                 // 使用自定义格式化器解析时间字符串
                 String text = context.getStringValue("EVENT_TIME");;
-                DateTimeFormatter formatter = null;
-                DateFormat hourFormateMeta = null;
-                if(text != null && text.length() > 25) {
-                    formatter = DateTimeFormatter.ofPattern("yyyy-MM-dd HH:mm:ss.SSSSSSXXX");
-                    hourFormateMeta = DateFormateMeta.buildDateFormateMeta("yyyy-MM-dd HH:mm:ss.SSSSSS").toDateFormat();
-                } else {
-                    formatter = DateTimeFormatter.ofPattern("yyyy-MM-dd HH:mm:ssXXX");
+                Date now = new Date();
+                Date eventTime = null;
+                if(SimpleStringUtil.isNotEmpty(text)) {
+                    DateFormat hourFormateMeta = null;
+                   
                     hourFormateMeta = DateFormateMeta.buildDateFormateMeta("yyyy-MM-dd HH:mm:ss").toDateFormat();
+                    eventTime = hourFormateMeta.parse(text);
                 }
-                OffsetDateTime dateTime = OffsetDateTime.parse(text, formatter);
-                LocalDateTime localDateTime = dateTime.toLocalDateTime();
-                Date eventTime = hourFormateMeta.parse(Timestamp.valueOf(localDateTime).toString());
+                else{
+                    eventTime = now;
+                }
+      
 //                context.addFieldValue("ACCEPT_TIME", eventTime);
 //                java.util.Date date = java.sql.Timestamp.valueOf(localDateTime);
 //                String eventTime2 = DateFormatUtils.format(date, "yyyy-MM-dd HH:mm:ss");
 //                String now = DateFormatUtils.format(new Date(), "yyyy-MM-dd HH:mm:ss");
-                Date now = new Date();
+                
                 context.addFieldValue("COLLECT_TIME", now);
                 context.addFieldValue("CREATE_TIME", now);
                 context.addFieldValue("UPDATE_TIME", now);

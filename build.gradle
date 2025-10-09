@@ -81,10 +81,9 @@ configure(allprojects) { project ->
 	}
 	if(project.getProperty('skipTest').equals("true"))
 	{
-		compileTestJava.enabled=false
-		processTestResources.enabled=false
-		testClasses.enabled = false
-		test.enabled = false
+        tasks.withType(Test) {
+            enabled = false
+        }
 	}
 
 	sourceSets {
@@ -201,56 +200,89 @@ configure(allprojects) { project ->
 //        api ( [group: 'com.bbossgroups.plugins', name: 'bboss-elasticsearch-rest-bc', version: "${bboss_es_version}", transitive: true])
 		//采用log4j2记录日志
 		api(
-			[group: 'org.apache.logging.log4j', name: 'log4j-api', version: "${log4j2_version}", transitive: false],
-	        [group: 'org.apache.logging.log4j', name: 'log4j-core', version: "${log4j2_version}", transitive: false],        
-			[group: 'org.apache.logging.log4j', name: 'log4j-slf4j-impl', version: "${log4j2_version}", transitive: true],
+			[group: 'org.apache.logging.log4j', name: 'log4j-api', version: log4j2_version, transitive: false],
+	        [group: 'org.apache.logging.log4j', name: 'log4j-core', version: log4j2_version, transitive: false],        
+			[group: 'org.apache.logging.log4j', name: 'log4j-slf4j-impl', version: log4j2_version, transitive: true],
 		)
 		api(
 				[group: 'com.bbossgroups.plugins', name: 'bboss-datatran-jdbc', version: "${bboss_es_version}", transitive: true],
 				[group: 'com.bbossgroups.plugins', name: 'bboss-datatran-fileftp', version: "${bboss_es_version}", transitive: true],
                 [group: 'com.bbossgroups.plugins', name: 'bboss-datatran-milvus', version: "${bboss_es_version}", transitive: true],
-                [group: 'com.bbossgroups.plugins', name: 'bboss-datatran-rocketmq', version: "${bboss_es_version}", transitive: true],
                 [group: 'com.bbossgroups.plugins', name: 'bboss-datatran-binlog', version: "${bboss_es_version}", transitive: true],
 				[group: 'com.bbossgroups', name: 'bboss-schedule', version: "${bboss_version}", transitive: true],
                 [group: 'com.bbossgroups.plugins', name: 'bboss-datatran-kafka2x', version: "${bboss_es_version}", transitive: true],
                 [group: 'com.github.housepower', name: 'clickhouse-native-jdbc-shaded', version: "${clickhouse_verion}", transitive: true],
 
         )
-
-        api 'com.opencsv:opencsv:5.12.0'
-        
         api (
-                [group: 'org.apache.kafka', name: 'kafka_2.12', version: kafka2x_12, transitive: true],
+                [group: 'com.bbossgroups.plugins', name: 'bboss-datatran-rocketmq', version: bboss_es_version, transitive: true],
+        ){
+            exclude group: 'commons-beanutils', module: 'commons-beanutils'
+
+        }
+        api 'com.opencsv:opencsv:5.12.0'
+
+        api (
+                [group: 'org.apache.kafka', name: 'kafka_2.12', version: "${kafka2x}", transitive: true],
         ){
             exclude group: 'log4j', module: 'log4j'
             exclude group: 'org.slf4j', module: 'slf4j-log4j12'
-            exclude group: 'org.slf4j', module: 'slf4j-reload4j'
             exclude group: 'org.apache.zookeeper', module: 'zookeeper'
+            exclude group: 'com.fasterxml.jackson.jaxrs', module: 'jackson-jaxrs-json-provider'
+            exclude group: 'com.fasterxml.jackson.dataformat', module: 'jackson-dataformat-csv'
+            exclude group: 'com.fasterxml.jackson.module', module: 'jackson-module-scala_2.12'
+            exclude group: 'com.fasterxml.jackson.core', module: 'jackson-databind'
+            exclude group: 'com.fasterxml.jackson.datatype', module: 'jackson-datatype-jdk8'
+            exclude group: 'org.xerial.snappy', module: 'snappy-java'
+            exclude group: 'commons-io', module: 'commons-io'
+//            exclude group: 'org.scala-lang', module: 'scala-reflect'
+
         }
+//        api 'org.scala-lang:scala-reflect:2.12.11'
 
         api ([group: 'org.apache.kafka', name: 'kafka-tools', version: "${kafka2x}", transitive: true],){
             exclude group: 'log4j', module: 'log4j'
             exclude group: 'org.slf4j', module: 'slf4j-log4j12'
-            exclude group: 'org.slf4j', module: 'slf4j-reload4j'
             exclude group: 'org.eclipse.jetty', module: 'jetty-server'
 
             exclude group: 'org.eclipse.jetty', module: 'jetty-servlets'
 
             exclude group: 'org.eclipse.jetty', module: 'jetty-servlet'
             exclude group: 'org.glassfish.jersey.containers', module: 'jersey-container-servlet'
+            exclude group: 'org.glassfish.jersey.core', module: 'jersey-common'
+            exclude group: 'org.glassfish.jersey.inject', module: 'jersey-hk2'
+            exclude group: 'com.fasterxml.jackson.jaxrs', module: 'jackson-jaxrs-json-provider'
+            exclude group: 'com.fasterxml.jackson.dataformat', module: 'jackson-dataformat-csv'
+            exclude group: 'com.fasterxml.jackson.module', module: 'jackson-module-scala_2.12'
+            exclude group: 'com.fasterxml.jackson.datatype', module: 'jackson-datatype-jdk8'
+            exclude group: 'com.fasterxml.jackson.core', module: 'jackson-databind'
+            exclude group: 'com.fasterxml.jackson.core', module: 'jackson-annotations'
+            exclude group: 'org.xerial.snappy', module: 'snappy-java'
+            exclude group: 'org.slf4j', module: 'slf4j-reload4j'
+            exclude group: 'com.fasterxml.jackson.core', module: 'jackson-core'
+            exclude group: 'com.fasterxml.jackson.datatype', module: 'jackson-datatype-jsr310'
+//            exclude group: 'org.scala-lang', module: 'scala-reflect'
         }
 
         api ([group: 'org.apache.kafka', name: 'kafka-clients', version: "${kafka2x}", transitive: true],){
             exclude group: 'log4j', module: 'log4j'
             exclude group: 'org.slf4j', module: 'slf4j-log4j12'
-            exclude group: 'org.slf4j', module: 'slf4j-reload4j'
+            exclude group: 'org.xerial.snappy', module: 'snappy-java'
+//            exclude group: 'org.scala-lang', module: 'scala-reflect'
+            exclude group: 'com.fasterxml.jackson.core', module: 'jackson-databind'
         }
 
         api ([group: 'org.apache.kafka', name: 'kafka-streams', version: "${kafka2x}", transitive: true],){
             exclude group: 'log4j', module: 'log4j'
             exclude group: 'org.slf4j', module: 'slf4j-log4j12'
-            exclude group: 'org.slf4j', module: 'slf4j-reload4j'
+            exclude group: 'com.fasterxml.jackson.datatype', module: 'jackson-datatype-jdk8'
+            exclude group: 'org.xerial.snappy', module: 'snappy-java'
+//            exclude group: 'org.scala-lang', module: 'scala-reflect'
+            exclude group: 'com.fasterxml.jackson.core', module: 'jackson-databind'
+            exclude group: 'com.fasterxml.jackson.core', module: 'jackson-annotations'
+
         }
+        api group: 'org.xerial.snappy', name: 'snappy-java', version: '1.1.10.7'
 		api 'org.postgresql:postgresql:42.3.3'
 //		api 'org.apache-extras.beanshell:bsh:2.0b6'
 		api 'org.xerial:sqlite-jdbc:3.47.1.0'
@@ -285,7 +317,15 @@ configure(allprojects) { project ->
         api "software.amazon.awssdk:s3:${s3version}"
         api "software.amazon.awssdk:auth:${s3version}"
         api "software.amazon.awssdk:regions:${s3version}"
-        api "software.amazon.awssdk:apache-client:${s3version}"
+        api  (
+                [group: 'software.amazon.awssdk', name: 'apache-client', version: s3version, transitive: true],
+
+        ){
+//            exclude group: 'org.apache.groovy', module: 'groovy-testng'
+            exclude group: 'org.apache.httpcomponents', module: 'httpco'
+           
+
+        }
 	}
 
 
