@@ -197,7 +197,7 @@ configure(allprojects) { project ->
     dependencies {
 		testImplementation 'junit:junit:4.12'
         //兼容velocity 1.7版本，导入向后兼容包，需排除velocity2.5版本
-//        api ( [group: 'com.bbossgroups.plugins', name: 'bboss-elasticsearch-rest-bc', version: "${bboss_es_version}", transitive: true])
+//        api ( [group: 'com.bbossgroups.plugins', name: 'bboss-elasticsearch-rest-bc', version: bboss_es_version, transitive: true])
 		//采用log4j2记录日志
 		api(
 			[group: 'org.apache.logging.log4j', name: 'log4j-api', version: log4j2_version, transitive: false],
@@ -205,12 +205,12 @@ configure(allprojects) { project ->
 			[group: 'org.apache.logging.log4j', name: 'log4j-slf4j-impl', version: log4j2_version, transitive: true],
 		)
 		api(
-				[group: 'com.bbossgroups.plugins', name: 'bboss-datatran-jdbc', version: "${bboss_es_version}", transitive: true],
-				[group: 'com.bbossgroups.plugins', name: 'bboss-datatran-fileftp', version: "${bboss_es_version}", transitive: true],
-                [group: 'com.bbossgroups.plugins', name: 'bboss-datatran-milvus', version: "${bboss_es_version}", transitive: true],
-                [group: 'com.bbossgroups.plugins', name: 'bboss-datatran-binlog', version: "${bboss_es_version}", transitive: true],
+				[group: 'com.bbossgroups.plugins', name: 'bboss-datatran-jdbc', version: bboss_es_version, transitive: true],
+				[group: 'com.bbossgroups.plugins', name: 'bboss-datatran-fileftp', version: bboss_es_version, transitive: true],
+                [group: 'com.bbossgroups.plugins', name: 'bboss-datatran-milvus', version: bboss_es_version, transitive: true],
+                [group: 'com.bbossgroups.plugins', name: 'bboss-datatran-binlog', version: bboss_es_version, transitive: true],
 				[group: 'com.bbossgroups', name: 'bboss-schedule', version: "${bboss_version}", transitive: true],
-                [group: 'com.bbossgroups.plugins', name: 'bboss-datatran-kafka2x', version: "${bboss_es_version}", transitive: true],
+                [group: 'com.bbossgroups.plugins', name: 'bboss-datatran-kafka2x', version: bboss_es_version, transitive: true],
                 [group: 'com.github.housepower', name: 'clickhouse-native-jdbc-shaded', version: "${clickhouse_verion}", transitive: true],
 
         )
