@@ -16,6 +16,7 @@ package org.frameworkset.datatran.imp.jobflow;
  */
 
 import org.frameworkset.tran.ftp.FtpConfig;
+import org.frameworkset.tran.input.zipfile.ZipFilePasswordFunction;
 import org.frameworkset.tran.jobflow.*;
 import org.frameworkset.tran.jobflow.builder.DatatranJobFlowNodeBuilder;
 import org.frameworkset.tran.jobflow.builder.JobFlowBuilder;
@@ -107,10 +108,24 @@ public class JobFlowZipFileDownload {
                     .setFtpUser("wsl").setFtpPassword("123456").setDownloadWorkThreads(4).setTransferProtocol(FtpConfig.TRANSFER_PROTOCOL_SFTP)
                     .setRemoteFileDir("/mnt/c/data/1000").setSocketTimeout(600000L)
                     .setConnectTimeout(600000L)
+                    .setSourcePath("c:/data/zipfile")//zip文件下载目录
                     .setUnzip(true)
-                    .setUnzipDir("c:/data/unzipfile")//解压目录
-                    .setZipFilePassward("123456").setDeleteZipFileAfterUnzip(false)
-                    .setSourcePath("c:/data/zipfile");//下载目录
+                    .setUnzipDir("c:/data/unzipfile")//zip文件解压目录
+//                    .setZipFilePassward("123456")
+                    .setZipFilePasswordFunction(new ZipFilePasswordFunction() {
+                        /**
+                         * 根据zip文件路径获取密码
+                         * @param jobFlowNodeExecuteContext 流程节点执行上下文对象
+                         * @param remoteFile 远程zip文件路径
+                         * @param localFilePath 本地zip文件路径
+                         * @return
+                         */
+                        @Override
+                        public String getZipFilePassword(JobFlowNodeExecuteContext jobFlowNodeExecuteContext, String remoteFile, String localFilePath) {
+                            return "123456";
+                        }
+                    })
+                    .setDeleteZipFileAfterUnzip(false);
             //向后续数据采集作业传递数据文件存放目录
             jobFlowNodeExecuteContext.addJobFlowContextData("csvfilepath",ftpConfig.getUnzipDir());
             DownloadfileConfig downloadfileConfig = new DownloadfileConfig();
