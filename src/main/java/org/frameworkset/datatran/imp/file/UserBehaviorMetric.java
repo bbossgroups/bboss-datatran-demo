@@ -78,7 +78,6 @@ public class UserBehaviorMetric extends TimeMetric {
 			String searchWordsVar = (String) record.getData("searchWords_var");
 			if(qryKdMsg == null) {
 				qryKdMsg = searchWordsVar;
-//				logger.info("用户搜索宽带相关记录：" + qryKdMsg);
 			} else {
 				if(qryKdMsg.contains(searchWordsVar)) {
 					return;
@@ -89,7 +88,6 @@ public class UserBehaviorMetric extends TimeMetric {
 			String xyScene = (String) record.getData("XY_SCENE");
 			if(qryKdMsg == null) {
 				qryKdMsg = xyScene;
-//				logger.info("用户搜索宽带相关记录：" + qryKdMsg);
 			} else {
 				if(qryKdMsg.contains(xyScene)) {
 					return;

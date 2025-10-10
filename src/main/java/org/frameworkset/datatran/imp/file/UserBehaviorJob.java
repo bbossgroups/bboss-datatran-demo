@@ -141,8 +141,8 @@ public class UserBehaviorJob {
                     public boolean accept(FilterFileInfo fileInfo, //Ftp文件名称
                                           FileConfig fileConfig) {
                         String name = fileInfo.getFileName();
-                        //判断是否采集文件数据，返回true标识采集，false 不采集，business_fans_mobile_20250815_QL.csv
-                        boolean nameMatch = name.startsWith("gio_kd_to_chnl_public_platform");
+                        //判断是否采集文件数据，返回true标识采集，false 不采集，xxxxx.csv
+                        boolean nameMatch = name.startsWith("xxxxx");
                         if(nameMatch){
                             
                             /**
@@ -241,7 +241,6 @@ public class UserBehaviorJob {
                     return;
                 }
 
-                //$page,2025-07-22 16:25:11.581000+08:00,5e53ff48-8d30-43fe-aa7a-1edcc771b46e,"{'$path': '/ech/h5/kd-gift/index.html#/', '$title': '移动宽带报装', '$query': 'channelId=P00000109981&yx=1341974001&DrainageChannel=JTAPPPLUSZHJTBAN&WT.ac_id=kdxz_190604_O_JTAPPPLUSZHJTBAN&recoempltel=OPRCITY2010280004'}",,CN,中国,广东,广州,Chrome Mobile WebView 138.0.7204,Android 12,Vivo,Vivo V2055A,800*360,14.19.193.210,"Mozilla/5.0 (Linux; Android 12; V2055A Build/SP1A.210812.003; wv) AppleWebKit/537.36 (KHTML, like Gecko) Version/4.0 Chrome/138.0.7204.157 Mobile Safari/537.36 leadeon/11.9.5/CMCCIT"
 //                String[] messageArr = message.split(",");
 //                String[] messageArr = CSV_PARSER.parseLine(message);
                 // 替换原 CSV_PARSER 使用方式
@@ -276,7 +275,7 @@ public class UserBehaviorJob {
                     return;
                 }
                 String eventKey = messageArr[0];
-                if("xcxsearchEventClick".equals(eventKey)) { //小程序搜索，号码需要特殊处理
+                if("xcxsearchEventClick".equals(eventKey)) { //小 
                     mobile = new String(Base64.getDecoder().decode(mobile), StandardCharsets.UTF_8);
 //                    AES aes = SecureUtil.aes(aesKey.getBytes(StandardCharsets.UTF_8));
 //                    mobile = Base64.getEncoder().encodeToString(aes.encrypt(mobile));
@@ -286,10 +285,7 @@ public class UserBehaviorJob {
 //                    context.setDrop(true);
 //                    return;
 //                }
-                /**
-                 * EVENT_KEY,EVENT_TIME,USER,ATTRIBUTES,REFERRER_DOMAIN,COUNTRY_CODE,COUNTRY_NAME,REGION,CITY,BROWSER_VERSION,OS_VERSION,DEVICE_BRAND,
-                 * DEVICE_MODEL,RESOLUTION,IP,USER_AGENT
-                 */
+                
                 // 使用自定义格式化器解析时间字符串
                 String text = messageArr[1];
                 DateTimeFormatter formatter = null;
