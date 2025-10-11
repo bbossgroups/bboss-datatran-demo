@@ -76,6 +76,7 @@ configure(allprojects) { project ->
             url "https://maven.aliyun.com/repository/public"
         }
 		mavenCentral()
+ 
 
 
 	}

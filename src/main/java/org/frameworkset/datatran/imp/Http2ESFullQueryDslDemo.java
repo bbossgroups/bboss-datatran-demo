@@ -16,9 +16,10 @@ package org.frameworkset.datatran.imp;
  */
 
 import com.frameworkset.util.SimpleStringUtil;
-import org.apache.http.HttpEntity;
-import org.apache.http.HttpResponse;
-import org.apache.http.util.EntityUtils;
+import org.apache.hc.core5.http.ClassicHttpResponse;
+import org.apache.hc.core5.http.HttpEntity;
+import org.apache.hc.core5.http.HttpResponse;
+import org.apache.hc.core5.http.io.entity.EntityUtils;
 import org.frameworkset.tran.DataRefactor;
 import org.frameworkset.tran.DataStream;
 import org.frameworkset.tran.ExportResultHandler;
@@ -83,7 +84,7 @@ public class Http2ESFullQueryDslDemo {
 				.setHttpResultParser(new HttpResultParser<Map>() {
 					@Override
 					public void parserHttpResult(HttpResult<Map> httpResult, HttpResultParserContext httpResultParserContext) throws Exception{
-						HttpResponse httpResponse = httpResult.getResponse();
+                        ClassicHttpResponse httpResponse = httpResult.getResponse();
 						HttpEntity entity = httpResponse.getEntity();
 						if(entity == null)
 							return;
