@@ -41,7 +41,11 @@ public class LoginModuleMetric extends TimeMetric {
     }
 
     @Override
-    public void incr(MapData data) {
+    public void incr(MapData firstData) {
+        CommonRecord data = (CommonRecord) firstData.getData();
+        //获取用于指标计算处理等的临时数据到记录，不会对临时数据进行持久化处理，
+        String name = (String)data.getTempData("name");
+        
         count ++;
     }
 

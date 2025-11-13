@@ -36,7 +36,7 @@ import java.util.concurrent.ConcurrentHashMap;
  * @author biaoping.yin
  * @Date 2025/9/21
  */
-public class JobFlowZipFileDownload {
+public class JobFlowTxtZipFileDownload {
     private static Logger logger = LoggerFactory.getLogger(SimpleJobFlowTest.class);
     public static void main(String[] args){
         /**
@@ -123,7 +123,7 @@ public class JobFlowZipFileDownload {
                          */
                         @Override
                         public String getZipFilePassword(JobFlowNodeExecuteContext jobFlowNodeExecuteContext, String remoteFile, String localFilePath) {
-                            return "123456";
+                            return "behavior_event_02_20251014143000.zip";
                         }
                     })
                     .setDeleteZipFileAfterUnzip(false);
@@ -133,7 +133,7 @@ public class JobFlowZipFileDownload {
             downloadfileConfig
                     .setFtpConfig(ftpConfig)
                     .setScanChild(true)
-                    .setFileNameRegular("d.*\\.zip");
+                    .setFileNameRegular("behavior_event_02_20251014143000\\.zip");
             return downloadfileConfig;
         });
         
@@ -157,7 +157,7 @@ public class JobFlowZipFileDownload {
          * 4.1设置数据采集作业构建函数
          */
         datatranJobFlowNodeBuilder.setImportBuilderFunction(jobFlowNodeExecuteContext -> {
-            CSVUserBehaviorImport csvUserBehaviorImport = new CSVUserBehaviorImport();
+            TxtUserBehaviorImport csvUserBehaviorImport = new TxtUserBehaviorImport();
             return csvUserBehaviorImport.buildImportBuilder(jobFlowNodeExecuteContext);
         });
         //4.2 为数据采集作业任务节点添加触发器，当上个节点解压文件数量大于0时，则触发数据采集作业，否则不触发

@@ -36,7 +36,7 @@ import java.util.concurrent.ConcurrentHashMap;
  * @author biaoping.yin
  * @Date 2025/9/21
  */
-public class JobFlowZipFileDownload {
+public class JobFlowTarFileDownload {
     private static Logger logger = LoggerFactory.getLogger(SimpleJobFlowTest.class);
     public static void main(String[] args){
         /**
@@ -106,26 +106,12 @@ public class JobFlowZipFileDownload {
         jobFlowNodeBuilder.setBuildDownloadConfigFunction(jobFlowNodeExecuteContext -> {
             FtpConfig ftpConfig = new FtpConfig().setFtpIP("172.24.176.18").setFtpPort(22)
                     .setFtpUser("wsl").setFtpPassword("123456").setDownloadWorkThreads(4).setTransferProtocol(FtpConfig.TRANSFER_PROTOCOL_SFTP)
-                    .setRemoteFileDir("/mnt/c/data/1000").setSocketTimeout(600000L)
+                    .setRemoteFileDir("/mnt/c/tool/jdk").setSocketTimeout(600000L)
                     .setConnectTimeout(600000L)
                     .setDownloadWorkThreads(5)
                     .setSourcePath("c:/data/zipfile")//zip文件下载目录
-                    .setUnzip(true)
-                    .setUnzipDir("c:/data/unzipfile")//zip文件解压目录
-//                    .setZipFilePassward("123456")
-                    .setZipFilePasswordFunction(new ZipFilePasswordFunction() {
-                        /**
-                         * 根据zip文件路径获取密码
-                         * @param jobFlowNodeExecuteContext 流程节点执行上下文对象
-                         * @param remoteFile 远程zip文件路径
-                         * @param localFilePath 本地zip文件路径
-                         * @return
-                         */
-                        @Override
-                        public String getZipFilePassword(JobFlowNodeExecuteContext jobFlowNodeExecuteContext, String remoteFile, String localFilePath) {
-                            return "123456";
-                        }
-                    })
+                    .setUntar(true)  // 如果是tar文件下载解压
+                    .setUnzipDir("c:/data/unzipfile")//zip文件解压目录//                  
                     .setDeleteZipFileAfterUnzip(false);
             //向后续数据采集作业传递数据文件存放目录
             jobFlowNodeExecuteContext.addJobFlowContextData("csvfilepath",ftpConfig.getUnzipDir());
@@ -133,7 +119,7 @@ public class JobFlowZipFileDownload {
             downloadfileConfig
                     .setFtpConfig(ftpConfig)
                     .setScanChild(true)
-                    .setFileNameRegular("d.*\\.zip");
+                    .setFileNameRegular(".*\\.tar.gz");
             return downloadfileConfig;
         });
         
@@ -157,7 +143,7 @@ public class JobFlowZipFileDownload {
          * 4.1设置数据采集作业构建函数
          */
         datatranJobFlowNodeBuilder.setImportBuilderFunction(jobFlowNodeExecuteContext -> {
-            CSVUserBehaviorImport csvUserBehaviorImport = new CSVUserBehaviorImport();
+            TxtUserBehaviorImport csvUserBehaviorImport = new TxtUserBehaviorImport();
             return csvUserBehaviorImport.buildImportBuilder(jobFlowNodeExecuteContext);
         });
         //4.2 为数据采集作业任务节点添加触发器，当上个节点解压文件数量大于0时，则触发数据采集作业，否则不触发

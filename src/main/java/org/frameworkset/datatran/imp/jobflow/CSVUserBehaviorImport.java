@@ -91,25 +91,25 @@ public class CSVUserBehaviorImport {
                 .setFetchSize(1000);//设置按批读取文件行数
         //设置强制刷新检测空闲时间间隔，单位：毫秒，在空闲flushInterval后，还没有数据到来，强制将已经入列的数据进行存储操作，默认8秒,为0时关闭本机制
         importBuilder.setFlushInterval(10000l);
-        CSVFileInputConfig config = new CSVFileInputConfig();
-        config.setDisableScanNewFiles( true);
-        config.setDisableScanNewFilesCheckpoint(false);
-        config.setMaxFilesThreshold(maxFilesThreshold);
+        CSVFileInputConfig csvFileInputConfig = new CSVFileInputConfig();
+        csvFileInputConfig.setDisableScanNewFiles( true);
+        csvFileInputConfig.setDisableScanNewFilesCheckpoint(false);
+        csvFileInputConfig.setMaxFilesThreshold(maxFilesThreshold);
         /**
          * 备份采集完成文件
          * true 备份
          * false 不备份
          */
-        config.setBackupSuccessFiles(true);
+        csvFileInputConfig.setBackupSuccessFiles(true);
         /**
          * 备份文件目录
          */
-        config.setBackupSuccessFileDir("C:\\data\\cvs\\backup");
+        csvFileInputConfig.setBackupSuccessFileDir("C:\\data\\cvs\\backup");
         /**
          * 备份文件清理线程执行时间间隔，单位：毫秒
          * 默认每隔10秒执行一次
          */
-        config.setBackupSuccessFileInterval(20000l);
+        csvFileInputConfig.setBackupSuccessFileInterval(20000l);
         /**
          * 备份文件保留时长，单位：秒
          * 默认保留7天
@@ -122,8 +122,8 @@ public class CSVUserBehaviorImport {
                     public boolean accept(FilterFileInfo fileInfo, //Ftp文件名称
                                           FileConfig fileConfig) {
                         String name = fileInfo.getFileName();
-                        //判断是否采集文件数据，返回true标识采集，false 不采集，ssssss.csv
-                        boolean nameMatch = name.startsWith("sssss");
+                        //判断是否采集文件数据，返回true标识采集，false 不采集，business_fans_mobile_20250815_QL.csv
+                        boolean nameMatch = name.startsWith("gio_kd_to_chnl_public_platform");
                         if(nameMatch){
 
                             /**
@@ -151,11 +151,12 @@ public class CSVUserBehaviorImport {
                 })
                 .setMaxCellIndexMatchesFailedPolicy(FieldMappingManager.MAX_CELL_INDEX_MATCHES_FAILED_POLICY_WARN_USENULLVALUE)
                 .setSkipHeaderLines(1)
+                .setCloseOlderTime(1000L)//setIgnoreOlderTime
                 .setSourcePath((String)jobFlowNodeExecuteContext.getJobFlowContextData("csvfilepath"));//从流程执行上下文中获取csv文件目录
-        config.addConfig(csvFileConfig);
-        config.setEnableMeta(true);
+        csvFileInputConfig.addConfig(csvFileConfig);
+        csvFileInputConfig.setEnableMeta(true);
 //		config.setJsondata(true);
-        importBuilder.setInputConfig(config);
+        importBuilder.setInputConfig(csvFileInputConfig);
 
 
         ETLMetrics keyMetrics = new ETLMetrics(Metrics.MetricsType_KeyTimeMetircs) {

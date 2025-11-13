@@ -69,7 +69,7 @@ public class Elasticsearch2EleasticsearchMetricsDemo {
 	public static void main(String args[]){
 		Elasticsearch2EleasticsearchMetricsDemo db2EleasticsearchDemo = new Elasticsearch2EleasticsearchMetricsDemo();
 		//从配置文件application.properties中获取参数值
-		boolean dropIndice = PropertiesUtil.getPropertiesContainer("application.properties").getBooleanSystemEnvProperty("dropIndice",true);
+		boolean dropIndice = PropertiesUtil.getPropertiesContainer().getBooleanSystemEnvProperty("dropIndice",true);
 //		dbdemo.fullImportData(  dropIndice);
 //		dbdemo.scheduleImportData(dropIndice);
 		db2EleasticsearchDemo.scheduleTimestampImportData(dropIndice);
@@ -383,6 +383,8 @@ public class Elasticsearch2EleasticsearchMetricsDemo {
 
             }
         });
+        importBuilder.setFetchSize(5000);
+//        
 
         ElasticsearchInputConfig elasticsearchInputConfig = new ElasticsearchInputConfig();
         elasticsearchInputConfig.setDslFile("dsl2ndSqlFile.xml")//配置dsl和sql语句的配置文件
@@ -512,6 +514,7 @@ public class Elasticsearch2EleasticsearchMetricsDemo {
 //		importBuilder.setLastValueStoreTableName("logs");//记录上次采集的增量字段值的表，可以不指定，采用默认表名increament_tab
         importBuilder.setLastValueType(ImportIncreamentConfig.TIMESTAMP_TYPE);//如果没有指定增量查询字段名称，则需要指定字段类型：ImportIncreamentConfig.NUMBER_TYPE 数字类型
         // 或者ImportIncreamentConfig.TIMESTAMP_TYPE 日期类型
+//        importBuilder.setLastValue(new Date());
         //增量配置结束
         //定时任务配置结束
 		importBuilder
