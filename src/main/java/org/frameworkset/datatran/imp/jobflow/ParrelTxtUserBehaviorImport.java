@@ -16,15 +16,16 @@ import org.frameworkset.tran.plugin.custom.output.CustomOutPutContext;
 import org.frameworkset.tran.plugin.custom.output.CustomOutPutV1;
 import org.frameworkset.tran.plugin.custom.output.CustomOutputConfig;
 import org.frameworkset.tran.plugin.file.input.FileInputConfig;
+import org.frameworkset.tran.schedule.FileScanAssertStopBarrier;
 import org.frameworkset.tran.schedule.ImportIncreamentConfig;
 import org.frameworkset.tran.task.TaskCommand;
 import org.frameworkset.util.beans.ObjectHolder;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
-public class TxtUserBehaviorImport {
+public class ParrelTxtUserBehaviorImport {
 
-    private static Logger logger = LoggerFactory.getLogger(TxtUserBehaviorImport.class);
+    private static Logger logger = LoggerFactory.getLogger(ParrelTxtUserBehaviorImport.class);
 
     private static final String JOB_ID = "JOB_TXT_USER_BEHAVIOR_JOB_ID";
     private static final String JOB_NAME = "JOB_TXT_USER_BEHAVIOR_JOB_NAME";
@@ -75,6 +76,24 @@ public class TxtUserBehaviorImport {
         fileInputConfig.setDisableScanNewFilesCheckpoint(false);
         fileInputConfig.setMaxFilesThreshold(maxFilesThreshold);
         
+        fileInputConfig.setAssertStopBarrier(new FileScanAssertStopBarrier(jobFlowNodeExecuteContext) {
+
+            @Override
+            protected boolean canStop() {
+                Boolean downloadNodeComplete = (Boolean)jobFlowNodeExecuteContext.getContainerJobFlowNodeContextData("downloadNodeComplete");
+                if(downloadNodeComplete == null){
+                    return true;
+                }
+                else{
+                    if(downloadNodeComplete){
+                        return true;
+                    }
+                    else {
+                        return false;
+                    }
+                }
+            }
+        });
         /**
          * 备份采集完成文件
          * true 备份
@@ -106,7 +125,7 @@ public class TxtUserBehaviorImport {
                     }
                 }).setSkipHeaderLines(1)
                 .setCloseOlderTime(1000L)//setIgnoreOlderTime
-                .setSourcePath((String)jobFlowNodeExecuteContext.getJobFlowContextData("csvfilepath"));//从流程执行上下文中获取csv文件目录
+                .setSourcePath((String)jobFlowNodeExecuteContext.getContainerJobFlowNodeContextData("csvfilepath"));//从并行任务节点（当前节点的父节点）执行上下文中获取解压数据文件目录
         fileInputConfig.addConfig(fileConfig);
         fileInputConfig.setEnableMeta(true);
 //		config.setJsondata(true);

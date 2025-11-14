@@ -1,0 +1,251 @@
+package org.frameworkset.datatran.imp.jobflow;
+/**
+ * Copyright 2025 bboss
+ * <p>
+ * Licensed under the Apache License, Version 2.0 (the "License");
+ * you may not use this file except in compliance with the License.
+ * You may obtain a copy of the License at
+ * <p>
+ * http://www.apache.org/licenses/LICENSE-2.0
+ * <p>
+ * Unless required by applicable law or agreed to in writing, software
+ * distributed under the License is distributed on an "AS IS" BASIS,
+ * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+ * See the License for the specific language governing permissions and
+ * limitations under the License.
+ */
+
+import org.frameworkset.tran.config.ImportBuilder;
+import org.frameworkset.tran.ftp.FtpConfig;
+import org.frameworkset.tran.input.file.FilterFileInfo;
+import org.frameworkset.tran.input.zipfile.ZipFilePasswordFunction;
+import org.frameworkset.tran.jobflow.*;
+import org.frameworkset.tran.jobflow.builder.DatatranJobFlowNodeBuilder;
+import org.frameworkset.tran.jobflow.builder.JobFlowBuilder;
+import org.frameworkset.tran.jobflow.builder.ParrelJobFlowNodeBuilder;
+import org.frameworkset.tran.jobflow.context.JobFlowNodeExecuteContext;
+import org.frameworkset.tran.jobflow.context.NodeTriggerContext;
+import org.frameworkset.tran.jobflow.listener.JobFlowNodeListener;
+import org.frameworkset.tran.jobflow.scan.JobFileFilter;
+import org.frameworkset.tran.jobflow.schedule.JobFlowScheduleConfig;
+import org.frameworkset.tran.jobflow.script.TriggerScriptAPI;
+import org.frameworkset.util.TimeUtil;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
+
+import java.util.Date;
+import java.util.Map;
+import java.util.concurrent.ConcurrentHashMap;
+
+/**
+ * 下载和采集并行处理工作流作业
+ * @author biaoping.yin
+ * @Date 2025/9/21
+ */
+public class JobFlowTParrelxtZipFileDownload {
+    private static Logger logger = LoggerFactory.getLogger(SimpleJobFlowTest.class);
+    public static void main(String[] args){
+        /**
+         * 1.定义工作流以及流程调度策略：流程启动后，延后5秒后开始执行，每隔30秒周期性调度执行
+         */
+        JobFlowBuilder jobFlowBuilder = new JobFlowBuilder();
+        jobFlowBuilder.setJobFlowName("测试流程")
+                .setJobFlowId("测试id");
+        JobFlowScheduleConfig jobFlowScheduleConfig = new JobFlowScheduleConfig();
+//        jobFlowScheduleConfig.setScheduleDate(TimeUtil.addDateHours(new Date(),2));//2小时后开始执行
+        jobFlowScheduleConfig.setScheduleDate(TimeUtil.addDateSeconds(new Date(),5));//5秒后开始执行
+//        jobFlowScheduleConfig.setScheduleEndDate(TimeUtil.addDates(new Date(),10));//10天后结束
+//        jobFlowScheduleConfig.setScheduleEndDate(TimeUtil.addDateMinitues(new Date(),10));//2分钟后结束
+        jobFlowScheduleConfig.setPeriod(30000L);
+//        jobFlowScheduleConfig.setExecuteOneTime(true);
+//        jobFlowScheduleConfig.setExecuteOneTimeSyn(true);
+        jobFlowBuilder.setJobFlowScheduleConfig(jobFlowScheduleConfig);
+
+        ParrelJobFlowNodeBuilder parrelJobFlowNodeBuilder = new ParrelJobFlowNodeBuilder();
+        parrelJobFlowNodeBuilder.addJobFlowNodeListener(new JobFlowNodeListener() {
+            @Override
+            public void beforeExecute(JobFlowNodeExecuteContext jobFlowNodeExecuteContext) {
+                //添加文件下载节点执行完毕标记，用于判断文件下载任务是否完成，文件下载节点下载完成时设置为true
+                //并行采集任务依赖该状态标记决定是否结束一次性采集任务
+                jobFlowNodeExecuteContext.addContextData("downloadNodeComplete",false);
+                jobFlowNodeExecuteContext.addContextData("csvfilepath","c:/data/unzipfile");//设置解压数据文件目录，下载节点和数据采集节点从参数中获取对应的文件目录路径
+            }
+
+            @Override
+            public void afterExecute(JobFlowNodeExecuteContext jobFlowNodeExecuteContext, Throwable throwable) {
+                //添加文件下载节点执行完毕标记，用于判断文件下载任务是否完成，文件下载节点下载完成时设置为true
+                //并行采集任务依赖该状态标记决定是否结束一次性采集任务
+                jobFlowNodeExecuteContext.addContextData("downloadNodeComplete",true);
+            }
+
+            @Override
+            public void afterEnd(JobFlowNode jobFlowNode) {
+
+            }
+        });
+        jobFlowBuilder.addJobFlowNodeBuilder(parrelJobFlowNodeBuilder);
+
+        /**
+         * 2.构建文件下载任务节点：Zip文件下载解压节点
+         */
+        RemoteFileInputJobFlowNodeBuilder remoteFileInputJobFlowNodeBuilder = new RemoteFileInputJobFlowNodeBuilder() ;
+        Map downloadedFileRecorder = new ConcurrentHashMap<String,Object>();
+        Object o = new Object();
+        /**
+         * 2.1 设置载情况跟踪记录器
+         */
+        remoteFileInputJobFlowNodeBuilder.setDownloadedFileRecorder(new DownloadedFileRecorder() {
+            /**
+             * 通过本方法记录下载文件信息，同时亦可以判断文件是否已经下载过，如果已经下载过则返回false，忽略下载，否则返回true允许下载
+             * @param downloadFileMetrics
+             * @param jobFlowNodeExecuteContext
+             * @return
+             */
+            @Override
+            
+            public boolean recordBeforeDownload(DownloadFileMetrics downloadFileMetrics, JobFlowNodeExecuteContext jobFlowNodeExecuteContext) {
+                //如果文件已经下载过，则返回false，忽略下载,一般会持久化保存到数据库中
+                if(downloadedFileRecorder.get(downloadFileMetrics.getRemoteFilePath()) != null)
+                    return false;
+                return true;
+            }
+
+            /**
+             * 文件下载完毕或者错误时调用本方法记录已完成或者下载失败文件信息，可以自行存储下载文件信息，以便下次下载时判断文件是否已经下载过             *
+             * @param downloadFileMetrics
+             * @param jobFlowNodeExecuteContext
+             * @param exception 
+             */
+            @Override
+            public void recordAfterDownload(DownloadFileMetrics downloadFileMetrics, JobFlowNodeExecuteContext jobFlowNodeExecuteContext, Throwable exception) {
+                //如果文件下载解压成功，则记录下载信息
+                if(exception == null) {
+                    //获取从当前压缩文件中解压的文件数量并判断是否大于0，则将解压文件数量保存到流程上下文数据中，用于作为数据采集作业节点的触发条件（只有当前解压文件数量大于0时，才触发下一个任务节点）
+                    if(downloadFileMetrics.getFiles() > 0)
+                        jobFlowNodeExecuteContext.addJobFlowContextData("unzipFiles",downloadFileMetrics.getFiles());
+                    downloadedFileRecorder.put(downloadFileMetrics.getRemoteFilePath(), o);
+                }
+            }
+        });
+        /**
+         * 2.2 设置Zip下载远程参数
+         */
+        remoteFileInputJobFlowNodeBuilder.setBuildDownloadConfigFunction(jobFlowNodeExecuteContext -> {
+            FtpConfig ftpConfig = new FtpConfig().setFtpIP("172.24.176.18").setFtpPort(22)
+                    .setFtpUser("wsl").setFtpPassword("123456").setDownloadWorkThreads(4).setTransferProtocol(FtpConfig.TRANSFER_PROTOCOL_SFTP)
+                    .setRemoteFileDir("/mnt/c/data/1000").setSocketTimeout(600000L)
+                    .setConnectTimeout(600000L)
+                    .setDownloadWorkThreads(5)
+                    .setSourcePath("c:/data/zipfile")//zip文件下载目录
+                    .setUnzip(true)
+                    .setUnzipDir((String)jobFlowNodeExecuteContext.getContainerJobFlowNodeContextData("csvfilepath"))//zip文件解压目录，从并行任务节点（当前节点的父节点）执行上下文中获取解压数据文件目录
+//                    .setZipFilePassward("123456")
+                    .setZipFilePasswordFunction(new ZipFilePasswordFunction() {
+                        /**
+                         * 根据zip文件路径获取密码
+                         * @param jobFlowNodeExecuteContext 流程节点执行上下文对象
+                         * @param remoteFile 远程zip文件路径
+                         * @param localFilePath 本地zip文件路径
+                         * @return
+                         */
+                        @Override
+                        public String getZipFilePassword(JobFlowNodeExecuteContext jobFlowNodeExecuteContext, String remoteFile, String localFilePath) {
+                            return "aaaaa.zip";
+                        }
+                    })
+                    .setDeleteZipFileAfterUnzip(false);
+            DownloadfileConfig downloadfileConfig = new DownloadfileConfig();
+            downloadfileConfig
+                    .setFtpConfig(ftpConfig)
+                    .setScanChild(true)
+                    .setJobFileFilter(new JobFileFilter() {
+                        /**
+                         * 判断是否采集文件数据或者归档文件，返回true标识采集/归档，false 不采集/归档
+                         *
+                         * @param fileInfo
+                         * @param jobFlowNodeExecuteContext
+                         * @return
+                         */
+                        @Override
+                        public boolean accept(FilterFileInfo fileInfo, JobFlowNodeExecuteContext jobFlowNodeExecuteContext) {
+                            return fileInfo.getFileName().startsWith("behavior_");
+                        }
+                    })
+                     ;
+            return downloadfileConfig;
+        });
+        remoteFileInputJobFlowNodeBuilder.addJobFlowNodeListener(new JobFlowNodeListener() {
+            /**
+             * 作业工作流节点调度执行前拦截方法
+             *
+             * @param jobFlowNodeExecuteContext
+             */
+            @Override
+            public void beforeExecute(JobFlowNodeExecuteContext jobFlowNodeExecuteContext) {
+                
+            }
+
+            /**
+             * 作业工作流节点调度执行完毕后执行方法
+             *
+             * @param jobFlowNodeExecuteContext
+             * @param throwable
+             */
+            @Override
+            public void afterExecute(JobFlowNodeExecuteContext jobFlowNodeExecuteContext, Throwable throwable) {
+                //文件下载完毕后，修改父节点状态标记
+                jobFlowNodeExecuteContext.addContainerJobFlowNodeContextData("downloadNodeComplete",true);
+            }
+
+            /**
+             * 作业工作流节点结束时拦截方法
+             *
+             * @param jobFlowNode
+             */
+            @Override
+            public void afterEnd(JobFlowNode jobFlowNode) {
+
+            }
+        });
+
+        /**
+         * 3.将文件下载节点添加到并行工作流节点构建器
+         */
+        parrelJobFlowNodeBuilder.addJobFlowNodeBuilder(remoteFileInputJobFlowNodeBuilder);
+
+        /**
+         * 4.构建第二个任务节点：数据采集作业节点
+         */
+        DatatranJobFlowNodeBuilder datatranJobFlowNodeBuilder = new DatatranJobFlowNodeBuilder();
+        
+
+        /**
+         * 4.1设置数据采集作业构建函数
+         */
+        datatranJobFlowNodeBuilder.setImportBuilderFunction(jobFlowNodeExecuteContext -> {
+            ParrelTxtUserBehaviorImport csvUserBehaviorImport = new ParrelTxtUserBehaviorImport();
+            ImportBuilder importBuilder = csvUserBehaviorImport.buildImportBuilder(jobFlowNodeExecuteContext);
+            return importBuilder;
+        });
+        
+        /**
+         * 5 将第二个节点添加到并行工作流节点构建器
+         */
+        parrelJobFlowNodeBuilder.addJobFlowNodeBuilder(datatranJobFlowNodeBuilder);
+
+
+        /**
+         * 6 构建并启动工作流
+         */
+        JobFlow jobFlow = jobFlowBuilder.build();
+        jobFlow.start();
+//        
+//        jobFlow.stop();
+////
+//        jobFlow.pause();
+////        
+//        jobFlow.consume();
+
+
+    }
+}
