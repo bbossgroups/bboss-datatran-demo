@@ -116,9 +116,9 @@ public class ParrelTxtUserBehaviorImport {
 //        config.setBackupSuccessFileLiveTime( 10 * 60l);
        
         FileConfig fileConfig = new FileConfig();
-        fileConfig.setFileFilter(new FileFilter() {//指定ftp文件筛选规则
+        fileConfig.setFileFilter(new FileFilter() {//指定文件筛选规则
                     @Override
-                    public boolean accept(FilterFileInfo fileInfo, //Ftp文件名称
+                    public boolean accept(FilterFileInfo fileInfo, //文件信息
                                           FileConfig fileConfig) {
                         String name = fileInfo.getFileName();
                         return true;
