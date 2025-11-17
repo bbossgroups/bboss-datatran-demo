@@ -144,7 +144,7 @@ public class JobFlowZipFileDownload {
         /**
          * 3.将第一个节点添加到工作流构建器
          */
-        jobFlowBuilder.addJobFlowNode(jobFlowNodeBuilder);
+        jobFlowBuilder.addJobFlowNodeBuilder(jobFlowNodeBuilder);
 
 
         /**
@@ -179,7 +179,7 @@ public class JobFlowZipFileDownload {
         /**
          * 5 将第二个节点添加到工作流构建器
          */
-        jobFlowBuilder.addJobFlowNode(datatranJobFlowNodeBuilder);
+        jobFlowBuilder.addJobFlowNodeBuilder(datatranJobFlowNodeBuilder);
 
 
         /**

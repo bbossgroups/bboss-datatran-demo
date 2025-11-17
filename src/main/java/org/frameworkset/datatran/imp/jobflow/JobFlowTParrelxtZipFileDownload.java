@@ -120,7 +120,7 @@ public class JobFlowTParrelxtZipFileDownload {
             public void recordAfterDownload(DownloadFileMetrics downloadFileMetrics, JobFlowNodeExecuteContext jobFlowNodeExecuteContext, Throwable exception) {
                 //如果文件下载解压成功，则记录下载信息
                 if(exception == null) {
-                    //获取从当前压缩文件中解压的文件数量并判断是否大于0，则将解压文件数量保存到流程上下文数据中，用于作为数据采集作业节点的触发条件（只有当前解压文件数量大于0时，才触发下一个任务节点）
+                    //获取从当前压缩文件中解压的文件数量并判断是否大于0，则将解压文件数量保存到流程上下文数据中，并行作业中这个变量暂时没有用）
                     if(downloadFileMetrics.getFiles() > 0)
                         jobFlowNodeExecuteContext.addJobFlowContextData("unzipFiles",downloadFileMetrics.getFiles());
                     downloadedFileRecorder.put(downloadFileMetrics.getRemoteFilePath(), o);

@@ -139,7 +139,7 @@ public class JobFlowFileDownload {
         /**
          * 1.2 将第一个节点添加到工作流构建器
          */
-        jobFlowBuilder.addJobFlowNode(jobFlowNodeBuilder);
+        jobFlowBuilder.addJobFlowNodeBuilder(jobFlowNodeBuilder);
 
       
 

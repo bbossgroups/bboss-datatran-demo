@@ -114,7 +114,7 @@ public class SimpleJobFlowTest {
         /**
          * 1.2 将第一个节点添加到工作流构建器
          */
-        jobFlowBuilder.addJobFlowNode(jobFlowNodeBuilder);
+        jobFlowBuilder.addJobFlowNodeBuilder(jobFlowNodeBuilder);
 
         /**
          * 2.构建第二个任务节点：并行任务节点
@@ -189,7 +189,7 @@ public class SimpleJobFlowTest {
         /**
          * 2.5 将第二个节点添加到工作流中
          */
-        jobFlowBuilder.addJobFlowNode(parrelJobFlowNodeBuilder);
+        jobFlowBuilder.addJobFlowNodeBuilder(parrelJobFlowNodeBuilder);
 
         /**
          * 3.构建第三个任务节点：单任务节点
@@ -203,7 +203,7 @@ public class SimpleJobFlowTest {
         /**
          * 1.2 将第三个节点添加到工作流构建器
          */
-        jobFlowBuilder.addJobFlowNode(jobFlowNodeBuilder);
+        jobFlowBuilder.addJobFlowNodeBuilder(jobFlowNodeBuilder);
 
         JobFlow jobFlow = jobFlowBuilder.build();
         jobFlow.start();

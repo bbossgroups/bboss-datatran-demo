@@ -16,7 +16,6 @@ package org.frameworkset.datatran.imp.jobflow;
  */
 
 import org.frameworkset.tran.ftp.FtpConfig;
-import org.frameworkset.tran.input.zipfile.ZipFilePasswordFunction;
 import org.frameworkset.tran.jobflow.*;
 import org.frameworkset.tran.jobflow.builder.DatatranJobFlowNodeBuilder;
 import org.frameworkset.tran.jobflow.builder.JobFlowBuilder;
@@ -130,7 +129,7 @@ public class JobFlowTarFileDownload {
         /**
          * 3.将第一个节点添加到工作流构建器
          */
-        jobFlowBuilder.addJobFlowNode(jobFlowNodeBuilder);
+        jobFlowBuilder.addJobFlowNodeBuilder(jobFlowNodeBuilder);
 
 
         /**
@@ -165,7 +164,7 @@ public class JobFlowTarFileDownload {
         /**
          * 5 将第二个节点添加到工作流构建器
          */
-        jobFlowBuilder.addJobFlowNode(datatranJobFlowNodeBuilder);
+        jobFlowBuilder.addJobFlowNodeBuilder(datatranJobFlowNodeBuilder);
 
 
         /**

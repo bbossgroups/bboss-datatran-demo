@@ -70,7 +70,7 @@ public class JobFlowTest {
                 //任务调用前，向流程执行上下文中添加参数
                 taskContext.addJobFlowContextData("flowParam","测试");
                 //任务调用前，向往流程节点执行上下文中添加参数
-                taskContext.addJobFlowNodeContextData("nodeParam","测试");
+                taskContext.addJobFlowNodeBuilderContextData("nodeParam","测试");
                 //任务调用前，向流程子节点所属的复合节点（串行/并行）执行上下文中添加参数
                 if(taskContext.getContainerJobFlowNodeExecuteContext() != null)
                     taskContext.addContainerJobFlowNodeContextData("nodeParam","测试");
@@ -295,7 +295,7 @@ public class JobFlowTest {
         /**
          * 1.2 将第一个节点添加到工作流构建器
          */
-        jobFlowBuilder.addJobFlowNode(jobFlowNodeBuilder);
+        jobFlowBuilder.addJobFlowNodeBuilder(jobFlowNodeBuilder);
         
         /**
          * 2.构建第二个任务节点：并行任务节点
@@ -367,7 +367,7 @@ public class JobFlowTest {
         /**
          * 2.5 将第二个节点添加到工作流中
          */
-        jobFlowBuilder.addJobFlowNode(parrelJobFlowNodeBuilder);
+        jobFlowBuilder.addJobFlowNodeBuilder(parrelJobFlowNodeBuilder);
 
         /**
          * 3.构建第三个任务节点：单任务节点
@@ -381,7 +381,7 @@ public class JobFlowTest {
         /**
          * 1.2 将第三个节点添加到工作流构建器
          */
-        jobFlowBuilder.addJobFlowNode(jobFlowNodeBuilder);
+        jobFlowBuilder.addJobFlowNodeBuilder(jobFlowNodeBuilder);
         
         JobFlow jobFlow = jobFlowBuilder.build();
         jobFlow.start();
