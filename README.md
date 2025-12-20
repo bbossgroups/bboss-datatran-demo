@@ -11,7 +11,7 @@ mysql,maridb，postgress,oracle ,sqlserver,db2、clickhouse等
 
 支持的Elasticsearch版本：
 
-1.x,2.X,5.X,6.X,7.x,8,x,+
+1.x,2.X,5.X,6.X,7.x,8,x,9.x,+
 
 海量PB级数据同步导入功能使用指南
 
@@ -25,9 +25,9 @@ https://esdoc.bbossgroups.com/#/etl-metrics
 
 JDK requirement: JDK 1.8+
 
-Elasticsearch version requirements: 1.x,2.X,5.X,6.X,7.x,8,x,+
+Elasticsearch version requirements: 1.x,2.X,5.X,6.X,7.x,8,x,9.x,+
 
-Spring booter 1.x,2.x,+
+Spring booter 1.x,2.x,3.x,+
 
 
 # 开发调试构建部署
