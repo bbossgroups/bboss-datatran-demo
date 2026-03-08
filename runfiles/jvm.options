@@ -19,8 +19,8 @@
 # Xms represents the initial size of total heap space
 # Xmx represents the maximum size of total heap space
 
--Xms128m
--Xmx128m
+-Xms512m
+-Xmx512m
 
 # explicitly set the stack size
 -Xss1m

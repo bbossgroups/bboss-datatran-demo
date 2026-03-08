@@ -293,7 +293,8 @@ configure(allprojects) { project ->
 //		api 'mysql:mysql-connector-java:8.0.33'
 		api (
                 [group: 'com.mysql', name: 'mysql-connector-j', version: "8.2.0", transitive: false],
-				[group: 'com.bbossgroups', name: 'bboss-bootstrap-rt', version: "${bboss_version}", transitive: true]
+				[group: 'com.bbossgroups', name: 'bboss-bootstrap-rt', version: "${bboss_version}", transitive: true],
+                [group: 'com.bbossgroups', name: 'bboss-ai', version: "${bboss_ai_version}", transitive: true]
 		)
 		api (
 				fileTree(dir: 'lib', include: '*.jar')
@@ -315,7 +316,13 @@ configure(allprojects) { project ->
         }
 
         // AWS依赖开始
-        api "software.amazon.awssdk:s3:${s3version}"
+        api ("software.amazon.awssdk:s3:${s3version}")
+        {
+//            exclude group: 'org.apache.groovy', module: 'groovy-testng'
+            exclude group: 'org.apache.httpcomponents', module: 'httpcore'
+
+
+        }
         api "software.amazon.awssdk:auth:${s3version}"
         api "software.amazon.awssdk:regions:${s3version}"
         api  (
@@ -323,7 +330,7 @@ configure(allprojects) { project ->
 
         ){
 //            exclude group: 'org.apache.groovy', module: 'groovy-testng'
-            exclude group: 'org.apache.httpcomponents', module: 'httpco'
+            exclude group: 'org.apache.httpcomponents', module: 'httpcore'
            
 
         }
