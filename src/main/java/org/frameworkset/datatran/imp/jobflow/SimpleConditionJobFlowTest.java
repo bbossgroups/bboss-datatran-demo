@@ -19,6 +19,7 @@ import com.frameworkset.util.SimpleStringUtil;
 import org.frameworkset.tran.jobflow.JobFlow;
 import org.frameworkset.tran.jobflow.JobFlowNode;
 import org.frameworkset.tran.jobflow.NodeTrigger;
+import org.frameworkset.tran.jobflow.NodeTriggerBuilder;
 import org.frameworkset.tran.jobflow.builder.*;
 import org.frameworkset.tran.jobflow.context.JobFlowExecuteContext;
 import org.frameworkset.tran.jobflow.context.JobFlowNodeExecuteContext;
@@ -28,6 +29,7 @@ import org.frameworkset.tran.jobflow.listener.JobFlowNodeListener;
 import org.frameworkset.tran.jobflow.schedule.JobFlowScheduleConfig;
 import org.frameworkset.tran.jobflow.script.TriggerScriptAPI;
 import org.frameworkset.util.TimeUtil;
+import org.frameworkset.util.concurrent.IntegerCount;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
@@ -37,15 +39,15 @@ import java.util.Date;
  * @author biaoping.yin
  * @Date 2025/6/22
  */
-public class SimpleJobFlowTest {
-    private static Logger logger = LoggerFactory.getLogger(SimpleJobFlowTest.class);
+public class SimpleConditionJobFlowTest {
+    private static Logger logger = LoggerFactory.getLogger(SimpleConditionJobFlowTest.class);
     public static void main(String[] args){
         JobFlowBuilder jobFlowBuilder = new JobFlowBuilder();
         jobFlowBuilder.setJobFlowName("测试流程")
                 .setJobFlowId("测试id");
         JobFlowScheduleConfig jobFlowScheduleConfig = new JobFlowScheduleConfig();
 //        jobFlowScheduleConfig.setScheduleDate(TimeUtil.addDateHours(new Date(),2));//2小时后开始执行
-        jobFlowScheduleConfig.setScheduleDate(TimeUtil.addDateMinitues(new Date(),1));//1分钟后开始执行
+//        jobFlowScheduleConfig.setScheduleDate(TimeUtil.addDateMinitues(new Date(),1));//1分钟后开始执行
 //        jobFlowScheduleConfig.setScheduleEndDate(TimeUtil.addDates(new Date(),10));//10天后结束
 //        jobFlowScheduleConfig.setScheduleEndDate(TimeUtil.addDateMinitues(new Date(),10));//2分钟后结束
 //        jobFlowScheduleConfig.setPeriod(1000000L);
@@ -84,34 +86,34 @@ public class SimpleJobFlowTest {
         /**
          * 1.构建第一个任务节点：单任务节点
          */
-        JobFlowNodeBuilder jobFlowNodeBuilder = new CallableJobFlowNodeBuilder("1", "DatatranJobFlowNode") {
+        JobFlowNodeBuilder jobFlowNodeBuilder = new CallableJobFlowNodeBuilder("1", "SimpleNode") {
             @Override
             public Object call(JobFlowNodeExecuteContext jobFlowNodeExecuteContext) throws Exception {
                 JobFlowNodeFunctionTest jobFlowNodeFunctionTest = new JobFlowNodeFunctionTest(false);
+                jobFlowNodeFunctionTest.init(jobFlowNodeExecuteContext.getJobFlowNode());
                 return jobFlowNodeFunctionTest.call(jobFlowNodeExecuteContext);
             }
         } ;
-        
+
+        JobFlowNodeBuilder conditionJobFlowNodeBuilder = jobFlowNodeBuilder;
+
+        IntegerCount integerCount = new IntegerCount();
         NodeTrigger nodeTrigger = new NodeTrigger();
-        /**
-         * boolean needTrigger(NodeTriggerContext nodeTriggerContext) throws Exception
-         */
-//        nodeTrigger.setTriggerScript("return 0 < 1;");
-        String script = new StringBuilder()                
-                .append("[import]")
-                .append("//导入脚本中需要引用的java类\r\n")
-                .append(" //import org.frameworkset.tran.jobflow.context.StaticContext; ")
-                .append("[/import]")
-                .append("StaticContext staticContext = nodeTriggerContext.getPreJobFlowStaticContext();")
-                .append("logger.info(\"前序节点执行异常结束，则忽略当前节点执行\");")
-                .append("//前序节点执行异常结束，则忽略当前节点执行\r\n")
-                .append("if(staticContext != null && staticContext.getExecuteException() != null)")
-                .append("    return false;")
-                .append("else{")
-                .append("    return true;")
-                .append("}").toString();
-        nodeTrigger.setTriggerScript(script);
-        
+        nodeTrigger.setTriggerScriptAPI(new TriggerScriptAPI() {
+            @Override
+            public boolean needTrigger(NodeTriggerContext nodeTriggerContext) throws Exception {
+                if(integerCount.getCountUnSynchronized() > 229) {
+                    logger.info("最多允许执行230次：迭代结束");
+                    return false;
+                }
+                
+                if(integerCount.getCountUnSynchronized() == 228){
+                    logger.info("228");
+                }
+                return true;
+            }
+        });
+
 
         /**
          * 1.1 为第一个任务节点添加一个带触发器的作业
@@ -121,6 +123,8 @@ public class SimpleJobFlowTest {
          * 1.2 将第一个节点添加到工作流构建器
          */
         jobFlowBuilder.addJobFlowNodeBuilder(jobFlowNodeBuilder);
+        
+        
 
         /**
          * 2.构建第二个任务节点：并行任务节点
@@ -129,7 +133,7 @@ public class SimpleJobFlowTest {
         parrelJobFlowNodeBuilder.addJobFlowNodeListener(new JobFlowNodeListener() {
             @Override
             public void beforeExecute(JobFlowNodeExecuteContext jobFlowNodeExecuteContext) {
-
+                integerCount.increament();
             }
 
             @Override
@@ -154,7 +158,7 @@ public class SimpleJobFlowTest {
          * 2.1 为第二个并行任务节点添加第一个带触发器的作业任务
          */
         parrelJobFlowNodeBuilder.addJobFlowNodeBuilder(
-                new CommonJobFlowNodeBuilder("ParrelJobFlowNode-DatatranJobFlowNode-2-1","ParrelJobFlowNode-DatatranJobFlowNode-2",new JobFlowNodeFunctionTest(true)).setNodeTrigger(nodeTrigger));
+                new CommonJobFlowNodeBuilder("ParrelJobFlowNode-DatatranJobFlowNode-2-1","ParrelJobFlowNode-DatatranJobFlowNode-2",new JobFlowNodeFunctionTest(false,true)).setNodeTrigger(nodeTrigger));
         /**
          * 2.2 为第二个并行任务节点添加第二个不带触发器的作业任务
          */
@@ -179,14 +183,54 @@ public class SimpleJobFlowTest {
 
             }
         });
-        comJobFlowNodeBuilder.addJobFlowNodeBuilder(new CommonJobFlowNodeBuilder("ParrelJobFlowNode-2-3-1","SequenceJobFlowNode-SequenceJobFlowNode",new JobFlowNodeFunctionTest(false)) );
-        comJobFlowNodeBuilder.addJobFlowNodeBuilder(new CommonJobFlowNodeBuilder("ParrelJobFlowNode-2-3-2","SequenceJobFlowNode-SequenceJobFlowNode",new JobFlowNodeFunctionTest(true)).setNodeTrigger(nodeTrigger) );
+        CommonJobFlowNodeBuilder subnode = new CommonJobFlowNodeBuilder("ParrelJobFlowNode-2-3-1","SequenceJobFlowNode-SequenceJobFlowNode",new JobFlowNodeFunctionTest(false));
+        subnode.setNodeTrigger(NodeTriggerBuilder.buildNodeTrigger(new TriggerScriptAPI() {
+            @Override
+            public boolean needTrigger(NodeTriggerContext nodeTriggerContext) throws Exception {
+                //从串行复合节点comJobFlowNodeBuilder中获取分支循环执行次数）
+                IntegerCount executeTimes = (IntegerCount) nodeTriggerContext.getContainerContextData("executeTimes");
+                if(executeTimes == null){
+                    return true;                     
+                }
+                if(executeTimes.getCountUnSynchronized() >= 2) {
+                    return false;
+                }
+                return true;
+            }
+        }));
+        subnode.addJobFlowNodeListener(new JobFlowNodeListener() {
+            @Override
+            public void beforeExecute(JobFlowNodeExecuteContext jobFlowNodeExecuteContext) {
+                
+            }
 
+            @Override
+            public void afterExecute(JobFlowNodeExecuteContext jobFlowNodeExecuteContext, Throwable throwable) {
+                //设置节点执行次数往节点父节点（串行复合节点comJobFlowNodeBuilder中添加循环执行测试）
+                IntegerCount executeTimes = (IntegerCount) jobFlowNodeExecuteContext.getContainerJobFlowNodeContextData("executeTimes");
+                if(executeTimes == null){
+                    executeTimes = new IntegerCount();
+                   
+                    jobFlowNodeExecuteContext.addContainerJobFlowNodeContextData("executeTimes",executeTimes);
+                }
+                executeTimes.increament();
+            }
+
+            @Override
+            public void afterEnd(JobFlowNode jobFlowNode) {
+
+            }
+        });
+        comJobFlowNodeBuilder.addJobFlowNodeBuilder(subnode);
+        comJobFlowNodeBuilder.addJobFlowNodeBuilder(new CommonJobFlowNodeBuilder("ParrelJobFlowNode-2-3-2","SequenceJobFlowNode-SequenceJobFlowNode",new JobFlowNodeFunctionTest(false)).setNodeTrigger(nodeTrigger) );
+        //串行分支中增加条件分支节点，指向第一个子节点subnode，形成一个局部循环链路，需要通过触发器设置循环结束条件，否则会进入无限循环
+        comJobFlowNodeBuilder.addConditionJobFlowNodeBuilder(subnode, true);
+        
         parrelJobFlowNodeBuilder.addJobFlowNodeBuilder(comJobFlowNodeBuilder);
 
         ParrelJobFlowNodeBuilder subParrelJobFlowNodeBuilder = new ParrelJobFlowNodeBuilder("ParrelJobFlowNode-2-4","ParrelJobFlowNode");
         subParrelJobFlowNodeBuilder.addJobFlowNodeBuilder(new CommonJobFlowNodeBuilder("ParrelJobFlowNode-2-4-1","ParrelJobFlowNode-SequenceJobFlowNode",new JobFlowNodeFunctionTest(false)) );
-        subParrelJobFlowNodeBuilder.addJobFlowNodeBuilder(new CommonJobFlowNodeBuilder("ParrelJobFlowNode-2-4-2","ParrelJobFlowNode-SequenceJobFlowNode",new JobFlowNodeFunctionTest(true)) );
+        subParrelJobFlowNodeBuilder.addJobFlowNodeBuilder(new CommonJobFlowNodeBuilder("ParrelJobFlowNode-2-4-2","ParrelJobFlowNode-SequenceJobFlowNode",new JobFlowNodeFunctionTest(false)) );
         /**
          * 2.4 为第二个并行任务节点添加第三个并行行复杂流程子任务
          */
@@ -200,7 +244,7 @@ public class SimpleJobFlowTest {
         /**
          * 3.构建第三个任务节点：单任务节点
          */
-        jobFlowNodeBuilder = new CommonJobFlowNodeBuilder("3","DatatranJobFlowNode",new JobFlowNodeFunctionTest(true));
+        jobFlowNodeBuilder = new CommonJobFlowNodeBuilder("3","SimpleNode",new JobFlowNodeFunctionTest(false));
         /**
          * 1.1 为第一个任务节点添加一个带触发器的作业
          */
@@ -211,6 +255,9 @@ public class SimpleJobFlowTest {
          */
         jobFlowBuilder.addJobFlowNodeBuilder(jobFlowNodeBuilder);
 
+        jobFlowBuilder.addConditionJobFlowNodeBuilder(new CommonJobFlowNodeBuilder("4","SimpleNode",new JobFlowNodeFunctionTest(false)),true);
+
+        jobFlowBuilder.addConditionJobFlowNodeBuilder(conditionJobFlowNodeBuilder);
         JobFlow jobFlow = jobFlowBuilder.build();
         jobFlow.start();
 //        
