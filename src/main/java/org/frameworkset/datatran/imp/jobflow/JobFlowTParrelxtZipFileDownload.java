@@ -69,6 +69,7 @@ public class JobFlowTParrelxtZipFileDownload {
                 //并行采集任务依赖该状态标记决定是否结束一次性采集任务
                 jobFlowNodeExecuteContext.addContextData("downloadNodeComplete",false);
                 jobFlowNodeExecuteContext.addContextData("csvfilepath","c:/data/unzipfile");//设置解压数据文件目录，下载节点和数据采集节点从参数中获取对应的文件目录路径
+//                throw new RuntimeException("ssss");
             }
 
             @Override
@@ -138,6 +139,7 @@ public class JobFlowTParrelxtZipFileDownload {
                     .setDownloadWorkThreads(5)
                     .setSourcePath("c:/data/zipfile")//zip文件下载目录
                     .setUnzip(true)
+                    .setReplaceExistFile(false) //如果压缩文件已经存在，是否替换 true 替换  false 不替换
                     .setUnzipDir((String)jobFlowNodeExecuteContext.getContainerJobFlowNodeContextData("csvfilepath"))//zip文件解压目录，从并行任务节点（当前节点的父节点）执行上下文中获取解压数据文件目录
 //                    .setZipFilePassward("123456")
                     .setZipFilePasswordFunction(new ZipFilePasswordFunction() {
@@ -150,7 +152,7 @@ public class JobFlowTParrelxtZipFileDownload {
                          */
                         @Override
                         public String getZipFilePassword(JobFlowNodeExecuteContext jobFlowNodeExecuteContext, String remoteFile, String localFilePath) {
-                            return "aaaaa.zip";
+                            return "behavior_event_02_20251014143000.zip";
                         }
                     })
                     .setDeleteZipFileAfterUnzip(false);
@@ -168,7 +170,9 @@ public class JobFlowTParrelxtZipFileDownload {
                          */
                         @Override
                         public boolean accept(FilterFileInfo fileInfo, JobFlowNodeExecuteContext jobFlowNodeExecuteContext) {
-                            return fileInfo.getFileName().startsWith("behavior_");
+                            String fileName = fileInfo.getFileName();
+                            
+                            return fileName.startsWith("behavior_") && fileName.endsWith(".zip");
                         }
                     })
                      ;
@@ -193,6 +197,9 @@ public class JobFlowTParrelxtZipFileDownload {
              */
             @Override
             public void afterExecute(JobFlowNodeExecuteContext jobFlowNodeExecuteContext, Throwable throwable) {
+                if(throwable != null){
+                    logger.error("Execute failed:",throwable);
+                }
                 //文件下载完毕后，修改父节点状态标记
                 jobFlowNodeExecuteContext.addContainerJobFlowNodeContextData("downloadNodeComplete",true);
             }

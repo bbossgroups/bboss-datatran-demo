@@ -158,7 +158,7 @@ public class SimpleConditionJobFlowTest {
          * 2.1 为第二个并行任务节点添加第一个带触发器的作业任务
          */
         parrelJobFlowNodeBuilder.addJobFlowNodeBuilder(
-                new CommonJobFlowNodeBuilder("ParrelJobFlowNode-DatatranJobFlowNode-2-1","ParrelJobFlowNode-DatatranJobFlowNode-2",new JobFlowNodeFunctionTest(false,true)).setNodeTrigger(nodeTrigger));
+                new CommonJobFlowNodeBuilder("ParrelJobFlowNode-DatatranJobFlowNode-2-1","ParrelJobFlowNode-DatatranJobFlowNode-2",new JobFlowNodeFunctionTest(false,true)));
         /**
          * 2.2 为第二个并行任务节点添加第二个不带触发器的作业任务
          */
@@ -222,7 +222,7 @@ public class SimpleConditionJobFlowTest {
             }
         });
         comJobFlowNodeBuilder.addJobFlowNodeBuilder(subnode);
-        comJobFlowNodeBuilder.addJobFlowNodeBuilder(new CommonJobFlowNodeBuilder("ParrelJobFlowNode-2-3-2","SequenceJobFlowNode-SequenceJobFlowNode",new JobFlowNodeFunctionTest(false)).setNodeTrigger(nodeTrigger) );
+        comJobFlowNodeBuilder.addJobFlowNodeBuilder(new CommonJobFlowNodeBuilder("ParrelJobFlowNode-2-3-2","SequenceJobFlowNode-SequenceJobFlowNode",new JobFlowNodeFunctionTest(false)) );
         //串行分支中增加条件分支节点，指向第一个子节点subnode，形成一个局部循环链路，需要通过触发器设置循环结束条件，否则会进入无限循环
         comJobFlowNodeBuilder.addConditionJobFlowNodeBuilder(subnode, true);
         
@@ -245,19 +245,89 @@ public class SimpleConditionJobFlowTest {
          * 3.构建第三个任务节点：单任务节点
          */
         jobFlowNodeBuilder = new CommonJobFlowNodeBuilder("3","SimpleNode",new JobFlowNodeFunctionTest(false));
-        /**
-         * 1.1 为第一个任务节点添加一个带触发器的作业
-         */
-        jobFlowNodeBuilder.setNodeTrigger(nodeTrigger);
+        
 
         /**
-         * 1.2 将第三个节点添加到工作流构建器
+         * 3.1 将第三个节点添加到工作流构建器
          */
         jobFlowBuilder.addJobFlowNodeBuilder(jobFlowNodeBuilder);
 
-        jobFlowBuilder.addConditionJobFlowNodeBuilder(new CommonJobFlowNodeBuilder("4","SimpleNode",new JobFlowNodeFunctionTest(false)),true);
+        jobFlowBuilder.addConditionJobFlowNodeBuilder(new CommonJobFlowNodeBuilder("ConditionNode-4","SimpleNode",new JobFlowNodeFunctionTest(false)),true);
 
         jobFlowBuilder.addConditionJobFlowNodeBuilder(conditionJobFlowNodeBuilder);
+
+
+        /**
+         * 4.添加第4个串行作业节点
+         */
+        SequenceJobFlowNodeBuilder sequenceJobFlowNodeBuilder = new SequenceJobFlowNodeBuilder("SequenceJobFlowNode-4","SequenceJobFlowNode");
+        sequenceJobFlowNodeBuilder.addJobFlowNodeListener(new JobFlowNodeListener() {
+            @Override
+            public void beforeExecute(JobFlowNodeExecuteContext jobFlowNodeExecuteContext) {
+
+            }
+
+            @Override
+            public void afterExecute(JobFlowNodeExecuteContext jobFlowNodeExecuteContext, Throwable throwable) {
+                logger.info(SimpleStringUtil.object2json(jobFlowNodeExecuteContext.getJobFlowNodeStaticContext()));
+            }
+
+            @Override
+            public void afterEnd(JobFlowNode jobFlowNode) {
+
+            }
+        });
+    
+        CommonJobFlowNodeBuilder subnode1 = new CommonJobFlowNodeBuilder("SequenceJobFlowNode-4-1","SequenceJobFlowNode-SequenceJobFlowNode",new JobFlowNodeFunctionTest(false));
+        subnode1.setNodeTrigger(NodeTriggerBuilder.buildNodeTrigger(new TriggerScriptAPI() {
+            @Override
+            public boolean needTrigger(NodeTriggerContext nodeTriggerContext) throws Exception {
+                IntegerCount executeTimes = (IntegerCount) nodeTriggerContext.getContainerContextData("executeTimes");
+               
+               
+                if(executeTimes == null){
+                    return true;
+                }
+//                else {
+//                    return false;
+//                }
+                if(executeTimes.getCountUnSynchronized() >= 2) {
+                    return false;
+                }
+                return true;
+            }
+        }));
+        subnode1.addJobFlowNodeListener(new JobFlowNodeListener() {
+            @Override
+            public void beforeExecute(JobFlowNodeExecuteContext jobFlowNodeExecuteContext) {
+
+            }
+
+            @Override
+            public void afterExecute(JobFlowNodeExecuteContext jobFlowNodeExecuteContext, Throwable throwable) {
+                //设置节点执行次数往节点父节点（串行复合节点comJobFlowNodeBuilder中添加循环执行测试）
+                IntegerCount executeTimes = (IntegerCount) jobFlowNodeExecuteContext.getContainerJobFlowNodeContextData("executeTimes");
+                if(executeTimes == null){
+                    executeTimes = new IntegerCount();
+
+                    jobFlowNodeExecuteContext.addContainerJobFlowNodeContextData("executeTimes",executeTimes);
+                }
+                executeTimes.increament();
+            }
+
+            @Override
+            public void afterEnd(JobFlowNode jobFlowNode) {
+
+            }
+        });
+        sequenceJobFlowNodeBuilder.addJobFlowNodeBuilder(subnode1);
+        sequenceJobFlowNodeBuilder.addJobFlowNodeBuilder(new CommonJobFlowNodeBuilder("SequenceJobFlowNode-4-2","SequenceJobFlowNode-SequenceJobFlowNode",new JobFlowNodeFunctionTest(false)) );
+        //串行分支中增加条件分支节点，指向第一个子节点subnode，形成一个局部循环链路，需要通过触发器设置循环结束条件，否则会进入无限循环
+        sequenceJobFlowNodeBuilder.addConditionJobFlowNodeBuilder(subnode1);
+        sequenceJobFlowNodeBuilder.addJobFlowNodeBuilder(new CommonJobFlowNodeBuilder("SequenceJobFlowNode-4-3","SequenceJobFlowNode-SequenceJobFlowNode",new JobFlowNodeFunctionTest(false))  );
+        sequenceJobFlowNodeBuilder.addJobFlowNodeBuilder(new CommonJobFlowNodeBuilder("SequenceJobFlowNode-4-4","SequenceJobFlowNode-SequenceJobFlowNode",new JobFlowNodeFunctionTest(false))  );
+
+        jobFlowBuilder.addJobFlowNodeBuilder(sequenceJobFlowNodeBuilder);
         JobFlow jobFlow = jobFlowBuilder.build();
         jobFlow.start();
 //        
