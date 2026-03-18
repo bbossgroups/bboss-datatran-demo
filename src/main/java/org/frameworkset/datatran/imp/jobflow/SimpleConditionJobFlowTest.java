@@ -224,7 +224,13 @@ public class SimpleConditionJobFlowTest {
         comJobFlowNodeBuilder.addJobFlowNodeBuilder(subnode);
         comJobFlowNodeBuilder.addJobFlowNodeBuilder(new CommonJobFlowNodeBuilder("ParrelJobFlowNode-2-3-2","SequenceJobFlowNode-SequenceJobFlowNode",new JobFlowNodeFunctionTest(false)) );
         //串行分支中增加条件分支节点，指向第一个子节点subnode，形成一个局部循环链路，需要通过触发器设置循环结束条件，否则会进入无限循环
-        comJobFlowNodeBuilder.addConditionJobFlowNodeBuilder(subnode, true);
+        String condtionNodeId = comJobFlowNodeBuilder.addConditionJobFlowNodeBuilder(subnode, true);
+        comJobFlowNodeBuilder.addConditionJobFlowNodeBuilder(condtionNodeId,NodeTriggerBuilder.buildNodeTrigger(new TriggerScriptAPI() {
+            @Override
+            public boolean needTrigger(NodeTriggerContext nodeTriggerContext) throws Exception {
+                return false;
+            }
+        }));
         
         parrelJobFlowNodeBuilder.addJobFlowNodeBuilder(comJobFlowNodeBuilder);
 
@@ -324,7 +330,10 @@ public class SimpleConditionJobFlowTest {
         sequenceJobFlowNodeBuilder.addJobFlowNodeBuilder(new CommonJobFlowNodeBuilder("SequenceJobFlowNode-4-2","SequenceJobFlowNode-SequenceJobFlowNode",new JobFlowNodeFunctionTest(false)) );
         //串行分支中增加条件分支节点，指向第一个子节点subnode，形成一个局部循环链路，需要通过触发器设置循环结束条件，否则会进入无限循环
         sequenceJobFlowNodeBuilder.addConditionJobFlowNodeBuilder(subnode1);
-        sequenceJobFlowNodeBuilder.addJobFlowNodeBuilder(new CommonJobFlowNodeBuilder("SequenceJobFlowNode-4-3","SequenceJobFlowNode-SequenceJobFlowNode",new JobFlowNodeFunctionTest(false))  );
+        
+        //在上面的条件分支后新加一个条件分支
+        sequenceJobFlowNodeBuilder.addAnotherConditionJobFlowNodeBuilder(new CommonJobFlowNodeBuilder("SequenceJobFlowNode-4-3","SequenceJobFlowNode-SequenceJobFlowNode",new JobFlowNodeFunctionTest(false))  );
+        sequenceJobFlowNodeBuilder.addConditionJobFlowNodeBuilder(subnode1);
         sequenceJobFlowNodeBuilder.addJobFlowNodeBuilder(new CommonJobFlowNodeBuilder("SequenceJobFlowNode-4-4","SequenceJobFlowNode-SequenceJobFlowNode",new JobFlowNodeFunctionTest(false))  );
 
         jobFlowBuilder.addJobFlowNodeBuilder(sequenceJobFlowNodeBuilder);
