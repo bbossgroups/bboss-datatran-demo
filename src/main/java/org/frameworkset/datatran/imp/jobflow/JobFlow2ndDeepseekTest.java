@@ -38,20 +38,8 @@ import java.util.Map;
 public class JobFlow2ndDeepseekTest {
     private static Logger logger = LoggerFactory.getLogger(JobFlow2ndDeepseekTest.class);
     private static void initDeepseekService(){
-        Map properties = new HashMap();
-
-        //deepseek为的Deepseek服务数据源名称
-        properties.put("http.poolNames","deepseek");
-
-        properties.put("deepseek.http.hosts","https://api.deepseek.com");///设置Deepseek服务地址
-        properties.put("deepseek.http.apiKeyId","sk-9fca957xxxxxd5a9f7852be1aefa2b");//设置apiKey
-        properties.put("deepseek.http.timeoutSocket","60000");
-        properties.put("deepseek.http.timeoutConnection","40000");
-        properties.put("deepseek.http.connectionRequestTimeout","70000");
-        properties.put("deepseek.http.maxTotal","100");
-        properties.put("deepseek.http.defaultMaxPerRoute","100");
-        //
-        HttpRequestProxy.startHttpPools(properties);//启动服务
+      
+        HttpRequestProxy.startHttpPools("application.properties");//启动服务
 
     }
     public static void main(String[] args){
@@ -242,6 +230,7 @@ public class JobFlow2ndDeepseekTest {
                 deepseekMessages.setModel(model);
                 deepseekMessages.setStream(stream);
                 deepseekMessages.setMax_tokens(this.max_tokens);
+                deepseekMessages.setTools( tools);
                 //调用Deepseek 对话api，结合用户问题和工具返回值，生成最终的问题答案
                 response = HttpRequestProxy.sendJsonBody(this.getDeepseekService(), deepseekMessages, "/chat/completions", Map.class);
                 choices = (List) response.get("choices");
