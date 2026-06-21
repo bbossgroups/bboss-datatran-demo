@@ -154,6 +154,14 @@ public class Db2FilterMultiOutputDemo {
             /**
              * 可以根据插件类型过滤记录，亦可以根据id或者name过滤记录
              */
+            for(CommonRecord record : records){
+                try {
+                    String author = record.getStringValue("author");
+                    logger.info("author:{}",author);
+                } catch (Exception e) {
+                    throw new RuntimeException(e);
+                }
+            }
             if(config instanceof ElasticsearchOutputConfig) {
                 return records;
             }
@@ -161,6 +169,7 @@ public class Db2FilterMultiOutputDemo {
                 //最多只返回前两条记录
                 List<CommonRecord> newRecords = new ArrayList<>();
                 for(int i = 0; i < records.size() ; i ++) {
+                    
                     newRecords.add(records.get(i));
                     if(i == 2)
                         break;
@@ -271,12 +280,14 @@ public class Db2FilterMultiOutputDemo {
         FileOutputConfig fileOutputConfig = new FileOutputConfig();
         OSSFileConfig ossFileConfig = new OSSFileConfig();
         fileOutputConfig.setOSSFileConfig(ossFileConfig);
+        ossFileConfig.setRegion("cn-north-1");
 
         ossFileConfig.setBackupSuccessFiles(true);
         ossFileConfig.setTransferEmptyFiles(false);
         ossFileConfig.setEndpoint("http://172.24.176.18:9000");
 
         ossFileConfig.setName("miniotest");
+        
         ossFileConfig.setAccessKeyId("O3CBPdUzJICHsMp7pj6h");
         ossFileConfig.setSecretAccesskey("Y6o9piJTjhL6wRQcHeI7fRCyeM2LTSavGcCVx8th");
         ossFileConfig.setConnectTimeout(5000);
@@ -382,7 +393,7 @@ public class Db2FilterMultiOutputDemo {
 
             }
         });
-        importBuilder.addOutputConfig(kafkaOutputConfig);
+//        importBuilder.addOutputConfig(kafkaOutputConfig);//服务器不可用，暂时注释掉
         
         importBuilder.setMetricsLogLevel(MetricsLogLevel.WARN);
         //在任务数据抽取之前做一些初始化处理，例如：通过删表来做初始化操作
@@ -458,12 +469,13 @@ public class Db2FilterMultiOutputDemo {
 
 //
 		final AtomicInteger s = new AtomicInteger(0);
-		importBuilder.setGeoipDatabase("C:/workdir/geolite2/GeoLite2-City.mmdb");
-		importBuilder.setGeoipAsnDatabase("C:/workdir/geolite2/GeoLite2-ASN.mmdb");
-		importBuilder.setGeoip2regionDatabase("C:/workdir/geolite2/ip2region.db");
-		/**
-		 * 重新设置数据结构
-		 */
+        importBuilder.setGeoipDatabase("C:/workdir/geolite2/GeoLite2-City.mmdb");
+        importBuilder.setGeoipAsnDatabase("C:/workdir/geolite2/GeoLite2-ASN.mmdb");
+        importBuilder.setGeoip2regionDatabase("C:/workdir/geolite2/ip2region_v4.xdb;C:/workdir/geolite2/ip2region_v6.xdb");
+
+        /**
+         * 重新设置数据结构
+         */
 		importBuilder.setDataRefactor(new DataRefactor() {
 			public void refactor(Context context) throws Exception  {
 				//可以根据条件定义是否丢弃当前记录
@@ -476,6 +488,7 @@ public class Db2FilterMultiOutputDemo {
 
 
 				context.addFieldValue("author","duoduo");
+                context.addFieldValue("author","duoduo1");
 				context.addFieldValue("title","解放");
 				context.addFieldValue("subtitle","小康");
 				context.addFieldValue("collecttime",new Date());//
@@ -489,10 +502,19 @@ public class Db2FilterMultiOutputDemo {
 				context.addIgnoreFieldMapping("subtitle");
 				/**
 				 * 获取ip对应的运营商和区域信息
+                 * 0:0:0:0:0:0:0:1||||
 				 */
-				IpInfo ipInfo = context.getIpInfo("LOG_VISITORIAL");
-				if(ipInfo != null)
-					context.addFieldValue("ipinfo", SimpleStringUtil.object2json(ipInfo));
+                String ip = context.getStringValue("LOG_VISITORIAL");
+                if(SimpleStringUtil.isNotEmpty(ip) ){
+                    if(ip.endsWith("||||")){
+                        ip = ip.substring(0,ip.length()-4);
+                    }
+                }
+				IpInfo ipInfo = context.getIpInfoByIp(ip);
+				if(ipInfo != null) {
+                    
+                    context.addFieldValue("ipinfo", SimpleStringUtil.object2json(ipInfo));
+                }
 				else{
 					context.addFieldValue("ipinfo", "");
 				}

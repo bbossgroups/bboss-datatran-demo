@@ -75,6 +75,7 @@ public class ParrelTxtUserBehaviorImport {
         fileInputConfig.setDisableScanNewFiles( true);
         fileInputConfig.setDisableScanNewFilesCheckpoint(false);
         fileInputConfig.setMaxFilesThreshold(maxFilesThreshold);
+//        fileInputConfig.setRegistLiveTime(60L*60L*1000L); //保留一小时
         
         fileInputConfig.setAssertStopBarrier(new FileScanAssertStopBarrier(jobFlowNodeExecuteContext) {
 
@@ -116,6 +117,8 @@ public class ParrelTxtUserBehaviorImport {
 //        config.setBackupSuccessFileLiveTime( 10 * 60l);
        
         FileConfig fileConfig = new FileConfig();
+        
+        String cvsfilepath = (String)jobFlowNodeExecuteContext.getContainerJobFlowNodeContextData("csvfilepath");
         fileConfig.setFileFilter(new FileFilter() {//指定文件筛选规则
                     @Override
                     public boolean accept(FilterFileInfo fileInfo, //文件信息
@@ -125,7 +128,7 @@ public class ParrelTxtUserBehaviorImport {
                     }
                 }).setSkipHeaderLines(1)
                 .setCloseOlderTime(1000L)//setIgnoreOlderTime
-                .setSourcePath((String)jobFlowNodeExecuteContext.getContainerJobFlowNodeContextData("csvfilepath"));//从并行任务节点（当前节点的父节点）执行上下文中获取解压数据文件目录
+                .setSourcePath(cvsfilepath);//从并行任务节点（当前节点的父节点）执行上下文中获取解压数据文件目录
         fileInputConfig.addConfig(fileConfig);
         fileInputConfig.setEnableMeta(true);
 //		config.setJsondata(true);

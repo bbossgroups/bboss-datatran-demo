@@ -294,7 +294,7 @@ configure(allprojects) { project ->
 		api (
                 [group: 'com.mysql', name: 'mysql-connector-j', version: "8.2.0", transitive: false],
 				[group: 'com.bbossgroups', name: 'bboss-bootstrap-rt', version: "${bboss_version}", transitive: true],
-                [group: 'com.bbossgroups', name: 'bboss-ai', version: "${bboss_ai_version}", transitive: true]
+                [group: 'com.bbossgroups', name: 'bboss-ai-flow', version: "${bboss_ai_version}", transitive: true]
 		)
 		api (
 				fileTree(dir: 'lib', include: '*.jar')

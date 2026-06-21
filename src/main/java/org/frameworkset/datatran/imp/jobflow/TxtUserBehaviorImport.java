@@ -24,7 +24,7 @@ import org.slf4j.LoggerFactory;
 
 public class TxtUserBehaviorImport {
 
-    private static Logger logger = LoggerFactory.getLogger(TxtUserBehaviorImport.class);
+    private Logger logger = LoggerFactory.getLogger(TxtUserBehaviorImport.class);
 
     private static final String JOB_ID = "JOB_TXT_USER_BEHAVIOR_JOB_ID";
     private static final String JOB_NAME = "JOB_TXT_USER_BEHAVIOR_JOB_NAME";

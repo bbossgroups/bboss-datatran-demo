@@ -251,6 +251,7 @@ public class Db2MultiOutputDemo {
         FileOutputConfig fileOutputConfig = new FileOutputConfig();
         OSSFileConfig ossFileConfig = new OSSFileConfig();
         fileOutputConfig.setOSSFileConfig(ossFileConfig);
+        ossFileConfig.setRegion("cn-north-1");
 
         ossFileConfig.setBackupSuccessFiles(true);
         ossFileConfig.setTransferEmptyFiles(false);
@@ -438,12 +439,13 @@ public class Db2MultiOutputDemo {
 
 //
 		final AtomicInteger s = new AtomicInteger(0);
-		importBuilder.setGeoipDatabase("C:/workdir/geolite2/GeoLite2-City.mmdb");
-		importBuilder.setGeoipAsnDatabase("C:/workdir/geolite2/GeoLite2-ASN.mmdb");
-		importBuilder.setGeoip2regionDatabase("C:/workdir/geolite2/ip2region.db");
-		/**
-		 * 重新设置数据结构
-		 */
+        importBuilder.setGeoipDatabase("C:/workdir/geolite2/GeoLite2-City.mmdb");
+        importBuilder.setGeoipAsnDatabase("C:/workdir/geolite2/GeoLite2-ASN.mmdb");
+        importBuilder.setGeoip2regionDatabase("C:/workdir/geolite2/ip2region_v4.xdb;C:/workdir/geolite2/ip2region_v6.xdb");
+
+        /**
+         * 重新设置数据结构
+         */
 		importBuilder.setDataRefactor(new DataRefactor() {
 			public void refactor(Context context) throws Exception  {
 				//可以根据条件定义是否丢弃当前记录

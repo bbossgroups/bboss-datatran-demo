@@ -133,11 +133,12 @@ public class ES2DBSliceScrollResultCallbackDemo {
 		/**
 		 * 设置IP地址信息库
 		 */
-		importBuilder.setGeoipDatabase("d:/geolite2/GeoLite2-City.mmdb");
-		importBuilder.setGeoipAsnDatabase("d:/geolite2/GeoLite2-ASN.mmdb");
-		importBuilder.setGeoip2regionDatabase("d:/geolite2/ip2region.db");
+        importBuilder.setGeoipDatabase("C:/workdir/geolite2/GeoLite2-City.mmdb");
+        importBuilder.setGeoipAsnDatabase("C:/workdir/geolite2/GeoLite2-ASN.mmdb");
+        importBuilder.setGeoip2regionDatabase("C:/workdir/geolite2/ip2region_v4.xdb;C:/workdir/geolite2/ip2region_v6.xdb");
 
-		//定时任务配置，
+
+        //定时任务配置，
 		importBuilder.setFixedRate(false)//参考jdk timer task文档对fixedRate的说明
 //					 .setScheduleDate(date) //指定任务开始执行时间：日期
 				.setDeyLay(1000L) // 任务延迟执行deylay毫秒后执行

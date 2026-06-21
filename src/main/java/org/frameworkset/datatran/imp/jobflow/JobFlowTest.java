@@ -70,7 +70,7 @@ public class JobFlowTest {
                 //任务调用前，向流程执行上下文中添加参数
                 taskContext.addJobFlowContextData("flowParam","测试");
                 //任务调用前，向往流程节点执行上下文中添加参数
-                taskContext.addJobFlowNodeBuilderContextData("nodeParam","测试");
+                taskContext.addJobFlowNodeContextData("nodeParam","测试");
                 //任务调用前，向流程子节点所属的复合节点（串行/并行）执行上下文中添加参数
                 if(taskContext.getContainerJobFlowNodeExecuteContext() != null)
                     taskContext.addContainerJobFlowNodeContextData("nodeParam","测试");

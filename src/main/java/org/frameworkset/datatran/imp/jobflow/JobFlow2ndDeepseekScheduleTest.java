@@ -54,7 +54,10 @@ public class JobFlow2ndDeepseekScheduleTest {
         jobFlowScheduleConfig.setDelay(1000L);
         jobFlowScheduleConfig.setFixedRate(true);
         jobFlowScheduleConfig.setPeriod(30000L);
-        jobFlowScheduleConfig.addCustomHoliday("2026-06-10");
+        jobFlowScheduleConfig.addCustomHoliday("2026-06-10");//设定某天不执行，可以调用多次添加多天不执行
+        jobFlowScheduleConfig.setSkipSunday(true);
+        jobFlowScheduleConfig.setSkipSaturday(true);
+        
         planAgent.setJobFlowScheduleConfig(jobFlowScheduleConfig);
 
         planAgent.addAgent(new AINodeAgent("模仿李白的风格写一首七律.飞机!").setSystemPrompt("你是一位唐代诗人.").setAgentId("1").setAgentName("Deepseek写诗-评价诗词流程").setAgentOutput(new AgentOutput() {

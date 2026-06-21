@@ -98,31 +98,28 @@ public class SimpleConditionJobFlowTest {
         JobFlowNodeBuilder conditionJobFlowNodeBuilder = jobFlowNodeBuilder;
 
         IntegerCount integerCount = new IntegerCount();
-        NodeTrigger nodeTrigger = new NodeTrigger();
-        nodeTrigger.setTriggerScriptAPI(new TriggerScriptAPI() {
+        
+
+
+        
+       
+        /**
+         * 1.2 将第一个节点添加到工作流构建器，并且为第一个任务节点添加一个带触发器
+         */
+        jobFlowBuilder.addJobFlowNodeBuilder(jobFlowNodeBuilder.setTriggerScriptAPI(new TriggerScriptAPI() {
             @Override
             public boolean needTrigger(NodeTriggerContext nodeTriggerContext) throws Exception {
                 if(integerCount.getCountUnSynchronized() > 229) {
                     logger.info("最多允许执行230次：迭代结束");
                     return false;
                 }
-                
+
                 if(integerCount.getCountUnSynchronized() == 228){
                     logger.info("228");
                 }
                 return true;
             }
-        });
-
-
-        /**
-         * 1.1 为第一个任务节点添加一个带触发器的作业
-         */
-        jobFlowNodeBuilder.setNodeTrigger(nodeTrigger);
-        /**
-         * 1.2 将第一个节点添加到工作流构建器
-         */
-        jobFlowBuilder.addJobFlowNodeBuilder(jobFlowNodeBuilder);
+        }));
         
         
 
@@ -146,14 +143,13 @@ public class SimpleConditionJobFlowTest {
 
             }
         });
-        NodeTrigger parrelnewNodeTrigger = new NodeTrigger();
-        parrelnewNodeTrigger.setTriggerScriptAPI(new TriggerScriptAPI() {
+  
+        parrelJobFlowNodeBuilder.setTriggerScriptAPI(new TriggerScriptAPI() {
             @Override
             public boolean needTrigger(NodeTriggerContext nodeTriggerContext) throws Exception {
                 return true;
             }
         });
-        parrelJobFlowNodeBuilder.setNodeTrigger(parrelnewNodeTrigger);
         /**
          * 2.1 为第二个并行任务节点添加第一个带触发器的作业任务
          */
@@ -184,7 +180,7 @@ public class SimpleConditionJobFlowTest {
             }
         });
         CommonJobFlowNodeBuilder subnode = new CommonJobFlowNodeBuilder("ParrelJobFlowNode-2-3-1","SequenceJobFlowNode-SequenceJobFlowNode",new JobFlowNodeFunctionTest(false));
-        subnode.setNodeTrigger(NodeTriggerBuilder.buildNodeTrigger(new TriggerScriptAPI() {
+        subnode.setTriggerScriptAPI(new TriggerScriptAPI() {
             @Override
             public boolean needTrigger(NodeTriggerContext nodeTriggerContext) throws Exception {
                 //从串行复合节点comJobFlowNodeBuilder中获取分支循环执行次数）
@@ -197,7 +193,7 @@ public class SimpleConditionJobFlowTest {
                 }
                 return true;
             }
-        }));
+        });
         subnode.addJobFlowNodeListener(new JobFlowNodeListener() {
             @Override
             public void beforeExecute(JobFlowNodeExecuteContext jobFlowNodeExecuteContext) {
@@ -285,7 +281,7 @@ public class SimpleConditionJobFlowTest {
         });
     
         CommonJobFlowNodeBuilder subnode1 = new CommonJobFlowNodeBuilder("SequenceJobFlowNode-4-1","SequenceJobFlowNode-SequenceJobFlowNode",new JobFlowNodeFunctionTest(false));
-        subnode1.setNodeTrigger(NodeTriggerBuilder.buildNodeTrigger(new TriggerScriptAPI() {
+        subnode1.setTriggerScriptAPI(new TriggerScriptAPI() {
             @Override
             public boolean needTrigger(NodeTriggerContext nodeTriggerContext) throws Exception {
                 IntegerCount executeTimes = (IntegerCount) nodeTriggerContext.getContainerContextData("executeTimes");
@@ -302,7 +298,7 @@ public class SimpleConditionJobFlowTest {
                 }
                 return true;
             }
-        }));
+        });
         subnode1.addJobFlowNodeListener(new JobFlowNodeListener() {
             @Override
             public void beforeExecute(JobFlowNodeExecuteContext jobFlowNodeExecuteContext) {

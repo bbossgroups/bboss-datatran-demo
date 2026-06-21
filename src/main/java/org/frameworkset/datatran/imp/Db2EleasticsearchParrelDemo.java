@@ -220,11 +220,12 @@ public class Db2EleasticsearchParrelDemo {
 		/**
 		 * 设置IP地址信息库
 		 */
-		importBuilder.setGeoipDatabase("C:\\workspace\\hnai\\terminal\\geolite2/GeoLite2-City.mmdb");
-		importBuilder.setGeoipAsnDatabase("C:\\workspace\\hnai\\terminal\\geolite2/GeoLite2-ASN.mmdb");
-		importBuilder.setGeoip2regionDatabase("C:\\workspace\\hnai\\terminal\\geolite2/ip2region.db");
+        importBuilder.setGeoipDatabase("C:/workdir/geolite2/GeoLite2-City.mmdb");
+        importBuilder.setGeoipAsnDatabase("C:/workdir/geolite2/GeoLite2-ASN.mmdb");
+        importBuilder.setGeoip2regionDatabase("C:/workdir/geolite2/ip2region_v4.xdb;C:/workdir/geolite2/ip2region_v6.xdb");
 
-		importBuilder
+
+        importBuilder
 //
 				.setUseJavaName(true) //可选项,将数据库字段名称转换为java驼峰规范的名称，true转换，false不转换，默认false，例如:doc_id -> docId
 				.setUseLowcase(false)  //可选项，true 列名称转小写，false列名称不转换小写，默认false，只要在UseJavaName为false的情况下，配置才起作用

@@ -229,9 +229,10 @@ public class Db2Milvusdemo {
  
 //
 		final AtomicInteger s = new AtomicInteger(0);
-		importBuilder.setGeoipDatabase("c:/data/geolite2/GeoLite2-City.mmdb");
-		importBuilder.setGeoipAsnDatabase("c:/data/geolite2/GeoLite2-ASN.mmdb");
-		importBuilder.setGeoip2regionDatabase("c:/data/geolite2/ip2region.db");
+        importBuilder.setGeoipDatabase("C:/workdir/geolite2/GeoLite2-City.mmdb");
+        importBuilder.setGeoipAsnDatabase("C:/workdir/geolite2/GeoLite2-ASN.mmdb");
+        importBuilder.setGeoip2regionDatabase("C:/workdir/geolite2/ip2region_v4.xdb;C:/workdir/geolite2/ip2region_v6.xdb");
+
         //mysql 数据表中的字段名称为大小，输出的时候需要映射为小写名称
         importBuilder.addFieldMapping("LOG_CONTENT","log_content");//将字段名称转换为小写输出
         importBuilder.addFieldMapping("LOG_ID","log_id");//将字段名称转换为小写输出

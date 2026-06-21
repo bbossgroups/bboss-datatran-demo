@@ -49,7 +49,7 @@ public class AIAgentJobFlow2ndDeepseekTest {
         properties.put("http.poolNames","deepseek,tool");
 
         properties.put("deepseek.http.hosts","https://api.deepseek.com");///设置Deepseek服务地址
-        properties.put("deepseek.http.apiKeyId","sk-36710e392e244584b3f7fc6a7423bd31");//设置apiKey
+        properties.put("deepseek.http.apiKeyId","sk-26710e392e244584b3f7fc6a7423bd31");//设置apiKey
         properties.put("deepseek.http.timeoutSocket","60000");
         properties.put("deepseek.http.timeoutConnection","40000");
         properties.put("deepseek.http.connectionRequestTimeout","70000");
@@ -95,7 +95,7 @@ public class AIAgentJobFlow2ndDeepseekTest {
                         .setSessionSize(50)
                         .setSessionMemory(session)
                         .setModel("deepseek-chat")
-                        .setMaxTokens(4096);
+                        .setMaxTokens(4096L);
 
                 AIAgent aiAgent = new AIAgent();
                 ServerEvent serverEvent = aiAgent.chat("deepseek", chatAgentMessage);
@@ -166,8 +166,9 @@ public class AIAgentJobFlow2ndDeepseekTest {
 //                        .addArrayParameter("params","subuser","string","城市或者地州, 例如：上海市")
 
 
-                chatAgentMessage.registTool(functionToolDefine);
+               
                 AIAgent aiAgent = new AIAgent();
+                aiAgent.registTool(functionToolDefine);
                 ServerEvent serverEvent = aiAgent.chat("deepseek", chatAgentMessage);
                 logger.info(serverEvent.getData());
                 return serverEvent;

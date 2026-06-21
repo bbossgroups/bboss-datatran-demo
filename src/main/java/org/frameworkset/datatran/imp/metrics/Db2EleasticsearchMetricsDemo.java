@@ -402,11 +402,12 @@ public class Db2EleasticsearchMetricsDemo {
 		/**
 		 * 设置IP地址信息库
 		 */
-		importBuilder.setGeoipDatabase("C:/workdir/geolite2/GeoLite2-City.mmdb");
-		importBuilder.setGeoipAsnDatabase("C:/workdir/geolite2/GeoLite2-ASN.mmdb");
-		importBuilder.setGeoip2regionDatabase("C:/workdir/geolite2/ip2region.db");
+        importBuilder.setGeoipDatabase("C:/workdir/geolite2/GeoLite2-City.mmdb");
+        importBuilder.setGeoipAsnDatabase("C:/workdir/geolite2/GeoLite2-ASN.mmdb");
+        importBuilder.setGeoip2regionDatabase("C:/workdir/geolite2/ip2region_v4.xdb;C:/workdir/geolite2/ip2region_v6.xdb");
 
-		importBuilder
+
+        importBuilder
 //
 				.setUseJavaName(true) //可选项,将数据库字段名称转换为java驼峰规范的名称，true转换，false不转换，默认false，例如:doc_id -> docId
 				.setPrintTaskLog(true) //可选项，true 打印任务执行日志（耗时，处理记录数） false 不打印，默认值false

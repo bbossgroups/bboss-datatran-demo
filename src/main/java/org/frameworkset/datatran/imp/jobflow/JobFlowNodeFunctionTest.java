@@ -16,7 +16,11 @@ package org.frameworkset.datatran.imp.jobflow;
  */
 
 import org.frameworkset.tran.jobflow.BaseJobFlowNodeFunction;
+import org.frameworkset.tran.jobflow.JobFlowException;
 import org.frameworkset.tran.jobflow.context.JobFlowNodeExecuteContext;
+import org.frameworkset.util.concurrent.IntegerCount;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 
 /**
  * 函数接口案例
@@ -25,7 +29,14 @@ import org.frameworkset.tran.jobflow.context.JobFlowNodeExecuteContext;
  */
 public class JobFlowNodeFunctionTest extends BaseJobFlowNodeFunction {
 
+    private static Logger logger = LoggerFactory.getLogger(JobFlowNodeFunctionTest.class);
     private boolean throwError;
+    private boolean blocked;
+    public JobFlowNodeFunctionTest(boolean throwError,boolean blocked){
+        this.throwError = throwError;
+        this.blocked = blocked;
+    }
+
     public JobFlowNodeFunctionTest(boolean throwError){
         this.throwError = throwError;
     }
@@ -41,6 +52,12 @@ public class JobFlowNodeFunctionTest extends BaseJobFlowNodeFunction {
     public Object call(JobFlowNodeExecuteContext jobFlowNodeExecuteContext) {
         Throwable exception = null;
         try {
+            IntegerCount integerCount = (IntegerCount) jobFlowNodeExecuteContext.getJobFlowContextData("integerCount");
+            if(integerCount == null){
+                integerCount = new IntegerCount();
+                jobFlowNodeExecuteContext.addJobFlowContextData("integerCount",integerCount);
+            }
+            integerCount.increament();
             //获取流程上下文参数functionParam的值，参数有效期为本次执行过程中有效，执行完毕后直接被清理
             Object flowParam = jobFlowNodeExecuteContext.getJobFlowContextData("flowParam","defaultValue");
             //如果节点包含在串行或者并行复合节点中，可以获取串行或者并行复合节点上下文中的参数，参数有效期为本次执行过程中有效，执行完毕后直接被清理
@@ -67,13 +84,30 @@ public class JobFlowNodeFunctionTest extends BaseJobFlowNodeFunction {
             //直接在节点执行上下文中添加参数，参数有效期为本次执行过程中有效，执行完毕后直接被清理
             jobFlowNodeExecuteContext.addContextData("nodeParam", "paramValue");
 
-            
+            if(blocked){
+                logger.info("JobFlowNodeFunctionTest Execute call blocked function");
+                 
+            }
 
-        }        
-        finally {
-            //方法执行完毕后，务必调用jobFlowNode.nodeComplete方法，如果方法执行过程中产生异常，则作为参数传递给complete方法
-            jobFlowNode.nodeComplete(exception);
+        }     
+        catch (Exception e){
+            exception = e;
+            logger.error("",e);
         }
+        catch (Throwable e){
+            exception = e;
+            logger.error("",e);
+        }
+        finally {
+           
+        }
+        //演示手动在方法中执行完毕后，务必调用jobFlowNode.nodeComplete方法，如果方法执行过程中产生异常，则作为参数传递给complete方法，
+        // 亦可以直接将异常抛出，流程引擎会自动调用nodeComplete方法，并将异常信息记录到流程执行日志中
+        if(exception != null)
+            throw new JobFlowException(exception);
+        
+        logger.info("JobFlowNodeFunctionTest Execute call complete.");
+      
         //此处可以返回一个值，目前无用
         return null;
     }

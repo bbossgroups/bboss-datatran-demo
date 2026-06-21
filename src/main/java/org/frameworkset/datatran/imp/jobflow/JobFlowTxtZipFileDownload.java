@@ -15,13 +15,16 @@ package org.frameworkset.datatran.imp.jobflow;
  * limitations under the License.
  */
 
+import org.frameworkset.spi.assemble.PropertiesContainer;
 import org.frameworkset.tran.ftp.FtpConfig;
+import org.frameworkset.tran.input.file.FilterFileInfo;
 import org.frameworkset.tran.input.zipfile.ZipFilePasswordFunction;
 import org.frameworkset.tran.jobflow.*;
 import org.frameworkset.tran.jobflow.builder.DatatranJobFlowNodeBuilder;
 import org.frameworkset.tran.jobflow.builder.JobFlowBuilder;
 import org.frameworkset.tran.jobflow.context.JobFlowNodeExecuteContext;
 import org.frameworkset.tran.jobflow.context.NodeTriggerContext;
+import org.frameworkset.tran.jobflow.scan.JobFileFilter;
 import org.frameworkset.tran.jobflow.schedule.JobFlowScheduleConfig;
 import org.frameworkset.tran.jobflow.script.TriggerScriptAPI;
 import org.frameworkset.util.TimeUtil;
@@ -39,6 +42,10 @@ import java.util.concurrent.ConcurrentHashMap;
 public class JobFlowTxtZipFileDownload {
     private static Logger logger = LoggerFactory.getLogger(SimpleJobFlowTest.class);
     public static void main(String[] args){
+        PropertiesContainer propertiesContainer = org.frameworkset.spi.assemble.PropertiesUtil.getPropertiesContainer();
+        String job = "userBehaviorJob";
+        String prefix = propertiesContainer.getSystemEnvProperty(job+".ftp.prefix");
+        logger.info(job+".ftp.prefix:{}",prefix);
         /**
          * 1.定义工作流以及流程调度策略：流程启动后，延后5秒后开始执行，每隔30秒周期性调度执行
          */
@@ -132,8 +139,13 @@ public class JobFlowTxtZipFileDownload {
             DownloadfileConfig downloadfileConfig = new DownloadfileConfig();
             downloadfileConfig
                     .setFtpConfig(ftpConfig)
-                    .setScanChild(true)
-                    .setFileNameRegular("behavior_event_02_20251014143000\\.zip");
+                    .setScanChild(true).setJobFileFilter(new JobFileFilter() {
+                        @Override
+                        public boolean accept(FilterFileInfo fileInfo, JobFlowNodeExecuteContext jobFlowNodeExecuteContext) {
+                            return fileInfo.getFileName().endsWith(".zip");
+                        }
+                    });
+//                    .setFileNameRegular("behavior_event_02_20251014143000\\.zip");
             return downloadfileConfig;
         });
         

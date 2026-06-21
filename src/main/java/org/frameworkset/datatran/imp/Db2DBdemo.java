@@ -88,6 +88,7 @@ public class Db2DBdemo {
 		 */
 		DBInputConfig dbInputConfig = new DBInputConfig();
 		dbInputConfig.setDbName("source")
+//                .setDbAdaptor("com.frameworkset.orm.adapter.DBOceanbase")
 				.setDbDriver("com.mysql.cj.jdbc.Driver") //数据库驱动程序，必须导入相关数据库的驱动jar包
                 .setDbUrl("jdbc:mysql://localhost:3306/bboss?useUnicode=true&allowPublicKeyRetrieval=true&characterEncoding=utf-8&useSSL=false&rewriteBatchedStatements=true")
 				.setDbUser("root")
@@ -225,9 +226,10 @@ public class Db2DBdemo {
 //		importBuilder.addFieldValue("testObject",testObject);
 //
 		final AtomicInteger s = new AtomicInteger(0);
-		importBuilder.setGeoipDatabase("d:/geolite2/GeoLite2-City.mmdb");
-		importBuilder.setGeoipAsnDatabase("d:/geolite2/GeoLite2-ASN.mmdb");
-		importBuilder.setGeoip2regionDatabase("d:/geolite2/ip2region.db");
+        importBuilder.setGeoipDatabase("C:/workdir/geolite2/GeoLite2-City.mmdb");
+        importBuilder.setGeoipAsnDatabase("C:/workdir/geolite2/GeoLite2-ASN.mmdb");
+        importBuilder.setGeoip2regionDatabase("C:/workdir/geolite2/ip2region_v4.xdb;C:/workdir/geolite2/ip2region_v6.xdb");
+
 //        ConfigSQLExecutor configSQLExecutor = new ConfigSQLExecutor("sql.xml");
 		/**"
 		 * 重新设置数据结构

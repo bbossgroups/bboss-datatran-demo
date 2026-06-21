@@ -40,6 +40,8 @@ import java.text.SimpleDateFormat;
 import java.util.Date;
 import java.util.Map;
 
+import static java.lang.Thread.sleep;
+
 /**
  * <p>Description: 增量扫描ftp目录中日志文件，下载未采集过的日志文件，
  * 然后采集日志数据并保存到elasticsearch，采集完毕后，备份日志文件到指定的目录下面，
@@ -171,6 +173,7 @@ public class LocalLog2FullfeatureHttpDslDemo {
                                                 return true;
 											}
 										})
+                        .setCloseEOF(true)
 										.setSourcePath("C:\\workdir\\error")//指定目录
 										.addField("tag","elasticsearch")//添加字段tag到记录中
 						);
@@ -206,7 +209,7 @@ public class LocalLog2FullfeatureHttpDslDemo {
 				.setTargetHttpPool("datatran")
 				.addHttpOutputConfig("http.poolNames","datatran,jwtservice")
 //				.addHttpOutputConfig("datatran.http.health","/health")//服务监控检查地址
-				.addHttpOutputConfig("datatran.http.hosts","192.168.137.1:28080")//服务地址清单，多个用逗号分隔
+				.addHttpOutputConfig("datatran.http.hosts","localhost:808")//服务地址清单，多个用逗号分隔
 				.addHttpOutputConfig("datatran.http.timeoutConnection","5000")
 				.addHttpOutputConfig("datatran.http.timeoutSocket","50000")
 				.addHttpOutputConfig("datatran.http.connectionRequestTimeout","50000")
@@ -215,7 +218,7 @@ public class LocalLog2FullfeatureHttpDslDemo {
 				.addHttpOutputConfig("datatran.http.failAllContinue","true")
 				//设置token申请和更新服务配置jwtservice，在TokenManager中使用jwtservice申请和更新token
 //				.addHttpOutputConfig("jwtservice.http.health","/health") //服务监控检查地址
-				.addHttpOutputConfig("jwtservice.http.hosts","192.168.137.1:28080") //服务地址清单，多个用逗号分隔，192.168.0.100:9501
+				.addHttpOutputConfig("jwtservice.http.hosts","localhost:808") //服务地址清单，多个用逗号分隔，192.168.0.100:9501
 				.addHttpOutputConfig("jwtservice.http.timeoutConnection","5000")
 				.addHttpOutputConfig("jwtservice.http.timeoutSocket","50000")
 				.addHttpOutputConfig("jwtservice.http.connectionRequestTimeout","50000")
@@ -387,8 +390,28 @@ public class LocalLog2FullfeatureHttpDslDemo {
 		/**
 		 * 启动es数据导入文件并上传sftp/ftp作业
 		 */
-		DataStream dataStream = importBuilder.builder();
+		final DataStream dataStream = importBuilder.builder();
 		dataStream.execute();//启动同步作业
-		logger.info("job started.");
+        
+        Thread stopThread = new Thread(new Runnable() {
+			@Override
+			public void run() {
+                try {
+                    sleep(30000);
+                } catch (InterruptedException e) {
+                        
+                }
+                dataStream.destroy(true);
+
+                DataStream dataStream1 = importBuilder.builder();
+                dataStream1.execute();//启动同步作业
+            }
+		});
+        stopThread.start();
+        try {
+            stopThread.join();
+        } catch (InterruptedException e) {
+        }
+        logger.info("job started.");
 	}
 }
